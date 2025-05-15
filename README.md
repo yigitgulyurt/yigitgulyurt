@@ -2,9 +2,9 @@
 
 
 
-[Convertyi](https://github.com/yigitgulyurt/convertyi)
+[ConvertYİ/Kaynak Kodları](https://github.com/yigitgulyurt/convertyi)
 
-[ConvertYİ](https://convertyi.yigitgulyurt.com)
+[ConvertYİ/WebSite](https://convertyi.yigitgulyurt.com)
 
 ㅤㅤㅤㅤㅤ
 
