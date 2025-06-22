@@ -2,12 +2,13 @@
 
 
 
-[ConvertYİ/Kaynak Kodları](https://github.com/yigitgulyurt/convertyi)
+[yigitgulyurt/portföy](https://yigitgulyurt.com)
 
 [ConvertYİ/WebSite](https://convertyi.yigitgulyurt.com)
 
-[Namaz Vakitleri/WebSite](https://imsakiye.yigitgulyurt.com)
+[Namaz Vakitleri/WebSite](https://namazvakitleri.yigitgulyurt.com)
 
+[urlAZ/WebSite](https://urlaz.yigitgulyurt.com)
 
 
 ㅤㅤㅤㅤㅤ
