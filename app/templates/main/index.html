@@ -128,10 +128,15 @@
             <div class="proj-arrow">↗</div>
           </div>
         </a>
-        {%if project.title == 'Çağrı Vakti' %}
+        {% if project.title == 'Çağrı Vakti' %}
         <div class="proj-desc">
         Çağrı Vakti namaz ve ezan saatlerine anlık ve doğru olarak kulanıcıya göstermeyi hedefleyen tek kişi tarafından geliştirilen bir projedir.<br>
         <a style="color : #fdc018" href="https://cagrivakti.com.tr">   CagriVakti.Com.TR</a>
+        </div>
+        {% elif project.title == 'QR Okuyucu' %}
+        <div class="proj-desc">
+        Tarayıcı tabanlı, hızlı ve güvenli QR kod okuma aracı. Herhangi bir uygulama indirmeden doğrudan tarayıcınız üzerinden QR kodlarını tarayın.<br>
+        <a style="color : #4ade80" href="{{ url_for('main.qr_okuyucu') }}">   QR Kod Okuyucuya Git</a>
         </div>
         {% else %}  
         <div class="proj-desc">{{ project.description }}</div>
