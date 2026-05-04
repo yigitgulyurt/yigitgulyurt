@@ -142,7 +142,7 @@
         </div>
         {% endif %}
         <div class="proj-card"><div style="display: flex;justify-content: center;align-items: center;"><iframe src="https://cagrivakti.com.tr/embed/Ankara?theme=dark" height="250" frameborder="0" scrolling="no" width="600"></iframe></div></div>
-        {% elif project.title == 'QR Okuyucu' %}
+        {% if project.title == 'QR Okuyucu' %}
         <div class="proj-desc">
         Tarayıcı tabanlı, hızlı ve güvenli QR kod okuma aracı. Herhangi bir uygulama indirmeden doğrudan tarayıcınız üzerinden QR kodlarını tarayın.<br>
         <a style="color : #4ade80" href="{{ url_for('main.qr_okuyucu') }}">   QR Kod Okuyucu ' ya git</a>
