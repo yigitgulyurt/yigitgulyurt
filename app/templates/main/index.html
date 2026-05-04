@@ -150,9 +150,7 @@
         {% endif %}
         <div class="proj-tags">
           {% for tech in project.tech_list %}
-          <a class="tag" href="javascript:void(0)" 
-          onclick="window.location.href = '{{ tech }}'"
-          target="_blank">{{ tech }}</a>
+          <a class="tag" href="https://www.google.com/search?q={{ tech }}" target="_blank">{{ tech }}</a>
           {% endfor %}
         </div>
       </div>
