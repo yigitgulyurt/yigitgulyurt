@@ -178,6 +178,7 @@ a { color: inherit; }
 .btn {
   font-family: var(--mono);
   font-size: 12px;
+  font-weight: 600;
   cursor: pointer;
   border: 0.5px solid var(--border2);
   border-radius: 4px;
@@ -193,7 +194,7 @@ a { color: inherit; }
   background: var(--accent);
   color: #0a0a0a;
   border-color: var(--accent);
-  font-weight: 500;
+  font-weight: 700;
   user-select: none;
 }
 .btn-primary:hover { background: #22c55e; border-color: #22c55e; }
