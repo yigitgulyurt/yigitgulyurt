@@ -1,0 +1,17 @@
+{% extends "base.html" %}
+
+{% block title %}İnternet Bağlantısı Yok{% endblock %}
+
+{% block content %}
+<div style="min-height: 60vh; display: flex; align-items: center; justify-content: center; text-align: center; padding: 20px;">
+    <div>
+        <h1 style="font-size: 3rem; margin-bottom: 20px;">🌐</h1>
+        <h2 class="lang-tr">İnternet Bağlantısı Yok</h2>
+        <h2 class="lang-en">No Internet Connection</h2>
+        <p class="lang-tr" style="color: var(--text-muted); margin-top: 15px;">Şu an çevrimdışısınız. Daha önce ziyaret ettiğiniz sayfaları görüntüleyebilirsiniz.</p>
+        <p class="lang-en" style="color: var(--text-muted); margin-top: 15px;">You are currently offline. You can view pages you've visited before.</p>
+        <button onclick="window.location.reload()" class="lang-tr" style="margin-top: 30px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer;">Tekrar Dene</button>
+        <button onclick="window.location.reload()" class="lang-en" style="margin-top: 30px; padding: 10px 20px; background: var(--primary); color: white; border: none; border-radius: 5px; cursor: pointer;">Try Again</button>
+    </div>
+</div>
+{% endblock %}

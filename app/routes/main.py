@@ -248,3 +248,24 @@ def robots():
 @bp.route('/font-test')
 def font_test():
     return render_template('main/font-test.html')
+
+@bp.route('/sw.js')
+def serve_sw():
+    from flask import send_from_directory, current_app, make_response
+    import os
+    version = "1.0.0" # Manuel versiyon veya config'den çekilebilir
+    sw_path = os.path.join(current_app.root_path, '..', 'sw.js')
+    try:
+        with open(sw_path, 'r', encoding='utf-8') as f:
+            content = f.read()
+        content = content.replace('${VERSION}', version)
+        resp = make_response(content)
+        resp.headers['Content-Type'] = 'application/javascript; charset=utf-8'
+        resp.headers['Cache-Control'] = 'no-cache'
+        return resp
+    except Exception:
+        return "Service Worker Not Found", 404
+
+@bp.route('/offline')
+def offline():
+    return render_template('main/offline.html')
