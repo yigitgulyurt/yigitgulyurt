@@ -150,7 +150,7 @@
         {% endif %}
         <div class="proj-tags">
           {% for tech in project.tech_list %}
-          <span class="tag">{{ tech }}</span>
+          <a class="tag" href="https://www.google.com/search?q={{ tech }}" target="_blank">{{ tech }}</a>
           {% endfor %}
         </div>
       </div>
