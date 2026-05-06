@@ -34,7 +34,7 @@ CANONICAL_NAMES = {
     'amiri': 'Amiri',
     'cinzel': 'Cinzel',
     'crimsonpro': 'Crimson Pro',
-    'jetbrainsmononerdfont': 'JetBrains Mono NF',
+    'jetbrainsmononerdfont': 'JetBrainsMonoNerdFont',
     'montserrat': 'Montserrat',
     'orbitron': 'Orbitron',
     'playfair': 'Playfair',
