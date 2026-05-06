@@ -27,6 +27,21 @@
             margin-bottom: 3rem;
             border-bottom: 1px solid #334155;
             padding-bottom: 1rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-end;
+        }
+        .preview-controls {
+            margin-bottom: 1rem;
+        }
+        #global-preview-input {
+            background: var(--card-bg);
+            border: 1px solid var(--accent-color);
+            color: white;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            width: 300px;
+            font-family: inherit;
         }
         h1 {
             font-size: 2.5rem;
@@ -107,8 +122,13 @@
 <body>
     <div class="container">
         <header>
-            <h1>Yiğit Gülyurt Fonts</h1>
-            <p>Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
+            <div>
+                <h1>Yiğit Gülyurt Fonts</h1>
+                <p>Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
+            </div>
+            <div class="preview-controls">
+                <input type="text" id="global-preview-input" placeholder="Önizleme metni yazın..." oninput="updatePreviews(this.value)">
+            </div>
         </header>
 
         <div class="font-grid">
@@ -118,7 +138,7 @@
                     <div class="font-name">{{ family }}</div>
                     <div class="font-meta">{{ variants|length }} varyant</div>
                 </div>
-                <div class="font-preview" style="font-family: '{{ family }}';">
+                <div class="font-preview" style="font-family: '{{ family }}';" data-family="{{ family }}">
                     The quick brown fox jumps over the lazy dog.
                 </div>
                 <div class="font-usage">
@@ -135,6 +155,14 @@
     </div>
 
     <script>
+        function updatePreviews(text) {
+            const previews = document.querySelectorAll('.font-preview');
+            const defaultText = "The quick brown fox jumps over the lazy dog.";
+            previews.forEach(p => {
+                p.innerText = text.trim() === "" ? defaultText : text;
+            });
+        }
+
         function copyText(btn, text) {
             navigator.clipboard.writeText(text).then(() => {
                 const original = btn.innerText;

@@ -6,9 +6,15 @@ Subdomain: fonts.yigitgulyurt.net.tr
 
 import os
 import re
+import time
 from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort
 
 bp = Blueprint('fonts', __name__, subdomain='fonts')
+
+# Global cache değişkenleri
+_fonts_cache = None
+_fonts_cache_time = 0
+CACHE_DURATION = 300 # 5 dakika
 
 # Font ağırlığı haritası
 WEIGHT_MAP = {
@@ -31,12 +37,18 @@ CANONICAL_NAMES = {
     'jetbrainsmononerdfont': 'JetBrains Mono NL',
     'montserrat': 'Montserrat',
     'orbitron': 'Orbitron',
-    'playfair': 'Playfair',
+    'playfair': 'Playfair Display',
     'rajdhani': 'Rajdhani'
 }
 
 def get_fonts_data():
-    """Font klasörünü tarar ve mevcut fontları döndürür."""
+    """Font klasörünü tarar ve mevcut fontları döndürür (Cache destekli)."""
+    global _fonts_cache, _fonts_cache_time
+    
+    now = time.time()
+    if _fonts_cache and (now - _fonts_cache_time < CACHE_DURATION):
+        return _fonts_cache
+
     fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts')
     fonts = {}
     
@@ -51,6 +63,8 @@ def get_fonts_data():
             
             # Google Fonts stili görünen isim
             display_name = CANONICAL_NAMES.get(normalized_name, family_name)
+            
+            font_variants = []
             for file in os.listdir(family_path):
                 if file.endswith(('.ttf', '.woff2', '.woff')):
                     name_no_ext = os.path.splitext(file)[0]
@@ -78,6 +92,9 @@ def get_fonts_data():
                     'display_name': display_name,
                     'variants': font_variants
                 }
+    
+    _fonts_cache = fonts
+    _fonts_cache_time = now
     return fonts
 
 @bp.route('/')
