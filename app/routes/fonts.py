@@ -34,7 +34,7 @@ CANONICAL_NAMES = {
     'amiri': 'Amiri',
     'cinzel': 'Cinzel',
     'crimsonpro': 'Crimson Pro',
-    'jetbrainsmononerdfont': 'JetBrains Mono NL',
+    'jetbrainsmononerdfont': 'JetBrains Mono NF',
     'montserrat': 'Montserrat',
     'orbitron': 'Orbitron',
     'playfair': 'Playfair',
@@ -63,6 +63,8 @@ def get_fonts_data():
             
             # Google Fonts stili görünen isim
             display_name = CANONICAL_NAMES.get(normalized_name, family_name)
+            # Arama için display_name'i de normalize et
+            normalized_display_name = display_name.lower().replace(" ", "").replace("-", "")
             
             font_variants = []
             for file in os.listdir(family_path):
@@ -87,11 +89,15 @@ def get_fonts_data():
                     })
             
             if font_variants:
-                fonts[normalized_name] = {
+                font_entry = {
                     'original_name': family_name,
                     'display_name': display_name,
                     'variants': font_variants
                 }
+                # Hem klasör adıyla hem de güzel adıyla erişilebilir yap
+                fonts[normalized_name] = font_entry
+                if normalized_display_name != normalized_name:
+                    fonts[normalized_display_name] = font_entry
     
     _fonts_cache = fonts
     _fonts_cache_time = now
@@ -101,9 +107,12 @@ def get_fonts_data():
 def index():
     """Fontların listelendiği ana sayfa."""
     fonts_data = get_fonts_data()
-    # Template için veriyi düzenle
-    display_fonts = {data['display_name']: data['variants'] for data in fonts_data.values()}
-    return render_template('fonts/index.html', fonts=display_fonts)
+    # Tekilleştir ve Template için veriyi düzenle
+    unique_fonts = {}
+    for data in fonts_data.values():
+        unique_fonts[data['display_name']] = data['variants']
+    
+    return render_template('fonts/index.html', fonts=unique_fonts)
 
 @bp.route('/css2')
 def css2():
