@@ -10,60 +10,67 @@ from flask import Blueprint, render_template, request, Response, current_app, se
 
 bp = Blueprint('fonts', __name__, subdomain='fonts')
 
-# Font ağırlığı haritası
+# Font ağırlığı haritası (Öncelik sırasına göre - Uzun isimler önce)
 WEIGHT_MAP = {
-    'Thin': '100',
     'ExtraLight': '200',
-    'Light': '300',
-    'Regular': '400',
-    'Medium': '500',
-    'SemiBold': '600',
-    'Bold': '700',
     'ExtraBold': '800',
-    'Black': '900'
+    'SemiBold': '600',
+    'Thin': '100',
+    'Light': '300',
+    'Medium': '500',
+    'Bold': '700',
+    'Black': '900',
+    'Regular': '400'
 }
+
+from pathlib import Path
 
 def get_fonts_data():
     """Font klasörünü tarar ve mevcut fontları döndürür."""
-    fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts')
+    # En sağlam yol belirleme yöntemi
+    root_path = Path(current_app.root_path)
+    fonts_dir = root_path / 'static' / 'fonts'
     fonts = {}
     
-    if not os.path.exists(fonts_dir):
-        return fonts
+    if not fonts_dir.exists():
+        # Alternatif yol denemesi (projenin kök dizininde olma ihtimaline karşı)
+        fonts_dir = root_path.parent / 'app' / 'static' / 'fonts'
+        if not fonts_dir.exists():
+            return fonts
 
-    for family_name in os.listdir(fonts_dir):
-        family_path = os.path.join(fonts_dir, family_name)
-        if os.path.isdir(family_path):
-            # Normalize edilmiş isim (küçük harf ve boşluksuz)
-            normalized_name = family_name.lower().replace(" ", "").replace("-", "")
+    # Pathlib ile daha sağlam tarama
+    for item in fonts_dir.iterdir():
+        if item.is_dir():
+            normalized_name = item.name.lower().replace(" ", "").replace("-", "").replace("_", "")
             
             font_variants = []
-            for file in os.listdir(family_path):
-                if file.endswith(('.ttf', '.woff2', '.woff')):
-                    name_no_ext = os.path.splitext(file)[0]
+            for font_file in item.glob('*'):
+                if font_file.suffix.lower() in ['.ttf', '.woff2', '.woff']:
+                    name_no_ext = font_file.stem
                     
                     style = "normal"
-                    if "Italic" in name_no_ext or "italic" in name_no_ext:
+                    if re.search(r'italic', name_no_ext, re.I):
                         style = "italic"
                     
                     weight = "400"
                     for key, val in WEIGHT_MAP.items():
-                        if key in name_no_ext:
+                        if re.search(key, name_no_ext, re.I):
                             weight = val
                             break
                     
                     font_variants.append({
-                        'file': file,
+                        'file': font_file.name,
                         'weight': weight,
                         'style': style,
-                        'format': 'truetype' if file.endswith('.ttf') else ('woff2' if file.endswith('.woff2') else 'woff')
+                        'format': 'truetype' if font_file.suffix.lower() == '.ttf' else font_file.suffix.lower()[1:]
                     })
             
             if font_variants:
                 fonts[normalized_name] = {
-                    'original_name': family_name,
+                    'original_name': item.name,
                     'variants': font_variants
                 }
+    
     return fonts
 
 @bp.route('/')
@@ -97,10 +104,12 @@ def css2():
         parts = param.split(':')
         raw_family_name = parts[0].strip()
         # Arama için normalize et
-        search_name = raw_family_name.lower().replace(" ", "").replace("-", "")
+        search_name = raw_family_name.lower().replace(" ", "").replace("-", "").replace("_", "")
         
         if search_name not in fonts_data:
-            css_output.append(f"/* Font family '{raw_family_name}' not found (searched as '{search_name}') */")
+            # Hata mesajını daha bilgilendirici yapalım
+            available = ", ".join(sorted(fonts_data.keys()))
+            css_output.append(f"/* Font family '{raw_family_name}' not found. Available: {available} */")
             continue
 
         family_info = fonts_data[search_name]
