@@ -23,6 +23,18 @@ WEIGHT_MAP = {
     'Black': '900'
 }
 
+# Font ailesi isimlerini Google Fonts stilinde "güzelleştiren" eşleme
+CANONICAL_NAMES = {
+    'amiri': 'Amiri',
+    'cinzel': 'Cinzel',
+    'crimsonpro': 'Crimson Pro',
+    'jetbrainsmononerdfont': 'JetBrains Mono NL',
+    'montserrat': 'Montserrat',
+    'orbitron': 'Orbitron',
+    'playfair': 'Playfair',
+    'rajdhani': 'Rajdhani'
+}
+
 def get_fonts_data():
     """Font klasörünü tarar ve mevcut fontları döndürür."""
     fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts')
@@ -37,7 +49,8 @@ def get_fonts_data():
             # Normalize edilmiş isim (küçük harf ve boşluksuz)
             normalized_name = family_name.lower().replace(" ", "").replace("-", "")
             
-            font_variants = []
+            # Google Fonts stili görünen isim
+            display_name = CANONICAL_NAMES.get(normalized_name, family_name)
             for file in os.listdir(family_path):
                 if file.endswith(('.ttf', '.woff2', '.woff')):
                     name_no_ext = os.path.splitext(file)[0]
@@ -62,6 +75,7 @@ def get_fonts_data():
             if font_variants:
                 fonts[normalized_name] = {
                     'original_name': family_name,
+                    'display_name': display_name,
                     'variants': font_variants
                 }
     return fonts
@@ -71,7 +85,7 @@ def index():
     """Fontların listelendiği ana sayfa."""
     fonts_data = get_fonts_data()
     # Template için veriyi düzenle
-    display_fonts = {data['original_name']: data['variants'] for data in fonts_data.values()}
+    display_fonts = {data['display_name']: data['variants'] for data in fonts_data.values()}
     return render_template('fonts/index.html', fonts=display_fonts)
 
 @bp.route('/css2')
@@ -104,7 +118,8 @@ def css2():
             continue
 
         family_info = fonts_data[search_name]
-        family_name = family_info['original_name']
+        folder_name = family_info['original_name']
+        display_name = family_info['display_name']
         available_variants = family_info['variants']
 
         requested_variants = []
@@ -152,10 +167,10 @@ def css2():
                         break
             
             if include:
-                font_url = f"{base_url}/s/{family_name}/{font['file']}"
+                font_url = f"{base_url}/s/{folder_name}/{font['file']}"
                 css_output.append(f"""
 @font-face {{
-  font-family: '{family_name}';
+  font-family: '{display_name}';
   font-style: {font['style']};
   font-weight: {font['weight']};
   font-display: {display};
