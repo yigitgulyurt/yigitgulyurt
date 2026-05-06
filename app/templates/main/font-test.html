@@ -5,15 +5,9 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Font System Test Dashboard</title>
     
-    <!-- Merkezi Font Sistemi Importları -->
+    <!-- Yeni Merkezi Font Sistemi API Kullanımı -->
     <style>
-        @import url('https://fonts.yigitgulyurt.net.tr/Montserrat/montserrat.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/orbitron/orbitron.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/rajdhani/rajdhani.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/playfair/playfair.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/JetBrainsMonoNerdFont/jetbrainsmononerdfont.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/cinzel/cinzel.css');
-        @import url('https://fonts.yigitgulyurt.net.tr/crimson-pro/crimson-pro.css');
+        @import url('https://fonts.yigitgulyurt.net.tr/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=Orbitron:wght@400..900&family=Rajdhani:wght@300..700&family=Playfair:ital,wght@0,300..900;1,300..900&family=JetBrainsMonoNerdFont:ital,wght@0,100..800;1,100..800&family=Cinzel:wght@400..900&family=CrimsonPro:ital,wght@0,200..900;1,200..900&display=swap');
     </style>
 
     <style>
@@ -128,14 +122,14 @@
             word-break: break-all;
         }
 
-        /* Font Specific Classes */
+        /* Font Specific Classes (API ile uyumlu family isimleri) */
         .font-montserrat { font-family: 'Montserrat', sans-serif; }
         .font-orbitron { font-family: 'Orbitron', sans-serif; }
         .font-rajdhani { font-family: 'Rajdhani', sans-serif; }
-        .font-playfair { font-family: 'Playfair Display', serif; }
-        .font-jetbrains { font-family: 'JetBrains Mono', monospace; }
+        .font-playfair { font-family: 'Playfair', serif; }
+        .font-jetbrains { font-family: 'JetBrainsMonoNerdFont', monospace; }
         .font-cinzel { font-family: 'Cinzel', serif; }
-        .font-crimson { font-family: 'Crimson Pro', serif; }
+        .font-crimson { font-family: 'CrimsonPro', serif; }
 
         .w100 { font-weight: 100; }
         .w200 { font-weight: 200; }
@@ -163,6 +157,20 @@
     <header>
         <p class="subtitle">Self-Hosted Font Management System</p>
         <h1>Font Testing Dashboard</h1>
+        
+        <!-- Kullanım Örneği Bölümü -->
+        <div style="margin-top: 2rem; background: rgba(56, 189, 248, 0.05); border: 1px solid var(--accent); border-radius: 1rem; padding: 1.5rem; text-align: left; max-width: 800px; margin-left: auto; margin-right: auto;">
+            <h3 style="margin-top: 0; color: var(--accent); font-family: 'Orbitron', sans-serif; font-size: 1rem;">NASIL KULLANILIR?</h3>
+            <p style="font-size: 0.9rem; color: var(--text-dim);">Artık fontları Google Fonts gibi tek bir URL üzerinden, istediğiniz ağırlık (weight) ve stil (italic) aralıklarıyla çağırabilirsiniz:</p>
+            <code style="display: block; background: #000; padding: 1rem; border-radius: 0.5rem; font-size: 0.8rem; color: #38bdf8; overflow-x: auto; white-space: nowrap;">
+                &lt;link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap"&gt;
+            </code>
+            <ul style="font-size: 0.85rem; color: var(--text-dim); margin-top: 1rem; padding-left: 1.2rem;">
+                <li><b>ital,wght@0,400</b> : Sadece Normal (0) stilinde 400 ağırlığını getirir.</li>
+                <li><b>wght@100..900</b> : 100 ile 900 arasındaki tüm mevcut ağırlıkları getirir.</li>
+                <li><b>display=swap</b> : Font yüklenene kadar sistem fontunu gösterir (performans için).</li>
+            </ul>
+        </div>
     </header>
 
     <div class="font-grid">
