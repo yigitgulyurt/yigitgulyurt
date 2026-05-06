@@ -1,0 +1,147 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Fontlar — Yiğit Gülyurt</title>
+    <link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css">
+    <style>
+        :root {
+            --bg-color: #0f172a;
+            --card-bg: #1e293b;
+            --text-color: #f8fafc;
+            --accent-color: #38bdf8;
+        }
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            font-family: 'Inter', sans-serif;
+            margin: 0;
+            padding: 2rem;
+        }
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+        }
+        header {
+            margin-bottom: 3rem;
+            border-bottom: 1px solid #334155;
+            padding-bottom: 1rem;
+        }
+        h1 {
+            font-size: 2.5rem;
+            margin: 0;
+            color: var(--accent-color);
+        }
+        .font-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+            gap: 2rem;
+        }
+        .font-card {
+            background: var(--card-bg);
+            border-radius: 12px;
+            padding: 1.5rem;
+            transition: transform 0.2s;
+            border: 1px solid #334155;
+        }
+        .font-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-color);
+        }
+        .font-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 1rem;
+        }
+        .font-name {
+            font-size: 1.25rem;
+            font-weight: 600;
+        }
+        .font-meta {
+            font-size: 0.875rem;
+            color: #94a3b8;
+        }
+        .font-preview {
+            font-size: 2rem;
+            margin: 1rem 0;
+            padding: 1rem;
+            background: rgba(15, 23, 42, 0.5);
+            border-radius: 8px;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+        .font-usage {
+            background: #0f172a;
+            padding: 1rem;
+            border-radius: 6px;
+            font-family: monospace;
+            font-size: 0.8rem;
+            color: #e2e8f0;
+            margin-top: 1rem;
+            position: relative;
+        }
+        .copy-btn {
+            position: absolute;
+            top: 0.5rem;
+            right: 0.5rem;
+            background: var(--accent-color);
+            color: #000;
+            border: none;
+            padding: 0.25rem 0.5rem;
+            border-radius: 4px;
+            font-size: 0.7rem;
+            cursor: pointer;
+            opacity: 0.7;
+        }
+        .copy-btn:hover {
+            opacity: 1;
+        }
+    </style>
+    {% for family, variants in fonts.items() %}
+    <link rel="stylesheet" href="/css2?family={{ family }}">
+    {% endfor %}
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>Yiğit Gülyurt Fonts</h1>
+            <p>Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
+        </header>
+
+        <div class="font-grid">
+            {% for family, variants in fonts.items() %}
+            <div class="font-card">
+                <div class="font-header">
+                    <div class="font-name">{{ family }}</div>
+                    <div class="font-meta">{{ variants|length }} varyant</div>
+                </div>
+                <div class="font-preview" style="font-family: '{{ family }}';">
+                    The quick brown fox jumps over the lazy dog.
+                </div>
+                <div class="font-usage">
+                    <button class="copy-btn" onclick="copyText(this, '<link rel=\'stylesheet\' href=\'https://fonts.yigitgulyurt.net.tr/css2?family={{ family }}\'>')">Kopyala</button>
+                    &lt;link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family={{ family }}"&gt;
+                </div>
+                <div class="font-usage">
+                    <button class="copy-btn" onclick="copyText(this, 'font-family: \'{{ family }}\', sans-serif;')">Kopyala</button>
+                    font-family: '{{ family }}', sans-serif;
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <script>
+        function copyText(btn, text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const original = btn.innerText;
+                btn.innerText = 'Kopyalandı!';
+                setTimeout(() => btn.innerText = original, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
