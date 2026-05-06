@@ -98,7 +98,7 @@ html = """
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 body {
-    font-family: 'JetBrains Mono', sans-serif;
+    font-family: 'JetBrainsMonoNerdFont', sans-serif;
     background: var(--bg);
     color: var(--text);
     padding: 40px 20px;
@@ -251,7 +251,7 @@ for item in data:
 
         <div class="field">
             <div class="label">🖼️ OG Görsel Yolu</div>
-            <div class="value" style="font-family: monospace; color: var(--text-dim); font-size: 0.8rem;">{item['og']}</div>
+            <div class="value" style="font-family: 'JetBrainsMonoNerdFont', sans-serif; color: var(--text-dim); font-size: 0.8rem;">{item['og']}</div>
         </div>
 
         <div class="img-container">
