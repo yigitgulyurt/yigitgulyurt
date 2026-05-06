@@ -34,7 +34,10 @@ def get_fonts_data():
     for family_name in os.listdir(fonts_dir):
         family_path = os.path.join(fonts_dir, family_name)
         if os.path.isdir(family_path):
-            fonts[family_name] = []
+            # Normalize edilmiş isim (küçük harf ve boşluksuz)
+            normalized_name = family_name.lower().replace(" ", "").replace("-", "")
+            
+            font_variants = []
             for file in os.listdir(family_path):
                 if file.endswith(('.ttf', '.woff2', '.woff')):
                     name_no_ext = os.path.splitext(file)[0]
@@ -49,19 +52,27 @@ def get_fonts_data():
                             weight = val
                             break
                     
-                    fonts[family_name].append({
+                    font_variants.append({
                         'file': file,
                         'weight': weight,
                         'style': style,
                         'format': 'truetype' if file.endswith('.ttf') else ('woff2' if file.endswith('.woff2') else 'woff')
                     })
+            
+            if font_variants:
+                fonts[normalized_name] = {
+                    'original_name': family_name,
+                    'variants': font_variants
+                }
     return fonts
 
 @bp.route('/')
 def index():
     """Fontların listelendiği ana sayfa."""
     fonts_data = get_fonts_data()
-    return render_template('fonts/index.html', fonts=fonts_data)
+    # Template için veriyi düzenle
+    display_fonts = {data['original_name']: data['variants'] for data in fonts_data.values()}
+    return render_template('fonts/index.html', fonts=display_fonts)
 
 @bp.route('/css2')
 def css2():
@@ -84,18 +95,23 @@ def css2():
     for param in families_param:
         # Parametre formatı: FamilyName:ital,wght@0,100..900;1,100..900
         parts = param.split(':')
-        family_name = parts[0]
+        raw_family_name = parts[0].strip()
+        # Arama için normalize et
+        search_name = raw_family_name.lower().replace(" ", "").replace("-", "")
         
-        if family_name not in fonts_data:
-            css_output.append(f"/* Font family '{family_name}' not found */")
+        if search_name not in fonts_data:
+            css_output.append(f"/* Font family '{raw_family_name}' not found (searched as '{search_name}') */")
             continue
+
+        family_info = fonts_data[search_name]
+        family_name = family_info['original_name']
+        available_variants = family_info['variants']
 
         requested_variants = []
         if len(parts) > 1:
             # Variantları ayıkla (ital,wght@...)
             variant_part = parts[1]
             if '@' in variant_part:
-                # wght@100;400 veya ital,wght@0,100;1,400 veya wght@100..900
                 header_str, values_str = variant_part.split('@')
                 header_parts = header_str.split(',')
                 
@@ -106,13 +122,17 @@ def css2():
                         if i < len(val_parts):
                             val = val_parts[i]
                             if '..' in val:
-                                start, end = val.split('..')
-                                variant_req[h_part] = list(range(int(start), int(end) + 1))
+                                try:
+                                    start, end = val.split('..')
+                                    variant_req[h_part] = list(range(int(start), int(end) + 1))
+                                except ValueError:
+                                    continue
                             else:
-                                variant_req[h_part] = [int(val)]
+                                try:
+                                    variant_req[h_part] = [int(val)]
+                                except ValueError:
+                                    continue
                     requested_variants.append(variant_req)
-        
-        available_variants = fonts_data[family_name]
         
         for font in available_variants:
             font_weight = int(font['weight'])
@@ -124,7 +144,6 @@ def css2():
             else:
                 include = False
                 for req in requested_variants:
-                    # req format: {'ital': [0], 'wght': [100, 200, ...]}
                     ital_req = req.get('ital', [0, 1])
                     wght_req = req.get('wght', list(range(100, 1000, 100)))
                     
