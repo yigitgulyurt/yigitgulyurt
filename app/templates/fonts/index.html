@@ -1,10 +1,8 @@
-<!DOCTYPE html>
-<html lang="tr">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Fontlar — Yiğit Gülyurt</title>
-    <link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css">
+{% extends "base.html" %}
+
+{% block title %}Fontlar | Yiğit Gülyurt{% endblock %}
+
+{% block head %}
     <style>
         :root {
             --bg-color: #0f172a;
@@ -12,119 +10,178 @@
             --text-color: #f8fafc;
             --accent-color: #38bdf8;
         }
-        body {
-            background-color: var(--bg-color);
-            color: var(--text-color);
-            font-family: 'Inter', sans-serif;
-            margin: 0;
-            padding: 2rem;
+        
+        .fonts-page-wrapper {
+            padding: 2rem 0;
         }
-        .container {
+
+        .fonts-container {
             max-width: 1200px;
             margin: 0 auto;
+            padding: 0 1rem;
         }
-        header {
+
+        .fonts-header {
             margin-bottom: 3rem;
             border-bottom: 1px solid #334155;
-            padding-bottom: 1rem;
+            padding-bottom: 1.5rem;
             display: flex;
             justify-content: space-between;
             align-items: flex-end;
+            flex-wrap: wrap;
+            gap: 1.5rem;
         }
+
         .preview-controls {
-            margin-bottom: 1rem;
+            margin-bottom: 0.5rem;
         }
+
         #global-preview-input {
             background: var(--card-bg);
             border: 1px solid var(--accent-color);
             color: white;
-            padding: 0.5rem 1rem;
+            padding: 0.6rem 1rem;
             border-radius: 8px;
             width: 300px;
             font-family: inherit;
+            outline: none;
         }
-        h1 {
+
+        #global-preview-input:focus {
+            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
+        }
+
+        .fonts-title {
             font-size: 2.5rem;
             margin: 0;
             color: var(--accent-color);
+            font-weight: 700;
         }
+
+        .fonts-subtitle {
+            margin: 0.5rem 0 0;
+            color: #94a3b8;
+        }
+
         .font-grid {
             display: grid;
             grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 2rem;
         }
+
         .font-card {
             background: var(--card-bg);
             border-radius: 12px;
             padding: 1.5rem;
-            transition: transform 0.2s;
+            transition: transform 0.2s, border-color 0.2s;
             border: 1px solid #334155;
+            display: flex;
+            flex-direction: column;
         }
+
         .font-card:hover {
             transform: translateY(-4px);
             border-color: var(--accent-color);
         }
+
         .font-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1rem;
+            margin-bottom: 1.2rem;
         }
+
         .font-name {
             font-size: 1.25rem;
             font-weight: 600;
+            color: white;
         }
+
         .font-meta {
-            font-size: 0.875rem;
+            font-size: 0.8rem;
             color: #94a3b8;
+            background: rgba(255, 255, 255, 0.05);
+            padding: 0.2rem 0.6rem;
+            border-radius: 4px;
         }
+
         .font-preview {
-            font-size: 2rem;
-            margin: 1rem 0;
-            padding: 1rem;
+            font-size: 1.8rem;
+            margin: 0.5rem 0 1.5rem;
+            padding: 1.5rem;
             background: rgba(15, 23, 42, 0.5);
             border-radius: 8px;
             overflow: hidden;
             text-overflow: ellipsis;
             white-space: nowrap;
+            border: 1px solid rgba(255, 255, 255, 0.03);
+            min-height: 4rem;
+            display: flex;
+            align-items: center;
         }
+
+        .font-usage-group {
+            margin-top: auto;
+            display: flex;
+            flex-direction: column;
+            gap: 0.8rem;
+        }
+
         .font-usage {
             background: #0f172a;
-            padding: 1rem;
+            padding: 0.8rem;
             border-radius: 6px;
-            font-family: monospace;
-            font-size: 0.8rem;
+            font-family: 'JetBrains Mono NL', monospace;
+            font-size: 0.75rem;
             color: #e2e8f0;
-            margin-top: 1rem;
             position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.05);
         }
+
         .copy-btn {
             position: absolute;
-            top: 0.5rem;
-            right: 0.5rem;
+            top: 0.4rem;
+            right: 0.4rem;
             background: var(--accent-color);
-            color: #000;
+            color: #0f172a;
             border: none;
-            padding: 0.25rem 0.5rem;
+            padding: 0.2rem 0.5rem;
             border-radius: 4px;
-            font-size: 0.7rem;
+            font-size: 0.65rem;
+            font-weight: 700;
             cursor: pointer;
-            opacity: 0.7;
+            opacity: 0.8;
+            transition: opacity 0.2s;
         }
+
         .copy-btn:hover {
             opacity: 1;
         }
+
+        @media (max-width: 640px) {
+            #global-preview-input {
+                width: 100%;
+            }
+            .fonts-header {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+        }
     </style>
+    
+    {# Her font için API üzerinden CSS yükle #}
     {% for family, variants in fonts.items() %}
-    <link rel="stylesheet" href="/css2?family={{ family }}">
+    <link rel="stylesheet" href="/css2?family={{ family|replace(' ', '+') }}">
     {% endfor %}
-</head>
-<body>
-    <div class="container">
-        <header>
+{% endblock %}
+
+{% block content %}
+<div class="fonts-page-wrapper">
+    <div class="fonts-container">
+        <header class="fonts-header">
             <div>
-                <h1>Yiğit Gülyurt Fonts</h1>
-                <p>Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
+                <h1 class="fonts-title">Yiğit Gülyurt Fonts</h1>
+                <p class="fonts-subtitle">Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
             </div>
             <div class="preview-controls">
                 <input type="text" id="global-preview-input" placeholder="Önizleme metni yazın..." oninput="updatePreviews(this.value)">
@@ -141,19 +198,24 @@
                 <div class="font-preview" style="font-family: '{{ family }}';" data-family="{{ family }}">
                     The quick brown fox jumps over the lazy dog.
                 </div>
-                <div class="font-usage">
-                    <button class="copy-btn" onclick="copyText(this, '<link rel=\'stylesheet\' href=\'https://fonts.yigitgulyurt.net.tr/css2?family={{ family }}\'>')">Kopyala</button>
-                    &lt;link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family={{ family }}"&gt;
-                </div>
-                <div class="font-usage">
-                    <button class="copy-btn" onclick="copyText(this, 'font-family: \'{{ family }}\', sans-serif;')">Kopyala</button>
-                    font-family: '{{ family }}', sans-serif;
+                <div class="font-usage-group">
+                    <div class="font-usage">
+                        <button class="copy-btn" onclick="copyText(this, '<link rel=\'stylesheet\' href=\'https://fonts.yigitgulyurt.net.tr/css2?family={{ family|replace(' ', '+') }}\'>')">KOPYALA</button>
+                        &lt;link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family={{ family|replace(' ', '+') }}"&gt;
+                    </div>
+                    <div class="font-usage">
+                        <button class="copy-btn" onclick="copyText(this, 'font-family: \'{{ family }}\', sans-serif;')">KOPYALA</button>
+                        font-family: '{{ family }}', sans-serif;
+                    </div>
                 </div>
             </div>
             {% endfor %}
         </div>
     </div>
+</div>
+{% endblock %}
 
+{% block scripts %}
     <script>
         function updatePreviews(text) {
             const previews = document.querySelectorAll('.font-preview');
@@ -166,10 +228,16 @@
         function copyText(btn, text) {
             navigator.clipboard.writeText(text).then(() => {
                 const original = btn.innerText;
-                btn.innerText = 'Kopyalandı!';
-                setTimeout(() => btn.innerText = original, 2000);
+                btn.innerText = 'KOPYALANDI!';
+                btn.style.background = '#10b981'; // Success color
+                btn.style.color = 'white';
+                
+                setTimeout(() => {
+                    btn.innerText = original;
+                    btn.style.background = '';
+                    btn.style.color = '';
+                }, 2000);
             });
         }
     </script>
-</body>
-</html>
+{% endblock %}
