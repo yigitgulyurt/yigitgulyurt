@@ -37,7 +37,7 @@ CANONICAL_NAMES = {
     'jetbrainsmononerdfont': 'JetBrains Mono NL',
     'montserrat': 'Montserrat',
     'orbitron': 'Orbitron',
-    'playfair': 'Playfair Display',
+    'playfair': 'Playfair',
     'rajdhani': 'Rajdhani'
 }
 
