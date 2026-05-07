@@ -1,243 +1,423 @@
 {% extends "base.html" %}
 
-{% block title %}Fontlar | Yiğit Gülyurt{% endblock %}
+{% block title %}Font Kütüphanesi | Yiğit Gülyurt{% endblock %}
 
 {% block head %}
     <style>
         :root {
-            --bg-color: #0f172a;
-            --card-bg: #1e293b;
-            --text-color: #f8fafc;
-            --accent-color: #38bdf8;
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.15);
+            --success: #238636;
         }
         
         .fonts-page-wrapper {
-            padding: 2rem 0;
+            padding: 3rem 0;
+            background-color: var(--bg-color);
+            min-height: 100vh;
         }
 
         .fonts-container {
-            max-width: 1200px;
+            max-width: 1300px;
             margin: 0 auto;
-            padding: 0 1rem;
+            padding: 0 1.5rem;
         }
 
+        /* --- Header & Controls --- */
         .fonts-header {
-            margin-bottom: 3rem;
-            border-bottom: 1px solid #334155;
-            padding-bottom: 1.5rem;
+            margin-bottom: 4rem;
             display: flex;
             justify-content: space-between;
-            align-items: flex-end;
+            align-items: flex-start;
             flex-wrap: wrap;
-            gap: 1.5rem;
-        }
-
-        .preview-controls {
-            margin-bottom: 0.5rem;
-        }
-
-        #global-preview-input {
-            background: var(--card-bg);
-            border: 1px solid var(--accent-color);
-            color: white;
-            padding: 0.6rem 1rem;
-            border-radius: 8px;
-            width: 300px;
-            font-family: inherit;
-            outline: none;
-        }
-
-        #global-preview-input:focus {
-            box-shadow: 0 0 0 2px rgba(56, 189, 248, 0.3);
-        }
-
-        .fonts-title {
-            font-size: 2.5rem;
-            margin: 0;
-            color: var(--accent-color);
-            font-weight: 700;
-        }
-
-        .fonts-subtitle {
-            margin: 0.5rem 0 0;
-            color: #94a3b8;
-        }
-
-        .font-grid {
-            display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
             gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--card-border);
         }
 
-        .font-card {
-            background: var(--card-bg);
-            border-radius: 12px;
-            padding: 1.5rem;
-            transition: transform 0.2s, border-color 0.2s;
-            border: 1px solid #334155;
+        .header-left h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left p {
+            margin: 0.5rem 0 0;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        .controls-group {
             display: flex;
-            flex-direction: column;
+            gap: 1rem;
+            flex-wrap: wrap;
+            flex: 1;
+            justify-content: flex-end;
+            min-width: 300px;
         }
 
-        .font-card:hover {
-            transform: translateY(-4px);
-            border-color: var(--accent-color);
+        .control-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            padding: 0.8rem 1.2rem;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+            transition: border-color 0.2s;
         }
 
-        .font-header {
+        .control-item:focus-within {
+            border-color: var(--accent);
+        }
+
+        .control-item input {
+            background: transparent;
+            border: none;
+            color: white;
+            font-size: 0.95rem;
+            outline: none;
+            font-family: inherit;
+            width: 200px;
+        }
+
+        .control-label {
+            font-size: 0.7rem;
+            font-weight: 800;
+            text-transform: uppercase;
+            color: var(--accent);
+            letter-spacing: 0.05em;
+            white-space: nowrap;
+        }
+
+        /* --- Font Family Section --- */
+        .font-family-section {
+            margin-bottom: 6rem;
+            animation: fadeIn 0.5s ease-out both;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(15px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .family-header {
             display: flex;
             justify-content: space-between;
             align-items: center;
-            margin-bottom: 1.2rem;
+            margin-bottom: 2rem;
+            padding: 0 0.5rem;
         }
 
-        .font-name {
-            font-size: 1.25rem;
-            font-weight: 600;
+        .family-info h2 {
+            font-size: 2.2rem;
+            margin: 0;
             color: white;
+            font-weight: 700;
+            display: flex;
+            align-items: center;
+            gap: 1rem;
         }
 
-        .font-meta {
-            font-size: 0.8rem;
-            color: #94a3b8;
-            background: rgba(255, 255, 255, 0.05);
-            padding: 0.2rem 0.6rem;
-            border-radius: 4px;
+        .category-tag {
+            font-size: 0.7rem;
+            text-transform: uppercase;
+            letter-spacing: 0.1em;
+            padding: 0.3rem 0.8rem;
+            background: rgba(88, 166, 255, 0.1);
+            color: var(--accent);
+            border: 1px solid rgba(88, 166, 255, 0.2);
+            border-radius: 99px;
+            font-weight: 600;
         }
 
-        .font-preview {
-            font-size: 1.8rem;
-            margin: 0.5rem 0 1.5rem;
-            padding: 1.5rem;
-            background: rgba(15, 23, 42, 0.5);
+        .family-info .meta {
+            color: var(--text-dim);
+            font-size: 0.95rem;
+            margin-top: 0.4rem;
+        }
+
+        .family-actions {
+            display: flex;
+            gap: 1rem;
+        }
+
+        .action-btn {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            color: var(--text-main);
+            padding: 0.6rem 1.2rem;
             border-radius: 8px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.6rem;
+        }
+
+        .action-btn:hover {
+            border-color: var(--accent);
+            background: var(--accent-glow);
+            color: var(--accent);
+        }
+
+        /* --- Variants List --- */
+        .variants-container {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 20px;
+            overflow: hidden;
+            box-shadow: 0 10px 30px rgba(0,0,0,0.3);
+        }
+
+        .variant-row {
+            display: grid;
+            grid-template-columns: 200px 1fr 120px;
+            align-items: center;
+            padding: 2rem 2.5rem;
+            border-bottom: 1px solid var(--card-border);
+            transition: background 0.2s;
+        }
+
+        .variant-row:last-child {
+            border-bottom: none;
+        }
+
+        .variant-row:hover {
+            background: rgba(255, 255, 255, 0.015);
+        }
+
+        .variant-label {
+            font-size: 0.85rem;
+            color: var(--text-dim);
+        }
+
+        .variant-label .weight-name {
+            color: white;
+            font-weight: 700;
+            display: block;
+            font-size: 1rem;
+            margin-bottom: 0.2rem;
+        }
+
+        .variant-preview {
+            font-size: 2.5rem;
+            color: white;
+            white-space: nowrap;
             overflow: hidden;
             text-overflow: ellipsis;
-            white-space: nowrap;
-            border: 1px solid rgba(255, 255, 255, 0.03);
-            min-height: 4rem;
-            display: flex;
-            align-items: center;
+            padding: 0 1.5rem;
         }
 
-        .font-usage-group {
-            margin-top: auto;
-            display: flex;
-            flex-direction: column;
-            gap: 0.8rem;
+        .variant-copy {
+            text-align: right;
         }
 
-        .font-usage {
-            background: #0f172a;
-            padding: 0.8rem;
-            border-radius: 6px;
-            font-family: 'JetBrains Mono NL', monospace;
-            font-size: 0.75rem;
-            color: #e2e8f0;
-            position: relative;
-            border: 1px solid rgba(255, 255, 255, 0.05);
-        }
-
-        .copy-btn {
-            position: absolute;
-            top: 0.4rem;
-            right: 0.4rem;
-            background: var(--accent-color);
-            color: #0f172a;
-            border: none;
-            padding: 0.2rem 0.5rem;
-            border-radius: 4px;
-            font-size: 0.65rem;
-            font-weight: 700;
+        .copy-variant-btn {
+            background: transparent;
+            border: 1px solid var(--card-border);
+            color: var(--text-dim);
+            width: 42px;
+            height: 42px;
+            border-radius: 10px;
             cursor: pointer;
-            opacity: 0.8;
-            transition: opacity 0.2s;
+            transition: all 0.2s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
         }
 
-        .copy-btn:hover {
-            opacity: 1;
+        .copy-variant-btn:hover {
+            border-color: var(--accent);
+            color: var(--accent);
+            background: var(--accent-glow);
+            transform: scale(1.05);
         }
 
-        @media (max-width: 640px) {
-            #global-preview-input {
-                width: 100%;
+        .copy-variant-btn.success {
+            background: var(--success);
+            border-color: var(--success);
+            color: white;
+        }
+
+        /* No Results */
+        #no-results {
+            display: none;
+            text-align: center;
+            padding: 5rem;
+            color: var(--text-dim);
+            font-size: 1.2rem;
+        }
+
+        @media (max-width: 900px) {
+            .variant-row {
+                grid-template-columns: 1fr 60px;
+                padding: 1.5rem 2rem;
             }
-            .fonts-header {
-                flex-direction: column;
-                align-items: flex-start;
+            .variant-label {
+                grid-column: 1 / 3;
+                margin-bottom: 0.8rem;
             }
+            .variant-preview {
+                padding: 0;
+                font-size: 1.8rem;
+            }
+            .header-left h1 { font-size: 2.2rem; }
+            .control-item input { width: 100%; }
+            .controls-group { justify-content: flex-start; }
         }
     </style>
     
-    {# Her font için API üzerinden CSS yükle #}
-    {% for family, variants in fonts.items() %}
-    <link rel="stylesheet" href="/css2?family={{ family|replace(' ', '+') }}">
+    {% for family, data in fonts.items() %}
+    <link rel="stylesheet" href="/css2?family={{ family|replace(' ', '+') }}:ital,wght@0,100..900;1,100..900">
     {% endfor %}
 {% endblock %}
 
 {% block content %}
 <div class="fonts-page-wrapper">
     <div class="fonts-container">
+        
         <header class="fonts-header">
-            <div>
-                <h1 class="fonts-title">Yiğit Gülyurt Fonts</h1>
-                <p class="fonts-subtitle">Özel font servis sağlayıcısı. Google Fonts benzeri API kullanımı desteklenir.</p>
+            <div class="header-left">
+                <h1>Font Kütüphanesi</h1>
+                <p>Yiğit Gülyurt Özel Font Servisi — {{ fonts|length }} Aile Kullanılabilir</p>
             </div>
-            <div class="preview-controls">
-                <input type="text" id="global-preview-input" placeholder="Önizleme metni yazın..." oninput="updatePreviews(this.value)">
+            
+            <div class="controls-group">
+                <div class="control-item">
+                    <span class="control-label">Ara</span>
+                    <input type="text" id="font-search-input" placeholder="Font ailesi ara..." oninput="filterFonts(this.value)">
+                </div>
+                <div class="control-item">
+                    <span class="control-label">Önizleme</span>
+                    <input type="text" id="global-preview-input" placeholder="Metni özelleştir..." oninput="updatePreviews(this.value)">
+                </div>
             </div>
         </header>
 
-        <div class="font-grid">
-            {% for family, variants in fonts.items() %}
-            <div class="font-card">
-                <div class="font-header">
-                    <div class="font-name">{{ family }}</div>
-                    <div class="font-meta">{{ variants|length }} varyant</div>
-                </div>
-                <div class="font-preview" style="font-family: '{{ family }}';" data-family="{{ family }}">
-                    The quick brown fox jumps over the lazy dog.
-                </div>
-                <div class="font-usage-group">
-                    <div class="font-usage">
-                        <button class="copy-btn" onclick="copyText(this, '<link rel=\'stylesheet\' href=\'https://fonts.yigitgulyurt.net.tr/css2?family={{ family|replace(' ', '+') }}\'>')">KOPYALA</button>
-                        &lt;link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family={{ family|replace(' ', '+') }}"&gt;
+        <div id="no-results">Aradığınız kriterlere uygun font bulunamadı.</div>
+
+        <div id="fonts-list">
+            {% for family, data in fonts.items() %}
+            {% set sorted_variants = data.variants|sort(attribute='weight') %}
+            <section class="font-family-section" data-family-name="{{ family|lower }}">
+                <div class="family-header">
+                    <div class="family-info">
+                        <h2>
+                            {{ family }}
+                            <span class="category-tag">{{ data.category }}</span>
+                        </h2>
+                        <div class="meta">{{ data.variants|length }} varyant mevcuttur</div>
                     </div>
-                    <div class="font-usage">
-                        <button class="copy-btn" onclick="copyText(this, 'font-family: \'{{ family }}\', sans-serif;')">KOPYALA</button>
-                        font-family: '{{ family }}', sans-serif;
+                    <div class="family-actions">
+                        <button class="action-btn" onclick="copyFullFamily(this, '{{ family }}')">
+                            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><path d="M16 4h2a2 2 0 0 1 2 2v14a2 2 0 0 1-2 2H6a2 2 0 0 1-2-2V6a2 2 0 0 1 2-2h2"></path><rect x="8" y="2" width="8" height="4" rx="1" ry="1"></rect></svg>
+                            Tüm Aileyi Kopyala
+                        </button>
                     </div>
                 </div>
-            </div>
+
+                <div class="variants-container">
+                    {% for v in sorted_variants %}
+                    <div class="variant-row">
+                        <div class="variant-label">
+                            <span class="weight-name">{{ v.weight }} — {{ 'Italic' if v.style == 'italic' else 'Regular' }}</span>
+                            <span>{{ family }}</span>
+                        </div>
+                        
+                        <div class="variant-preview" 
+                             style="font-family: '{{ family }}'; font-weight: {{ v.weight }}; font-style: {{ v.style }};"
+                             data-family="{{ family }}">
+                            The quick brown fox jumps over the lazy dog.
+                        </div>
+                        
+                        <div class="variant-copy">
+                            <button class="copy-variant-btn" 
+                                    title="Bu varyantı kopyala"
+                                    onclick="copyVariant(this, '{{ family }}', '{{ v.weight }}', '{{ v.style }}')">
+                                <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><rect x="9" y="9" width="13" height="13" rx="2" ry="2"></rect><path d="M5 15H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2h9a2 2 0 0 1 2 2v1"></path></svg>
+                            </button>
+                        </div>
+                    </div>
+                    {% endfor %}
+                </div>
+            </section>
             {% endfor %}
         </div>
+
     </div>
 </div>
 {% endblock %}
 
 {% block scripts %}
     <script>
+        const defaultText = "The quick brown fox jumps over the lazy dog.";
+        
         function updatePreviews(text) {
-            const previews = document.querySelectorAll('.font-preview');
-            const defaultText = "The quick brown fox jumps over the lazy dog.";
+            const previews = document.querySelectorAll('.variant-preview');
+            const val = text.trim() === "" ? defaultText : text;
             previews.forEach(p => {
-                p.innerText = text.trim() === "" ? defaultText : text;
+                p.innerText = val;
             });
         }
 
-        function copyText(btn, text) {
-            navigator.clipboard.writeText(text).then(() => {
-                const original = btn.innerText;
-                btn.innerText = 'KOPYALANDI!';
-                btn.style.background = '#10b981'; // Success color
-                btn.style.color = 'white';
-                
-                setTimeout(() => {
-                    btn.innerText = original;
-                    btn.style.background = '';
-                    btn.style.color = '';
-                }, 2000);
+        function filterFonts(query) {
+            const sections = document.querySelectorAll('.font-family-section');
+            const noResults = document.getElementById('no-results');
+            let foundCount = 0;
+            
+            const q = query.toLowerCase().trim();
+            
+            sections.forEach(s => {
+                const name = s.getAttribute('data-family-name');
+                if (name.includes(q)) {
+                    s.style.display = 'block';
+                    foundCount++;
+                } else {
+                    s.style.display = 'none';
+                }
             });
+            
+            noResults.style.display = foundCount === 0 ? 'block' : 'none';
+        }
+
+        async function copyToClipboard(text, btn) {
+            try {
+                await navigator.clipboard.writeText(text);
+                if (btn) {
+                    btn.classList.add('success');
+                    const originalIcon = btn.innerHTML;
+                    btn.innerHTML = '<svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2"><polyline points="20 6 9 17 4 12"></polyline></svg>';
+                    setTimeout(() => {
+                        btn.classList.remove('success');
+                        btn.innerHTML = originalIcon;
+                    }, 2000);
+                }
+            } catch (err) {
+                console.error('Kopyalama hatası:', err);
+            }
+        }
+
+        function copyFullFamily(btn, family) {
+            const cleanFamily = family.replace(/ /g, '+');
+            const code = `<link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@0,100..900;1,100..900&display=swap">`;
+            copyToClipboard(code, btn);
+        }
+
+        function copyVariant(btn, family, weight, style) {
+            const cleanFamily = family.replace(/ /g, '+');
+            const italVal = style === 'italic' ? '1' : '0';
+            const code = `<link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@${italVal},${weight}&display=swap">`;
+            copyToClipboard(code, btn);
         }
     </script>
 {% endblock %}

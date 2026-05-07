@@ -29,16 +29,16 @@ WEIGHT_MAP = {
     'Black': '900'
 }
 
-# Font ailesi isimlerini Google Fonts stilinde "güzelleştiren" eşleme
-CANONICAL_NAMES = {
-    'amiri': 'Amiri',
-    'cinzel': 'Cinzel',
-    'crimsonpro': 'Crimson Pro',
-    'jetbrainsmononerdfont': 'JetBrainsMonoNerdFont',
-    'montserrat': 'Montserrat',
-    'orbitron': 'Orbitron',
-    'playfair': 'Playfair',
-    'rajdhani': 'Rajdhani'
+# Font ailesi bilgilerini (isim + kategori) içeren eşleme
+FONT_METADATA = {
+    'amiri': {'name': 'Amiri', 'cat': 'Serif'},
+    'cinzel': {'name': 'Cinzel', 'cat': 'Serif'},
+    'crimsonpro': {'name': 'Crimson Pro', 'cat': 'Serif'},
+    'jetbrainsmononerdfont': {'name': 'JetBrainsMonoNerdFont', 'cat': 'Monospace'},
+    'montserrat': {'name': 'Montserrat', 'cat': 'Sans-Serif'},
+    'orbitron': {'name': 'Orbitron', 'cat': 'Display'},
+    'playfair': {'name': 'Playfair Display', 'cat': 'Serif'},
+    'rajdhani': {'name': 'Rajdhani', 'cat': 'Sans-Serif'}
 }
 
 def get_fonts_data():
@@ -61,8 +61,11 @@ def get_fonts_data():
             # Normalize edilmiş isim (küçük harf ve boşluksuz)
             normalized_name = family_name.lower().replace(" ", "").replace("-", "")
             
-            # Google Fonts stili görünen isim
-            display_name = CANONICAL_NAMES.get(normalized_name, family_name)
+            # Metadata'dan bilgileri al
+            meta = FONT_METADATA.get(normalized_name, {'name': family_name, 'cat': 'Sans-Serif'})
+            display_name = meta['name']
+            category = meta['cat']
+            
             # Arama için display_name'i de normalize et
             normalized_display_name = display_name.lower().replace(" ", "").replace("-", "")
             
@@ -92,6 +95,7 @@ def get_fonts_data():
                 font_entry = {
                     'original_name': family_name,
                     'display_name': display_name,
+                    'category': category,
                     'variants': font_variants
                 }
                 # Hem klasör adıyla hem de güzel adıyla erişilebilir yap
@@ -110,7 +114,10 @@ def index():
     # Tekilleştir ve Template için veriyi düzenle
     unique_fonts = {}
     for data in fonts_data.values():
-        unique_fonts[data['display_name']] = data['variants']
+        unique_fonts[data['display_name']] = {
+            'variants': data['variants'],
+            'category': data.get('category', 'Sans-Serif')
+        }
     
     return render_template('fonts/index.html', fonts=unique_fonts)
 
