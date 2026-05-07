@@ -146,23 +146,23 @@ def _fit_title_font(draw: ImageDraw.ImageDraw, text: str, max_width: int) -> tup
     font = _load_font(FONT_BOLD, TITLE_SIZES[-1])
     return font, TITLE_SIZES[-1]
 
-def _draw_bracket(draw, x1, y1, x2, y2, color):
-    """4 köşeli bracket (⌐ ¬) çerçevesi çizer."""
-    arm = max(20, min(36, int((x2 - x1) * 0.18)))
-    lw  = BRACKET_LW
+# def _draw_bracket(draw, x1, y1, x2, y2, color):
+#     """4 köşeli bracket (⌐ ¬) çerçevesi çizer."""
+#     arm = max(20, min(36, int((x2 - x1) * 0.18)))
+#     lw  = BRACKET_LW
 
-    # Sol üst ⌐
-    draw.rectangle([x1,       y1,       x1 + arm, y1 + lw], fill=color)
-    draw.rectangle([x1,       y1,       x1 + lw,  y1 + arm], fill=color)
-    # Sağ üst
-    draw.rectangle([x2 - arm, y1,       x2,        y1 + lw], fill=color)
-    draw.rectangle([x2 - lw,  y1,       x2,        y1 + arm], fill=color)
-    # Sol alt
-    draw.rectangle([x1,       y2 - lw,  x1 + arm,  y2], fill=color)
-    draw.rectangle([x1,       y2 - arm, x1 + lw,   y2], fill=color)
-    # Sağ alt ¬
-    draw.rectangle([x2 - arm, y2 - lw,  x2,        y2], fill=color)
-    draw.rectangle([x2 - lw,  y2 - arm, x2,        y2], fill=color)
+#     # Sol üst ⌐
+#     draw.rectangle([x1,       y1,       x1 + arm, y1 + lw], fill=color)
+#     draw.rectangle([x1,       y1,       x1 + lw,  y1 + arm], fill=color)
+#     # Sağ üst
+#     draw.rectangle([x2 - arm, y1,       x2,        y1 + lw], fill=color)
+#     draw.rectangle([x2 - lw,  y1,       x2,        y1 + arm], fill=color)
+#     # Sol alt
+#     draw.rectangle([x1,       y2 - lw,  x1 + arm,  y2], fill=color)
+#     draw.rectangle([x1,       y2 - arm, x1 + lw,   y2], fill=color)
+#     # Sağ alt ¬
+#     draw.rectangle([x2 - arm, y2 - lw,  x2,        y2], fill=color)
+#     draw.rectangle([x2 - lw,  y2 - arm, x2,        y2], fill=color)
 
 def _draw_subtitle_multiline(draw, text, x, y, font, color, max_width, line_spacing=12):
     """Alt başlığı çok satırlı çizer (manuel '|' veya otomatik wrap)."""
