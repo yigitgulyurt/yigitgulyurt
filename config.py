@@ -19,3 +19,7 @@ class Config:
     STREAM_KEY                     = os.environ.get('STREAM_KEY')           or ''
     STREAM_LIVE_FALLBACK           = os.environ.get('STREAM_LIVE_FALLBACK') or 'false'
     UPLOAD_FOLDER                  = os.path.join(os.path.dirname(__file__), 'app', 'static', 'img')
+
+    # Telegram Bot Settings
+    TELEGRAM_TOKEN                 = os.environ.get('TELEGRAM_TOKEN')
+    ADMIN_TELEGRAM_ID              = os.environ.get('ADMIN_TELEGRAM_ID')

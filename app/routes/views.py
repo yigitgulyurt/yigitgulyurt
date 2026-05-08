@@ -10,6 +10,8 @@ import re
 import os
 import io
 import markdown as md
+import requests
+from threading import Thread
 from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont
@@ -23,6 +25,28 @@ admin_bp    = Blueprint('admin', __name__)
 og_bp       = Blueprint('og', __name__)
 
 # --- Helpers ---
+def send_async_notification(app, name, email, subject, message):
+    with app.app_context():
+        send_admin_notification(name, email, subject, message)
+
+def send_admin_notification(name, email, subject, message):
+    telegram_token = current_app.config.get('TELEGRAM_TOKEN')
+    admin_id       = current_app.config.get('ADMIN_TELEGRAM_ID')
+    if telegram_token and admin_id:
+        try:
+            text = (f"📩 *Yeni İletişim Mesajı (yigitgulyurt.net.tr)*\n\n"
+                    f"👤 *Gönderen:* {name}\n"
+                    f"📧 *E-posta:* {email}\n"
+                    f"📌 *Konu:* {subject.capitalize() if subject else 'Yok'}\n\n"
+                    f"📝 *Mesaj:*\n{message}")
+            requests.post(
+                f"https://api.telegram.org/bot{telegram_token}/sendMessage",
+                json={"chat_id": admin_id, "text": text, "parse_mode": "Markdown"},
+                timeout=10,
+            )
+        except Exception as e:
+            current_app.logger.error(f"Telegram notification error: {e}")
+
 def generate_id(length=7):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
 
@@ -283,6 +307,11 @@ def index():
         msg = ContactMessage(name=name, email=email, subject=subject, message=message)
         db.session.add(msg)
         db.session.commit()
+        
+        # Telegram Bildirimi Gönder
+        app = current_app._get_current_object()
+        Thread(target=send_async_notification, args=(app, name, email, subject, message)).start()
+
         flash('Mesajınız alındı, teşekkürler!', 'success')
         return redirect(url_for('contact.index'))
     return render_template('contact/index.html')
