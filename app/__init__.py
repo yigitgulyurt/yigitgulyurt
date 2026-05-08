@@ -27,7 +27,7 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
     limiter.init_app(app)
 
-    from app.routes.views import main_bp, og_bp, projects_bp, blog_bp, contact_bp, admin_bp
+    from app.routes.views import main_bp, og_bp, projects_bp, blog_bp, contact_bp, admin_bp, tools_bp
     from app.routes.stream import stream_bp
     from app.routes.obsidian import obsidian_bp
     from app.routes.fonts import fonts_bp
@@ -37,6 +37,7 @@ def create_app(config_class=Config):
     app.register_blueprint(blog_bp, url_prefix='/blog')
     app.register_blueprint(contact_bp, url_prefix='/iletisim')
     app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(tools_bp, url_prefix='/araclar')
     app.register_blueprint(og_bp)
     app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
     app.register_blueprint(obsidian_bp, subdomain='obsidian')

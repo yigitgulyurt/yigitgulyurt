@@ -1,0 +1,143 @@
+{% extends "base.html" %}
+
+{% block title %}Araçlar{% endblock %}
+
+{% block head %}
+<style>
+.tools-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 20px;
+}
+
+.tools-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(280px, 1fr));
+    gap: 24px;
+    margin-top: 30px;
+}
+
+.tool-card {
+    background: var(--card-bg);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    border-radius: 16px;
+    padding: 24px;
+    transition: all 0.3s ease;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    height: 100%;
+}
+
+.tool-card:hover {
+    transform: translateY(-5px);
+    border-color: var(--primary);
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+}
+
+.tool-icon {
+    font-size: 2.5rem;
+    margin-bottom: 16px;
+}
+
+.tool-title {
+    font-size: 1.25rem;
+    font-weight: 700;
+    margin-bottom: 12px;
+    color: var(--primary);
+}
+
+.tool-desc {
+    font-size: 0.95rem;
+    color: var(--text-dim);
+    line-height: 1.5;
+    flex-grow: 1;
+}
+
+.tool-tag {
+    display: inline-block;
+    padding: 4px 10px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    border-radius: 8px;
+    font-size: 0.8rem;
+    font-weight: 600;
+    margin-top: 16px;
+    align-self: flex-start;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tools-container">
+    <div class="section-header">
+        <h1 class="section-title">
+            <span class="lang-tr">Faydalı Araçlar</span>
+            <span class="lang-en">Utility Tools</span>
+        </h1>
+        <p class="section-subtitle">
+            <span class="lang-tr">Günlük işlerinizi kolaylaştıracak küçük yardımcılar.</span>
+            <span class="lang-en">Small helpers to make your daily tasks easier.</span>
+        </p>
+    </div>
+
+    <div class="tools-grid">
+        <!-- QR Okuyucu -->
+        <a href="{{ url_for('main.qr_okuyucu') }}" class="tool-card">
+            <div class="tool-icon">QR</div>
+            <h3 class="tool-title">
+                <span class="lang-tr">QR Kod Okuyucu</span>
+                <span class="lang-en">QR Code Reader</span>
+            </h3>
+            <p class="tool-desc">
+                <span class="lang-tr">Kameranızı kullanarak QR kodlarını anında tarayın ve linkleri açın.</span>
+                <span class="lang-en">Scan QR codes instantly using your camera and open links.</span>
+            </p>
+            <span class="tool-tag">Utility</span>
+        </a>
+
+        <!-- Şifre Oluşturucu -->
+        <a href="{{ url_for('tools.password_gen') }}" class="tool-card">
+            <div class="tool-icon">🔐</div>
+            <h3 class="tool-title">
+                <span class="lang-tr">Şifre Oluşturucu</span>
+                <span class="lang-en">Password Generator</span>
+            </h3>
+            <p class="tool-desc">
+                <span class="lang-tr">Güvenli, rastgele ve özelleştirilebilir şifreler oluşturun.</span>
+                <span class="lang-en">Generate secure, random, and customizable passwords.</span>
+            </p>
+            <span class="tool-tag">Security</span>
+        </a>
+
+        <!-- Karakter Sayıcı -->
+        <a href="{{ url_for('tools.char_counter') }}" class="tool-card">
+            <div class="tool-icon">📝</div>
+            <h3 class="tool-title">
+                <span class="lang-tr">Metin Analizci</span>
+                <span class="lang-en">Text Analyzer</span>
+            </h3>
+            <p class="tool-desc">
+                <span class="lang-tr">Karakter, kelime ve satır sayısını anlık olarak hesaplayın.</span>
+                <span class="lang-en">Count characters, words, and lines in real-time.</span>
+            </p>
+            <span class="tool-tag">Text</span>
+        </a>
+
+        <!-- JSON Formatlayıcı -->
+        <a href="{{ url_for('tools.json_formatter') }}" class="tool-card">
+            <div class="tool-icon">JS</div>
+            <h3 class="tool-title">
+                <span class="lang-tr">JSON Formatlayıcı</span>
+                <span class="lang-en">JSON Formatter</span>
+            </h3>
+            <p class="tool-desc">
+                <span class="lang-tr">JSON verilerini düzenleyin, renklendirin ve doğrulayın.</span>
+                <span class="lang-en">Prettify, highlight, and validate JSON data.</span>
+            </p>
+            <span class="tool-tag">Dev</span>
+        </a>
+    </div>
+</div>
+{% endblock %}

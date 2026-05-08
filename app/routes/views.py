@@ -24,6 +24,7 @@ projects_bp = Blueprint('projects', __name__)
 contact_bp  = Blueprint('contact', __name__)
 admin_bp    = Blueprint('admin', __name__)
 og_bp       = Blueprint('og', __name__)
+tools_bp    = Blueprint('tools', __name__)
 
 # --- Helpers ---
 def send_async_notification(app, name, email, subject, message):
@@ -609,3 +610,20 @@ def og_image():
     resp = send_file(io.BytesIO(data), mimetype='image/png')
     resp.headers['Cache-Control'] = 'public, max-age=3600'
     return resp
+
+# --- Tools Routes ---
+@tools_bp.route('/')
+def index():
+    return render_template('tools/index.html')
+
+@tools_bp.route('/sifre-olusturucu')
+def password_gen():
+    return render_template('tools/password_gen.html')
+
+@tools_bp.route('/karakter-sayici')
+def char_counter():
+    return render_template('tools/char_counter.html')
+
+@tools_bp.route('/json-formatlayici')
+def json_formatter():
+    return render_template('tools/json_formatter.html')

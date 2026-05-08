@@ -1,0 +1,177 @@
+{% extends "base.html" %}
+
+{% block title %}Metin Analizci{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.text-area {
+    width: 100%;
+    min-height: 300px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 20px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 1rem;
+    resize: vertical;
+    margin-bottom: 20px;
+    transition: border-color 0.3s;
+}
+
+.text-area:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(150px, 1fr));
+    gap: 20px;
+}
+
+.stat-card {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 20px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-val {
+    display: block;
+    font-size: 2rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin-bottom: 5px;
+}
+
+.stat-label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.tool-actions {
+    display: flex;
+    gap: 10px;
+    margin-top: 20px;
+}
+
+.action-btn {
+    flex: 1;
+    padding: 12px;
+    border-radius: 8px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.btn-clear { background: #444; color: white; }
+.btn-copy { background: var(--primary); color: white; }
+
+.action-btn:hover { opacity: 0.9; transform: translateY(-2px); }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📝 Metin Analizci</span>
+        <span class="lang-en">📝 Text Analyzer</span>
+    </h1>
+
+    <textarea id="text-input" class="text-area" placeholder="Metninizi buraya yapıştırın..." oninput="analyzeText()"></textarea>
+
+    <div class="stats-grid">
+        <div class="stat-card">
+            <span id="char-count" class="stat-val">0</span>
+            <span class="stat-label">
+                <span class="lang-tr">Karakter</span>
+                <span class="lang-en">Characters</span>
+            </span>
+        </div>
+        <div class="stat-card">
+            <span id="word-count" class="stat-val">0</span>
+            <span class="stat-label">
+                <span class="lang-tr">Kelime</span>
+                <span class="lang-en">Words</span>
+            </span>
+        </div>
+        <div class="stat-card">
+            <span id="line-count" class="stat-val">0</span>
+            <span class="stat-label">
+                <span class="lang-tr">Satır</span>
+                <span class="lang-en">Lines</span>
+            </span>
+        </div>
+        <div class="stat-card">
+            <span id="read-time" class="stat-val">0</span>
+            <span class="stat-label">
+                <span class="lang-tr">Dk. Okuma</span>
+                <span class="lang-en">Min Read</span>
+            </span>
+        </div>
+    </div>
+
+    <div class="tool-actions">
+        <button class="action-btn btn-clear" onclick="clearText()">
+            <span class="lang-tr">Temizle</span>
+            <span class="lang-en">Clear</span>
+        </button>
+        <button class="action-btn btn-copy" onclick="copyText()">
+            <span class="lang-tr">Kopyala</span>
+            <span class="lang-en">Copy</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function analyzeText() {
+    const text = document.getElementById('text-input').value;
+    
+    // Karakter
+    document.getElementById('char-count').innerText = text.length;
+    
+    // Kelime
+    const words = text.trim() ? text.trim().split(/\s+/).length : 0;
+    document.getElementById('word-count').innerText = words;
+    
+    // Satır
+    const lines = text ? text.split('\n').length : 0;
+    document.getElementById('line-count').innerText = lines;
+    
+    // Okuma Süresi (Ortalama 200 kelime/dakika)
+    const readTime = Math.ceil(words / 200);
+    document.getElementById('read-time').innerText = readTime;
+}
+
+function clearText() {
+    document.getElementById('text-input').value = '';
+    analyzeText();
+}
+
+function copyText() {
+    const text = document.getElementById('text-input').value;
+    if (!text) return;
+    
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Metin kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}
