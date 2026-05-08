@@ -175,6 +175,11 @@ async function revealDetails() {
             body: JSON.stringify(data)
         });
 
+        // Dilleri filtrele: Sadece ülke kodu içerenleri (örn: tr-TR) göster
+        const filteredLanguages = data.languages 
+            ? data.languages.split(',').filter(lang => lang.includes('-')).join(', ')
+            : 'N/A';
+
         // Grid'i doldur
         const items = [
             { label: 'Network', val: data.network },
@@ -188,7 +193,7 @@ async function revealDetails() {
             { label: 'Longitude', val: data.longitude },
             { label: 'Timezone', val: data.timezone },
             { label: 'Currency', val: `${data.currency_name} (${data.currency})` },
-            { label: 'Languages', val: data.languages },
+            { label: 'Languages', val: filteredLanguages },
             { label: 'ASN', val: data.asn },
             { label: 'Organization', val: data.org }
         ];
