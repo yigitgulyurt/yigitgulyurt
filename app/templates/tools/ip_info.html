@@ -1,0 +1,153 @@
+{% extends "base.html" %}
+
+{% block title %}IP Bilgisi{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.ip-display {
+    font-size: 3rem;
+    font-weight: 800;
+    color: var(--primary);
+    margin: 20px 0;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+}
+
+.ip-details {
+    display: grid;
+    gap: 15px;
+    margin-top: 30px;
+    text-align: left;
+}
+
+.detail-item {
+    background: rgba(255, 255, 255, 0.03);
+    padding: 15px 20px;
+    border-radius: 12px;
+    display: flex;
+    justify-content: space-between;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.detail-label {
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.detail-val {
+    color: var(--text);
+    font-weight: 700;
+}
+
+.copy-ip {
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 10px 20px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    margin-top: 10px;
+    transition: all 0.2s;
+}
+
+.copy-ip:hover { transform: scale(1.05); }
+
+#loader {
+    border: 4px solid #f3f3f3;
+    border-top: 4px solid var(--primary);
+    border-radius: 50%;
+    width: 30px;
+    height: 30px;
+    animation: spin 2s linear infinite;
+    display: inline-block;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🌐 IP Bilgim Nedir?</span>
+        <span class="lang-en">🌐 What is my IP?</span>
+    </h1>
+
+    <div id="ip-address" class="ip-display">{{ user_ip }}</div>
+    
+    <button class="copy-ip" onclick="copyIp()">
+        <span class="lang-tr">IP Kopyala</span>
+        <span class="lang-en">Copy IP</span>
+    </button>
+
+    <div class="ip-details" id="ip-details-container">
+        <div id="loader-wrap" style="text-align: center;">
+            <div id="loader"></div>
+            <p style="margin-top: 10px; color: var(--text-dim);">
+                <span class="lang-tr">Detaylar yükleniyor...</span>
+                <span class="lang-en">Loading details...</span>
+            </p>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function fetchIpDetails() {
+    const container = document.getElementById('ip-details-container');
+    const ip = "{{ user_ip }}";
+    
+    try {
+        const response = await fetch(`https://ipapi.co/${ip}/json/`);
+        const data = await response.json();
+        
+        if (data.error) throw new Error(data.reason);
+
+        container.innerHTML = `
+            <div class="detail-item">
+                <span class="detail-label"><span class="lang-tr">Ülke</span><span class="lang-en">Country</span></span>
+                <span class="detail-val">${data.country_name} (${data.country_code})</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label"><span class="lang-tr">Şehir</span><span class="lang-en">City</span></span>
+                <span class="detail-val">${data.city} / ${data.region}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label"><span class="lang-tr">İnternet Sağlayıcı</span><span class="lang-en">ISP</span></span>
+                <span class="detail-val">${data.org}</span>
+            </div>
+            <div class="detail-item">
+                <span class="detail-label"><span class="lang-tr">Zaman Dilimi</span><span class="lang-en">Timezone</span></span>
+                <span class="detail-val">${data.timezone}</span>
+            </div>
+        `;
+    } catch (e) {
+        container.innerHTML = `<p style="color: #ff4d4d;">❌ Detaylar alınamadı: ${e.message}</p>`;
+    }
+}
+
+function copyIp() {
+    const ip = document.getElementById('ip-address').innerText;
+    navigator.clipboard.writeText(ip).then(() => {
+        showToast("IP kopyalandı!", "success");
+    });
+}
+
+document.addEventListener('DOMContentLoaded', fetchIpDetails);
+</script>
+{% endblock %}

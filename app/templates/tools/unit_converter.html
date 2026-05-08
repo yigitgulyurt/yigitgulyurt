@@ -1,0 +1,112 @@
+{% extends "base.html" %}
+
+{% block title %}Birim Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.converter-box {
+    display: flex;
+    flex-direction: column;
+    gap: 20px;
+    margin-top: 20px;
+}
+
+.input-group {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.label {
+    font-weight: 600;
+    color: var(--primary);
+}
+
+.input-field {
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 15px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    transition: border-color 0.3s;
+}
+
+.input-field:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.settings {
+    margin-top: 20px;
+    padding-top: 20px;
+    border-top: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.base-size-input {
+    width: 80px;
+    padding: 8px;
+    border-radius: 6px;
+    border: 1px solid rgba(255,255,255,0.1);
+    background: #222;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📐 Px to Rem Dönüştürücü</span>
+        <span class="lang-en">📐 Px to Rem Converter</span>
+    </h1>
+
+    <div class="converter-box">
+        <div class="input-group">
+            <label class="label">Pixels (px)</label>
+            <input type="number" id="px-input" class="input-field" value="16" oninput="convert('px')">
+        </div>
+
+        <div style="text-align: center; font-size: 1.5rem;">⇅</div>
+
+        <div class="input-group">
+            <label class="label">Rem (rem)</label>
+            <input type="number" id="rem-input" class="input-field" value="1" oninput="convert('rem')">
+        </div>
+    </div>
+
+    <div class="settings">
+        <span class="lang-tr">Base Font Size (genelde 16px):</span>
+        <span class="lang-en">Base Font Size (default 16px):</span>
+        <input type="number" id="base-size" class="base-size-input" value="16" oninput="convert('px')">
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function convert(source) {
+    const pxInput = document.getElementById('px-input');
+    const remInput = document.getElementById('rem-input');
+    const baseSize = parseFloat(document.getElementById('base-size').value) || 16;
+
+    if (source === 'px') {
+        const px = parseFloat(pxInput.value) || 0;
+        remInput.value = (px / baseSize).toFixed(3);
+    } else {
+        const rem = parseFloat(remInput.value) || 0;
+        pxInput.value = (rem * baseSize).toFixed(2);
+    }
+}
+</script>
+{% endblock %}

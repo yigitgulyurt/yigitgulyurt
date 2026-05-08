@@ -627,3 +627,20 @@ def char_counter():
 @tools_bp.route('/json-formatlayici')
 def json_formatter():
     return render_template('tools/json_formatter.html')
+
+@tools_bp.route('/base64-donusturucu')
+def base64_converter():
+    return render_template('tools/base64_converter.html')
+
+@tools_bp.route('/ip-bilgisi')
+def ip_info():
+    # IP bilgisini frontend'de JS ile veya backend'de alabiliriz.
+    # ProxyFix kullandığımız için request.remote_addr doğru gelmeli.
+    user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
+    if ',' in user_ip:
+        user_ip = user_ip.split(',')[0].strip()
+    return render_template('tools/ip_info.html', user_ip=user_ip)
+
+@tools_bp.route('/birim-donusturucu')
+def unit_converter():
+    return render_template('tools/unit_converter.html')
