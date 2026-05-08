@@ -12,3 +12,5 @@ google-auth==2.29.0
 google-auth-oauthlib==1.2.0
 google-api-python-client==2.125.0
 requests==2.31.0
+Flask-Limiter==3.7.0
+bleach==6.1.0

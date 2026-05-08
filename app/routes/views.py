@@ -2,7 +2,7 @@ from flask import Blueprint, render_template, Response, url_for, current_app, re
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage
-from app import db
+from app import db, limiter
 from datetime import datetime
 import random
 import string
@@ -11,6 +11,7 @@ import os
 import io
 import markdown as md
 import requests
+import bleach
 from threading import Thread
 from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
@@ -35,10 +36,10 @@ def send_admin_notification(name, email, subject, message):
     if telegram_token and admin_id:
         try:
             text = (f"📩 *Yeni İletişim Mesajı (yigitgulyurt.net.tr)*\n\n"
-                    f"👤 *Gönderen:*   {name}\n"
-                    f"📧 *E-posta:*   {email}\n"
-                    f"📌 *Konu:*   {subject.capitalize() if subject else 'Yok'}\n\n"
-                    f"📝 *Mesaj:*\n\n{message}")
+                    f"👤 *Gönderen:* {name}\n"
+                    f"📧 *E-posta:* {email}\n"
+                    f"📌 *Konu:* {subject.capitalize() if subject else 'Yok'}\n\n"
+                    f"📝 *Mesaj:*\n{message}")
             requests.post(
                 f"https://api.telegram.org/bot{telegram_token}/sendMessage",
                 json={"chat_id": admin_id, "text": text, "parse_mode": "Markdown"},
@@ -297,13 +298,30 @@ def detail(slug):
 
 # --- Contact Routes ---
 @contact_bp.route('/', methods=['GET', 'POST'])
+@limiter.limit("5 per hour", methods=['POST'])
 def index():
     if request.method == 'POST':
-        name, email = request.form.get('name', '').strip(), request.form.get('email', '').strip()
-        subject, message = request.form.get('subject', '').strip(), request.form.get('message', '').strip()
+        # Honeypot check
+        if request.form.get('website'):
+            return redirect(url_for('contact.index'))
+
+        name    = bleach.clean(request.form.get('name', '').strip())
+        email   = bleach.clean(request.form.get('email', '').strip())
+        subject = bleach.clean(request.form.get('subject', '').strip())
+        message = bleach.clean(request.form.get('message', '').strip())
+
         if not name or not email or not message:
             flash('Lütfen zorunlu alanları doldurun.', 'error')
             return render_template('contact/index.html')
+
+        if len(message) < 10:
+            flash('Mesajınız çok kısa, lütfen biraz daha detay verin.', 'error')
+            return render_template('contact/index.html')
+
+        if len(message) > 3000:
+            flash('Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.', 'error')
+            return render_template('contact/index.html')
+
         msg = ContactMessage(name=name, email=email, subject=subject, message=message)
         db.session.add(msg)
         db.session.commit()
