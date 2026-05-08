@@ -4,7 +4,7 @@ import json
 import requests as req_lib
 from flask import Blueprint, render_template, jsonify, request, abort, current_app
 
-bp = Blueprint('stream', __name__, subdomain='canli')
+stream_bp = Blueprint('stream', __name__, subdomain='canli')
 
 try:
     import redis as redis_lib
@@ -26,7 +26,7 @@ def _get_ip():
             request.remote_addr or
             'bilinmiyor')
 
-@bp.route('/')
+@stream_bp.route('/')
 def canli_root():
     from flask import redirect
     from app.models import StreamConfig
@@ -34,7 +34,7 @@ def canli_root():
     key = cfg.stream_key or current_app.config.get('STREAM_KEY', '')
     return redirect(f'/{key}')
 
-@bp.route('/<key>')
+@stream_bp.route('/<key>')
 def canli(key):
     from app.models import StreamConfig
     cfg = StreamConfig.get()
@@ -44,7 +44,7 @@ def canli(key):
     stream_url = f'/canli-kaynak/canli/{key}/index.m3u8'
     return render_template('stream/canli.html', stream_url=stream_url, stream_config=cfg)
 
-@bp.route('/ping', methods=['POST'])
+@stream_bp.route('/ping', methods=['POST'])
 def stream_ping():
     data = request.get_json(silent=True) or {}
     sid = data.get('sid', '')
@@ -63,7 +63,7 @@ def stream_ping():
             current_app.logger.warning(f'Redis ping error: {e}')
     return jsonify({'ok': True})
 
-@bp.route('/status')
+@stream_bp.route('/status')
 def stream_status():
     from app.models import StreamConfig
     cfg = StreamConfig.get()
@@ -79,7 +79,7 @@ def stream_status():
         fallback = current_app.config.get('STREAM_LIVE_FALLBACK', 'false').lower() == 'true'
         return jsonify({'live': fallback})
 
-@bp.route('/viewers')
+@stream_bp.route('/viewers')
 def stream_viewers():
     if not _REDIS_AVAILABLE:
         return jsonify({'viewers': 0})

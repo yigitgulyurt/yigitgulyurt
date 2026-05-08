@@ -8,8 +8,8 @@ from app import db, login_manager
 
 class Admin(UserMixin, db.Model):
     __tablename__ = 'admins'
-    id = db.Column(db.Integer, primary_key=True)
-    username = db.Column(db.String(64), unique=True, nullable=False)
+    id            = db.Column(db.Integer, primary_key=True)
+    username      = db.Column(db.String(64), unique=True, nullable=False)
     password_hash = db.Column(db.String(256), nullable=False)
 
     def set_password(self, password):
@@ -27,18 +27,18 @@ def load_user(user_id):
 
 class Project(db.Model):
     __tablename__ = 'projects'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(128), nullable=False)
-    slug = db.Column(db.String(128), unique=True, nullable=False)
-    description = db.Column(db.Text)
-    tech_stack = db.Column(db.String(256))   # virgülle ayrılmış: "Flask, nginx, Redis"
-    live_url = db.Column(db.String(256))
-    github_url = db.Column(db.String(256))
-    image = db.Column(db.String(256))        # static/img/ altındaki dosya adı
-    content = db.Column(db.Text)                   # Markdown — detay sayfası
-    featured = db.Column(db.Boolean, default=False)
-    order = db.Column(db.Integer, default=0)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    id            = db.Column(db.Integer, primary_key=True)
+    title         = db.Column(db.String(128), nullable=False)
+    slug          = db.Column(db.String(128), unique=True, nullable=False)
+    description   = db.Column(db.Text)
+    tech_stack    = db.Column(db.String(256))   # virgülle ayrılmış: "Flask, nginx, Redis"
+    live_url      = db.Column(db.String(256))
+    github_url    = db.Column(db.String(256))
+    image         = db.Column(db.String(256))        # static/img/ altındaki dosya adı
+    content       = db.Column(db.Text)                   # Markdown — detay sayfası
+    featured      = db.Column(db.Boolean, default=False)
+    order         = db.Column(db.Integer, default=0)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property
     def tech_list(self):
@@ -52,14 +52,14 @@ class Project(db.Model):
 
 class BlogPost(db.Model):
     __tablename__ = 'blog_posts'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(256), nullable=False)
-    slug = db.Column(db.String(256), unique=True, nullable=False)
-    summary = db.Column(db.String(512))
-    content = db.Column(db.Text)             # Markdown
-    published = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id            = db.Column(db.Integer, primary_key=True)
+    title         = db.Column(db.String(256), nullable=False)
+    slug          = db.Column(db.String(256), unique=True, nullable=False)
+    summary       = db.Column(db.String(512))
+    content       = db.Column(db.Text)             # Markdown
+    published     = db.Column(db.Boolean, default=False)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     def __repr__(self):
         return f'<BlogPost {self.slug}>'
@@ -69,13 +69,13 @@ class BlogPost(db.Model):
 
 class ContactMessage(db.Model):
     __tablename__ = 'contact_messages'
-    id = db.Column(db.Integer, primary_key=True)
-    name = db.Column(db.String(128), nullable=False)
-    email = db.Column(db.String(256), nullable=False)
-    subject = db.Column(db.String(256))
-    message = db.Column(db.Text, nullable=False)
-    read = db.Column(db.Boolean, default=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
+    id            = db.Column(db.Integer, primary_key=True)
+    name          = db.Column(db.String(128), nullable=False)
+    email         = db.Column(db.String(256), nullable=False)
+    subject       = db.Column(db.String(256))
+    message       = db.Column(db.Text, nullable=False)
+    read          = db.Column(db.Boolean, default=False)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
 
     def __repr__(self):
         return f'<ContactMessage from {self.email}>'
@@ -86,12 +86,12 @@ class ContactMessage(db.Model):
 
 class StreamConfig(db.Model):
     __tablename__ = 'stream_config'
-    id = db.Column(db.Integer, primary_key=True)
-    title = db.Column(db.String(256), default='Canlı Yayın')
-    subtitle = db.Column(db.String(256), default='')
-    stream_key = db.Column(db.String(256), default='')
-    show_section = db.Column(db.Boolean, default=False)
-    updated_at = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
+    id            = db.Column(db.Integer, primary_key=True)
+    title         = db.Column(db.String(256), default='Canlı Yayın')
+    subtitle      = db.Column(db.String(256), default='')
+    stream_key    = db.Column(db.String(256), default='')
+    show_section  = db.Column(db.Boolean, default=False)
+    updated_at    = db.Column(db.DateTime, default=datetime.utcnow, onupdate=datetime.utcnow)
 
     @staticmethod
     def get():
@@ -111,9 +111,9 @@ class StreamConfig(db.Model):
 
 class QrRedirect(db.Model):
     __tablename__ = 'qr_redirect'
-    id = db.Column(db.String(20), primary_key=True) # Uzunluğu artırdık
-    short_domain = db.Column(db.String(20), index=True) # Yeni alan
-    url = db.Column(db.Text, nullable=False)
-    created_at = db.Column(db.DateTime, default=datetime.utcnow)
-    hit_count = db.Column(db.Integer, default=0)
+    id            = db.Column(db.String(20), primary_key=True) # Uzunluğu artırdık
+    short_domain  = db.Column(db.String(20), index=True) # Yeni alan
+    url           = db.Column(db.Text, nullable=False)
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    hit_count     = db.Column(db.Integer, default=0)
 

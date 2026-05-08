@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
-bp = Blueprint('obsidian', __name__, subdomain='obsidian')
+obsidian_bp = Blueprint('obsidian', __name__, subdomain='obsidian')
 
 def obsidian_auth(f):
     @wraps(f)
@@ -100,7 +100,7 @@ def build_tree(root_path, current_path=''):
 
 # ── AUTH ROUTES ───────────────────────────────────────────────
 
-@bp.route('/login', methods=['GET', 'POST'])
+@obsidian_bp.route('/login', methods=['GET', 'POST'])
 def login():
     error = False
     if request.method == 'POST':
@@ -112,14 +112,14 @@ def login():
         error = True
     return render_template('obsidian/obsidian_login.html', error=error)
 
-@bp.route('/logout')
+@obsidian_bp.route('/logout')
 def logout():
     session.pop('obsidian_ok', None)
     return redirect(url_for('obsidian.login'))
 
 # ── MAIN ROUTES ───────────────────────────────────────────────
 
-@bp.route('/')
+@obsidian_bp.route('/')
 @obsidian_auth
 def index():
     vault_path = get_vault_path()
@@ -144,7 +144,7 @@ def index():
 
 # ── API ROUTES ────────────────────────────────────────────────
 
-@bp.route('/api/file/<path:file_id>', methods=['GET'])
+@obsidian_bp.route('/api/file/<path:file_id>', methods=['GET'])
 @obsidian_auth
 def api_get_file(file_id):
     vault_path = get_vault_path()
@@ -158,7 +158,7 @@ def api_get_file(file_id):
         content = f.read()
     return jsonify({'content': content})
 
-@bp.route('/api/file/<path:file_id>', methods=['PUT'])
+@obsidian_bp.route('/api/file/<path:file_id>', methods=['PUT'])
 @obsidian_auth
 def api_update_file(file_id):
     vault_path = get_vault_path()
@@ -174,7 +174,7 @@ def api_update_file(file_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/api/file', methods=['POST'])
+@obsidian_bp.route('/api/file', methods=['POST'])
 @obsidian_auth
 def api_create_file():
     vault_path = get_vault_path()
@@ -221,7 +221,7 @@ def api_create_file():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/api/folder', methods=['POST'])
+@obsidian_bp.route('/api/folder', methods=['POST'])
 @obsidian_auth
 def api_create_folder():
     vault_path = get_vault_path()
@@ -237,7 +237,7 @@ def api_create_folder():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/api/file/<path:file_id>', methods=['DELETE'])
+@obsidian_bp.route('/api/file/<path:file_id>', methods=['DELETE'])
 @obsidian_auth
 def api_delete_file(file_id):
     vault_path = get_vault_path()
@@ -260,7 +260,7 @@ def api_delete_file(file_id):
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/api/move', methods=['POST'])
+@obsidian_bp.route('/api/move', methods=['POST'])
 @obsidian_auth
 def api_move():
     vault_path = get_vault_path()
@@ -299,7 +299,7 @@ def api_move():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/api/rename', methods=['POST'])
+@obsidian_bp.route('/api/rename', methods=['POST'])
 @obsidian_auth
 def api_rename():
     vault_path = get_vault_path()
@@ -335,7 +335,7 @@ def api_rename():
     except Exception as e:
         return jsonify({'error': str(e)}), 500
 
-@bp.route('/media/<path:filename>')
+@obsidian_bp.route('/media/<path:filename>')
 @obsidian_auth
 def serve_media(filename):
     """Vault içindeki resim ve diğer medya dosyalarını sunar."""
@@ -369,7 +369,7 @@ _search_cache = {
     'files': {} # {rel_path: {'content': '...', 'mtime': ..., 'content_lower': '...'}}
 }
 
-@bp.route('/api/daily-note')
+@obsidian_bp.route('/api/daily-note')
 @obsidian_auth
 def api_daily_note():
     """Bugünün tarihli notunu bulur veya oluşturur ve Günlük.md'ye linkler."""
@@ -414,7 +414,7 @@ def api_daily_note():
     update_recent_files(rel_path)
     return jsonify({'ok': True, 'path': rel_path})
 
-@bp.route('/api/upload', methods=['POST'])
+@obsidian_bp.route('/api/upload', methods=['POST'])
 @obsidian_auth
 def api_upload():
     """Vault'a dosya yükler."""
@@ -434,7 +434,7 @@ def api_upload():
     
     return jsonify({'ok': True, 'filename': filename})
 
-@bp.route('/api/backlinks/<path:file_id>')
+@obsidian_bp.route('/api/backlinks/<path:file_id>')
 @obsidian_auth
 def api_backlinks(file_id):
     """Belirli bir nota link veren diğer notları bulur."""
@@ -470,7 +470,7 @@ def api_backlinks(file_id):
                 
     return jsonify(backlinks)
 
-@bp.route('/api/graph-data')
+@obsidian_bp.route('/api/graph-data')
 @obsidian_auth
 def api_graph_data():
     """Graph view için tüm notları ve aralarındaki linkleri döndürür."""
@@ -515,7 +515,7 @@ def api_graph_data():
             
     return jsonify({'nodes': nodes, 'links': links})
 
-@bp.route('/api/search')
+@obsidian_bp.route('/api/search')
 @obsidian_auth
 def api_search():
     query = request.args.get('q', '').lower().strip()
@@ -593,7 +593,7 @@ def api_search():
     results.sort(key=lambda x: x['score'], reverse=True)
     return jsonify(results)
 
-@bp.route('/api/tree')
+@obsidian_bp.route('/api/tree')
 @obsidian_auth
 def api_tree():
     vault_path = get_vault_path()

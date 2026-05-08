@@ -15,12 +15,12 @@ from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont
 
 # --- Blueprints ---
-main_bp = Blueprint('main', __name__)
-blog_bp = Blueprint('blog', __name__)
+main_bp     = Blueprint('main', __name__)
+blog_bp     = Blueprint('blog', __name__)
 projects_bp = Blueprint('projects', __name__)
-contact_bp = Blueprint('contact', __name__)
-admin_bp = Blueprint('admin', __name__)
-og_bp = Blueprint('og', __name__)
+contact_bp  = Blueprint('contact', __name__)
+admin_bp    = Blueprint('admin', __name__)
+og_bp       = Blueprint('og', __name__)
 
 # --- Helpers ---
 def generate_id(length=7):

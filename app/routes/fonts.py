@@ -9,12 +9,12 @@ import re
 import time
 from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort
 
-bp = Blueprint('fonts', __name__, subdomain='fonts')
+fonts_bp = Blueprint('fonts', __name__, subdomain='fonts')
 
 # Global cache değişkenleri
-_fonts_cache = None
+_fonts_cache      = None
 _fonts_cache_time = 0
-CACHE_DURATION = 300 # 5 dakika
+CACHE_DURATION    = 300 # 5 dakika
 
 # Font ağırlığı haritası
 WEIGHT_MAP = {
@@ -107,7 +107,7 @@ def get_fonts_data():
     _fonts_cache_time = now
     return fonts
 
-@bp.route('/')
+@fonts_bp.route('/')
 def index():
     """Fontların listelendiği ana sayfa."""
     fonts_data = get_fonts_data()
@@ -121,7 +121,7 @@ def index():
     
     return render_template('fonts/index.html', fonts=unique_fonts)
 
-@bp.route('/css2')
+@fonts_bp.route('/css2')
 def css2():
     """
     Google Fonts benzeri CSS API'si.
@@ -214,7 +214,7 @@ def css2():
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-@bp.route('/s/<family>/<filename>')
+@fonts_bp.route('/s/<family>/<filename>')
 def serve_font(family, filename):
     """Font dosyalarını servis eder."""
     fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts', family)

@@ -5,9 +5,9 @@ from flask_login import LoginManager
 from werkzeug.middleware.proxy_fix import ProxyFix
 from config import Config
 
-db = SQLAlchemy()
-migrate = Migrate()
-login_manager = LoginManager()
+db                       = SQLAlchemy()
+migrate                  = Migrate()
+login_manager            = LoginManager()
 login_manager.login_view = 'admin.login'
 
 def create_app(config_class=Config):
@@ -24,9 +24,9 @@ def create_app(config_class=Config):
     login_manager.init_app(app)
 
     from app.routes.views import main_bp, og_bp, projects_bp, blog_bp, contact_bp, admin_bp
-    from app.routes.stream import bp as stream_bp
-    from app.routes.obsidian import bp as obsidian_bp
-    from app.routes.fonts import bp as fonts_bp
+    from app.routes.stream import stream_bp
+    from app.routes.obsidian import obsidian_bp
+    from app.routes.fonts import fonts_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(projects_bp, url_prefix='/projeler')
@@ -45,13 +45,11 @@ def create_app(config_class=Config):
 from app import models  # noqa
 
 
-from datetime import datetime
+from datetime import datetime, timezone
 
 def register_context_processors(app):
     @app.context_processor
     def inject_globals():
-        from flask import current_app
         return {
-            'now': datetime.utcnow(),
-            'config': current_app.config,
+            'now': datetime.now(timezone.utc),
         }
