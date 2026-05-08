@@ -117,3 +117,25 @@ class QrRedirect(db.Model):
     created_at    = db.Column(db.DateTime, default=datetime.utcnow)
     hit_count     = db.Column(db.Integer, default=0)
 
+
+# --- IP Logs ---
+
+class IpLog(db.Model):
+    __tablename__ = 'ip_logs'
+    id            = db.Column(db.Integer, primary_key=True)
+    ip            = db.Column(db.String(45), nullable=False) # IPv6 support
+    city          = db.Column(db.String(128))
+    region        = db.Column(db.String(128))
+    country       = db.Column(db.String(128))
+    org           = db.Column(db.String(256))
+    asn           = db.Column(db.String(64))
+    latitude      = db.Column(db.Float)
+    longitude     = db.Column(db.Float)
+    timezone      = db.Column(db.String(128))
+    user_agent    = db.Column(db.Text)
+    full_data     = db.Column(db.JSON) # Store the whole JSON for future use
+    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+
+    def __repr__(self):
+        return f'<IpLog {self.ip} at {self.created_at}>'
+

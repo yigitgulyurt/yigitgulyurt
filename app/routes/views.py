@@ -1,7 +1,7 @@
 from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage
+from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog
 from app import db, limiter
 from datetime import datetime
 import random
@@ -634,12 +634,38 @@ def base64_converter():
 
 @tools_bp.route('/ip-bilgisi')
 def ip_info():
-    # IP bilgisini frontend'de JS ile veya backend'de alabiliriz.
-    # ProxyFix kullandığımız için request.remote_addr doğru gelmeli.
     user_ip = request.headers.get('X-Forwarded-For', request.remote_addr)
     if ',' in user_ip:
         user_ip = user_ip.split(',')[0].strip()
     return render_template('tools/ip_info.html', user_ip=user_ip)
+
+@tools_bp.route('/ip-log', methods=['POST'])
+@limiter.limit("10 per minute")
+def log_ip():
+    data = request.get_json()
+    if not data:
+        return jsonify({"error": "No data provided"}), 400
+    
+    try:
+        log = IpLog(
+            ip=data.get('ip'),
+            city=data.get('city'),
+            region=data.get('region'),
+            country=data.get('country_name'),
+            org=data.get('org'),
+            asn=data.get('asn'),
+            latitude=data.get('latitude'),
+            longitude=data.get('longitude'),
+            timezone=data.get('timezone'),
+            user_agent=request.user_agent.string,
+            full_data=data
+        )
+        db.session.add(log)
+        db.session.commit()
+        return jsonify({"status": "success"}), 201
+    except Exception as e:
+        current_app.logger.error(f"IP Log error: {e}")
+        return jsonify({"error": str(e)}), 500
 
 @tools_bp.route('/birim-donusturucu')
 def unit_converter():

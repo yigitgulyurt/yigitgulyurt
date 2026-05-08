@@ -5,77 +5,111 @@
 {% block head %}
 <style>
 .tool-container {
-    max-width: 600px;
+    max-width: 800px;
     margin: 40px auto;
     padding: 30px;
     background: var(--card-bg);
     border-radius: 20px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.ip-display-wrap {
     text-align: center;
+    margin-bottom: 30px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 16px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
 }
 
 .ip-display {
-    font-size: 3rem;
+    font-size: 2.5rem;
     font-weight: 800;
     color: var(--primary);
-    margin: 20px 0;
     font-family: 'JetBrains Mono', monospace;
     word-break: break-all;
+    margin: 10px 0;
 }
 
-.ip-details {
+.consent-box {
+    text-align: center;
+    padding: 20px;
+    background: rgba(var(--primary-rgb), 0.05);
+    border: 1px dashed var(--primary);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.ip-details-grid {
     display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
     gap: 15px;
-    margin-top: 30px;
-    text-align: left;
+    margin-top: 20px;
+    display: none; /* Rıza alınana kadar gizli */
 }
 
 .detail-item {
     background: rgba(255, 255, 255, 0.03);
-    padding: 15px 20px;
-    border-radius: 12px;
-    display: flex;
-    justify-content: space-between;
+    padding: 12px 15px;
+    border-radius: 10px;
     border: 1px solid rgba(255, 255, 255, 0.05);
+    display: flex;
+    flex-direction: column;
 }
 
 .detail-label {
+    font-size: 0.75rem;
     color: var(--text-dim);
-    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    margin-bottom: 4px;
 }
 
 .detail-val {
+    font-size: 0.95rem;
+    font-weight: 600;
     color: var(--text);
-    font-weight: 700;
+    word-break: break-all;
 }
 
-.copy-ip {
+.btn-reveal {
     background: var(--primary);
     color: white;
     border: none;
-    padding: 10px 20px;
-    border-radius: 8px;
+    padding: 12px 24px;
+    border-radius: 10px;
+    font-weight: 700;
     cursor: pointer;
-    font-weight: 600;
+    transition: all 0.3s;
     margin-top: 10px;
-    transition: all 0.2s;
 }
 
-.copy-ip:hover { transform: scale(1.05); }
+.btn-reveal:hover { transform: translateY(-2px); box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3); }
 
 #loader {
-    border: 4px solid #f3f3f3;
-    border-top: 4px solid var(--primary);
+    border: 3px solid #333;
+    border-top: 3px solid var(--primary);
     border-radius: 50%;
-    width: 30px;
-    height: 30px;
-    animation: spin 2s linear infinite;
-    display: inline-block;
+    width: 24px;
+    height: 24px;
+    animation: spin 1s linear infinite;
+    display: none;
+    margin: 10px auto;
 }
 
-@keyframes spin {
-    0% { transform: rotate(0deg); }
-    100% { transform: rotate(360deg); }
+@keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+.json-view {
+    margin-top: 30px;
+    background: #0d0d0d;
+    padding: 15px;
+    border-radius: 10px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    color: #4ade80;
+    overflow-x: auto;
+    display: none;
+    border: 1px solid #333;
 }
 </style>
 {% endblock %}
@@ -83,71 +117,103 @@
 {% block content %}
 <div class="tool-container">
     <h1 class="tool-title">
-        <span class="lang-tr">🌐 IP Bilgim Nedir?</span>
-        <span class="lang-en">🌐 What is my IP?</span>
+        <span class="lang-tr">🌐 IP Detayları</span>
+        <span class="lang-en">🌐 IP Details</span>
     </h1>
 
-    <div id="ip-address" class="ip-display">{{ user_ip }}</div>
-    
-    <button class="copy-ip" onclick="copyIp()">
-        <span class="lang-tr">IP Kopyala</span>
-        <span class="lang-en">Copy IP</span>
-    </button>
-
-    <div class="ip-details" id="ip-details-container">
-        <div id="loader-wrap" style="text-align: center;">
-            <div id="loader"></div>
-            <p style="margin-top: 10px; color: var(--text-dim);">
-                <span class="lang-tr">Detaylar yükleniyor...</span>
-                <span class="lang-en">Loading details...</span>
-            </p>
-        </div>
+    <div class="ip-display-wrap">
+        <span class="detail-label">IP ADDRESS</span>
+        <div id="ip-address" class="ip-display">{{ user_ip }}</div>
     </div>
+
+    <div id="consent-section" class="consent-box">
+        <p>
+            <span class="lang-tr">IP adresinizle ilişkili tüm coğrafi ve ağ bilgilerini görmek istiyor musunuz?</span>
+            <span class="lang-en">Do you want to see all geographic and network information associated with your IP address?</span>
+        </p>
+        <p style="font-size: 0.85rem; color: var(--text-dim); margin-top: 8px;">
+            <span class="lang-tr">* Bu işlem sonucunda verileriniz sistemimize kaydedilecektir.</span>
+            <span class="lang-en">* By proceeding, your data will be logged in our system.</span>
+        </p>
+        <button id="btn-reveal" class="btn-reveal" onclick="revealDetails()">
+            <span class="lang-tr">Evet, Göster ve Kaydet</span>
+            <span class="lang-en">Yes, Reveal and Log</span>
+        </button>
+        <div id="loader"></div>
+    </div>
+
+    <div id="details-grid" class="ip-details-grid">
+        <!-- JS ile dolacak -->
+    </div>
+
+    <pre id="json-view" class="json-view"></pre>
 </div>
 {% endblock %}
 
 {% block scripts %}
 <script>
-async function fetchIpDetails() {
-    const container = document.getElementById('ip-details-container');
-    const ip = "{{ user_ip }}";
+async function revealDetails() {
+    const btn = document.getElementById('btn-reveal');
+    const loader = document.getElementById('loader');
+    const grid = document.getElementById('details-grid');
+    const jsonView = document.getElementById('json-view');
+    const consentBox = document.getElementById('consent-section');
     
+    btn.style.display = 'none';
+    loader.style.display = 'block';
+
     try {
-        const response = await fetch(`https://ipapi.co/${ip}/json/`);
+        const response = await fetch(`https://ipapi.co/{{ user_ip }}/json/`);
         const data = await response.json();
         
         if (data.error) throw new Error(data.reason);
 
-        container.innerHTML = `
+        // Backend'e kaydet
+        await fetch("{{ url_for('tools.log_ip') }}", {
+            method: "POST",
+            headers: { "Content-Type": "application/json" },
+            body: JSON.stringify(data)
+        });
+
+        // Grid'i doldur
+        const items = [
+            { label: 'Network', val: data.network },
+            { label: 'Version', val: data.version },
+            { label: 'City', val: data.city },
+            { label: 'Region', val: `${data.region} (${data.region_code})` },
+            { label: 'Country', val: `${data.country_name} (${data.country})` },
+            { label: 'Capital', val: data.country_capital },
+            { label: 'Postal', val: data.postal },
+            { label: 'Latitude', val: data.latitude },
+            { label: 'Longitude', val: data.longitude },
+            { label: 'Timezone', val: data.timezone },
+            { label: 'Currency', val: `${data.currency_name} (${data.currency})` },
+            { label: 'Languages', val: data.languages },
+            { label: 'ASN', val: data.asn },
+            { label: 'Organization', val: data.org }
+        ];
+
+        grid.innerHTML = items.map(i => `
             <div class="detail-item">
-                <span class="detail-label"><span class="lang-tr">Ülke</span><span class="lang-en">Country</span></span>
-                <span class="detail-val">${data.country_name} (${data.country_code})</span>
+                <span class="detail-label">${i.label}</span>
+                <span class="detail-val">${i.val || 'N/A'}</span>
             </div>
-            <div class="detail-item">
-                <span class="detail-label"><span class="lang-tr">Şehir</span><span class="lang-en">City</span></span>
-                <span class="detail-val">${data.city} / ${data.region}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label"><span class="lang-tr">İnternet Sağlayıcı</span><span class="lang-en">ISP</span></span>
-                <span class="detail-val">${data.org}</span>
-            </div>
-            <div class="detail-item">
-                <span class="detail-label"><span class="lang-tr">Zaman Dilimi</span><span class="lang-en">Timezone</span></span>
-                <span class="detail-val">${data.timezone}</span>
-            </div>
-        `;
+        `).join('');
+
+        jsonView.textContent = JSON.stringify(data, null, 4);
+        
+        // Göster
+        consentBox.style.display = 'none';
+        grid.style.display = 'grid';
+        jsonView.style.display = 'block';
+        
+        showToast("IP bilgileri başarıyla kaydedildi.", "success");
+
     } catch (e) {
-        container.innerHTML = `<p style="color: #ff4d4d;">❌ Detaylar alınamadı: ${e.message}</p>`;
+        loader.style.display = 'none';
+        btn.style.display = 'inline-block';
+        showToast("Hata: " + e.message, "error");
     }
 }
-
-function copyIp() {
-    const ip = document.getElementById('ip-address').innerText;
-    navigator.clipboard.writeText(ip).then(() => {
-        showToast("IP kopyalandı!", "success");
-    });
-}
-
-document.addEventListener('DOMContentLoaded', fetchIpDetails);
 </script>
 {% endblock %}
