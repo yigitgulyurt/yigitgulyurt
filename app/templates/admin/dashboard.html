@@ -16,12 +16,19 @@
     <div class="stat-num">{{ stats.messages }}</div>
     <div class="stat-label">okunmamış mesaj</div>
   </div>
+  <div class="stat">
+    <div class="stat-num">{{ stats.ip_logs }}</div>
+    <div class="stat-label">IP kaydı</div>
+  </div>
 </div>
 <div style="margin-top:24px;display:flex;gap:10px;flex-wrap:wrap">
   <a class="btn" href="{{ url_for('admin.projects') }}">projeler →</a>
   <a class="btn" href="{{ url_for('admin.blog') }}">blog →</a>
   <a class="btn" href="{{ url_for('admin.messages') }}">mesajlar →</a>
   <a class="btn" href="{{ url_for('admin.stream_viewers') }}">izleyiciler →</a>
+  <form action="{{ url_for('admin.merge_ip_logs') }}" method="POST" style="display:inline">
+    <button type="submit" class="btn" style="background:var(--primary);color:white;cursor:pointer">IP Loglarını Birleştir 🧹</button>
+  </form>
   <a class="btn" href="{{ url_for('main.index') }}" target="_blank">siteyi gör ↗</a>
 </div>
 {% endblock %}

@@ -360,8 +360,23 @@ def dashboard():
         'projects': Project.query.count(),
         'posts': BlogPost.query.count(),
         'messages': ContactMessage.query.filter_by(read=False).count(),
+        'ip_logs': IpLog.query.count(),
     }
     return render_template('admin/dashboard.html', stats=stats)
+
+@admin_bp.route('/ip-logs/merge', methods=['POST'])
+@login_required
+def merge_ip_logs():
+    from sqlalchemy import func
+    # Her IP için en son id'yi bul (en güncel kaydı tutmak için)
+    latest_ids_subquery = db.session.query(func.max(IpLog.id)).group_by(IpLog.ip).subquery()
+    
+    # Bu id'ler dışındaki tüm kayıtları sil
+    deleted_count = IpLog.query.filter(~IpLog.id.in_(latest_ids_subquery)).delete(synchronize_session=False)
+    db.session.commit()
+    
+    flash(f'{deleted_count} adet mükerrer IP kaydı başarıyla birleştirildi.', 'success')
+    return redirect(url_for('admin.dashboard'))
 
 @admin_bp.route('/projeler')
 @login_required
