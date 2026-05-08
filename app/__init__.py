@@ -23,13 +23,8 @@ def create_app(config_class=Config):
     migrate.init_app(app, db)
     login_manager.init_app(app)
 
-    from app.routes.main import bp as main_bp
-    from app.routes.og import bp as og_bp
+    from app.routes.views import main_bp, og_bp, projects_bp, blog_bp, contact_bp, admin_bp
     from app.routes.stream import bp as stream_bp
-    from app.routes.projects import bp as projects_bp
-    from app.routes.blog import bp as blog_bp
-    from app.routes.contact import bp as contact_bp
-    from app.routes.admin import bp as admin_bp
     from app.routes.obsidian import bp as obsidian_bp
     from app.routes.fonts import bp as fonts_bp
 
