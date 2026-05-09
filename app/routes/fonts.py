@@ -38,7 +38,9 @@ FONT_METADATA = {
     'montserrat': {'name': 'Montserrat', 'cat': 'Sans-Serif'},
     'orbitron': {'name': 'Orbitron', 'cat': 'Display'},
     'playfair': {'name': 'Playfair', 'cat': 'Serif'},
-    'rajdhani': {'name': 'Rajdhani', 'cat': 'Sans-Serif'}
+    'rajdhani': {'name': 'Rajdhani', 'cat': 'Sans-Serif'},
+    'noto_sans_old_turkic': {'name': 'Noto Sans Old Turkic', 'cat': 'Sans-Serif'}
+
 }
 
 def get_fonts_data():
