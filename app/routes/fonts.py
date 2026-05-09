@@ -39,8 +39,9 @@ FONT_METADATA = {
     'orbitron': {'name': 'Orbitron', 'cat': 'Display'},
     'playfair': {'name': 'Playfair', 'cat': 'Serif'},
     'rajdhani': {'name': 'Rajdhani', 'cat': 'Sans-Serif'},
-    'noto_sans_old_turkic': {'name': 'Noto Sans Old Turkic', 'cat': 'Sans-Serif'}
-
+    'noto_sans_old_turkic': {'name': 'Noto Sans Old Turkic', 'cat': 'Sans-Serif'},
+    'gokturkfont': {'name': 'Gokturk Font', 'cat': 'Sans-Serif'}
+    
 }
 
 def get_fonts_data():
