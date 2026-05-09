@@ -37,7 +37,7 @@ FONT_METADATA = {
     'jetbrainsmononerdfont': {'name': 'JetBrainsMonoNerdFont', 'cat': 'Monospace'},
     'montserrat': {'name': 'Montserrat', 'cat': 'Sans-Serif'},
     'orbitron': {'name': 'Orbitron', 'cat': 'Display'},
-    'playfair': {'name': 'Playfair Display', 'cat': 'Serif'},
+    'playfair': {'name': 'Playfair', 'cat': 'Serif'},
     'rajdhani': {'name': 'Rajdhani', 'cat': 'Sans-Serif'}
 }
 
