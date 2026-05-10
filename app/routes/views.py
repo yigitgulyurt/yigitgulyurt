@@ -397,7 +397,7 @@ def project_edit(id=None):
         image_file = request.files.get('image')
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
-            upload_dir = os.path.join(current_app.root_path, 'static', 'img', 'projects')
+            upload_dir = os.path.join(current_app.root_path, 'static', 'image', 'yigitgulyurt', 'projects')
             os.makedirs(upload_dir, exist_ok=True)
             image_file.save(os.path.join(upload_dir, filename))
             project.image = filename

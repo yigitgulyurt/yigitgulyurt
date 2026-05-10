@@ -101,7 +101,7 @@ def build_breadcrumb(current_path):
 @image_bp.route('/file/<path:filename>')
 def serve_image(filename):
     """Görsel dosyalarını servis eder."""
-    images_dir = os.path.join(current_app.root_path, 'static', 'img')
+    images_dir = os.path.join(current_app.root_path, 'static', 'image')
     full_path = safe_join(images_dir, filename)
     if not os.path.exists(full_path) or not os.path.isfile(full_path):
         abort(404)
@@ -117,7 +117,7 @@ def serve_image(filename):
 @login_required
 def index(path=''):
     """Görsel galeri ana sayfası (korumalı)."""
-    img_dir = os.path.join(current_app.root_path, 'static', 'img')
+    img_dir = os.path.join(current_app.root_path, 'static', 'image')
     items = list_items(img_dir, path)
     breadcrumb = build_breadcrumb(path)
     total_items = len(items)
