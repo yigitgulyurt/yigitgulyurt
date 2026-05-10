@@ -127,6 +127,46 @@ def extract_slug(url):
     return "link", None
 
 # --- Main Routes ---
+@main_bp.route('/subdomains')
+def subdomains():
+    subdomains_list = [
+        {
+            "name": "Ana Site",
+            "url": "https://yigitgulyurt.net.tr",
+            "description": "Kişisel portfolyo ve ana site"
+        },
+        {
+            "name": "Görsel Galerisi",
+            "url": "https://image.yigitgulyurt.net.tr",
+            "description": "Görsel galerisi ve dosya paylaşımı"
+        },
+        {
+            "name": "Font Kütüphanesi",
+            "url": "https://font.yigitgulyurt.net.tr",
+            "description": "Özel font servisi ve font kütüphanesi"
+        },
+        {
+            "name": "Canlı Yayın",
+            "url": "https://canli.yigitgulyurt.net.tr",
+            "description": "Canlı yayın platformu"
+        },
+        {
+            "name": "CSS",
+            "url": "https://css.yigitgulyurt.net.tr",
+            "description": "CSS dosyaları CDN"
+        },
+        {
+            "name": "JS",
+            "url": "https://js.yigitgulyurt.net.tr",
+            "description": "JavaScript dosyaları CDN"
+        }
+    ]
+    return jsonify({
+        "status": "success",
+        "count": len(subdomains_list),
+        "subdomains": subdomains_list
+    })
+
 @main_bp.route('/')
 def index():
     featured_projects = Project.query.filter_by(featured=True).order_by(Project.order).limit(3).all()
