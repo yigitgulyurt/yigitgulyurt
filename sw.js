@@ -79,6 +79,7 @@ self.addEventListener('fetch', (event) => {
     // Font ve admin bypass
     if (
         url.hostname === 'font.yigitgulyurt.net.tr' ||
+        url.hostname === 'image.yigitgulyurt.net.tr' ||
         url.pathname.startsWith('/admin') ||
         url.pathname.startsWith('/obsidian')
     ) {
