@@ -1,7 +1,7 @@
 """
-app/routes/fonts.py
+app/routes/font.py
 Google Fonts benzeri font servis sistemi
-Subdomain: fonts.yigitgulyurt.net.tr
+Subdomain: font.yigitgulyurt.net.tr
 """
 
 import os
@@ -9,7 +9,7 @@ import re
 import time
 from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort
 
-fonts_bp = Blueprint('fonts', __name__, subdomain='fonts')
+font_bp = Blueprint('font', __name__, subdomain='font')
 
 # Global cache değişkenleri
 _fonts_cache      = None
@@ -110,7 +110,7 @@ def get_fonts_data():
     _fonts_cache_time = now
     return fonts
 
-@fonts_bp.route('/')
+@font_bp.route('/')
 def index():
     """Fontların listelendiği ana sayfa."""
     fonts_data = get_fonts_data()
@@ -124,7 +124,7 @@ def index():
     
     return render_template('fonts/index.html', fonts=unique_fonts)
 
-@fonts_bp.route('/css2')
+@font_bp.route('/css2')
 def css2():
     """
     Google Fonts benzeri CSS API'si.
@@ -139,8 +139,8 @@ def css2():
     fonts_data = get_fonts_data()
     css_output = []
     
-    # Base URL'i belirle (fonts subdomain'i üzerinden)
-    base_url = f"https://fonts.{current_app.config.get('SERVER_NAME', 'yigitgulyurt.net.tr')}"
+    # Base URL'i belirle (font subdomain'i üzerinden)
+    base_url = f"https://font.{current_app.config.get('SERVER_NAME', 'yigitgulyurt.net.tr')}"
 
     for param in families_param:
         # Parametre formatı: FamilyName:ital,wght@0,100..900;1,100..900
@@ -203,7 +203,7 @@ def css2():
                         break
             
             if include:
-                font_url = f"{base_url}/s/{folder_name}/{font['file']}"
+                font_url = f"{base_url}/{folder_name}/{font['file']}"
                 css_output.append(f"""
 @font-face {{
   font-family: '{display_name}';
@@ -217,7 +217,7 @@ def css2():
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-@fonts_bp.route('/s/<family>/<filename>')
+@font_bp.route('/<family>/<filename>')
 def serve_font(family, filename):
     """Font dosyalarını servis eder."""
     fonts_dir = os.path.join(current_app.root_path, 'static', 'fonts', family)

@@ -1,5 +1,5 @@
 """
-app/routes/images.py
+app/routes/image.py
 Görsel servis sistemi
 Subdomain: image.yigitgulyurt.net.tr
 """
@@ -7,10 +7,10 @@ Subdomain: image.yigitgulyurt.net.tr
 import os
 from flask import Blueprint, request, Response, current_app, send_from_directory, abort
 
-images_bp = Blueprint('images', __name__, subdomain='image')
+image_bp = Blueprint('image', __name__, subdomain='image')
 
 
-@images_bp.route('/<path:filename>')
+@image_bp.route('/<path:filename>')
 def serve_image(filename):
     """Görsel dosyalarını servis eder."""
     images_dir = os.path.join(current_app.root_path, 'static', 'img')

@@ -30,8 +30,8 @@ def create_app(config_class=Config):
     from app.routes.views import main_bp, og_bp, projects_bp, blog_bp, contact_bp, admin_bp, tools_bp
     from app.routes.stream import stream_bp
     from app.routes.obsidian import obsidian_bp
-    from app.routes.fonts import fonts_bp
-    from app.routes.images import images_bp
+    from app.routes.font import font_bp
+    from app.routes.image import image_bp
 
     app.register_blueprint(main_bp)
     app.register_blueprint(projects_bp, url_prefix='/projeler')
@@ -42,8 +42,8 @@ def create_app(config_class=Config):
     app.register_blueprint(og_bp)
     app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
     app.register_blueprint(obsidian_bp, subdomain='obsidian')
-    app.register_blueprint(fonts_bp, subdomain='fonts')
-    app.register_blueprint(images_bp, subdomain='image')
+    app.register_blueprint(font_bp, subdomain='font')
+    app.register_blueprint(image_bp, subdomain='image')
 
     register_context_processors(app)
 
