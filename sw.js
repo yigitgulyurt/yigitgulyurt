@@ -6,9 +6,7 @@ const CSS_CACHE    = `yg-css-v${VERSION}`;
 
 // ── Statik dosyalar (İkonlar & Resimler) ───────────────────────────────────
 const STATIC_ASSETS = [
-    '/static/img/favicon.ico',
-    '/static/img/favicon.svg',
-    '/static/img/og-default.png'
+    '/static/image/yigitgulyurt/favicon.ico'
 ];
 
 // ── Sayfa URL'leri ───────────────────────────────────────────────────────────

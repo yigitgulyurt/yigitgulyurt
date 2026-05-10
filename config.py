@@ -18,7 +18,7 @@ class Config:
     SQLALCHEMY_TRACK_MODIFICATIONS = False
     STREAM_KEY                     = os.environ.get('STREAM_KEY')           or ''
     STREAM_LIVE_FALLBACK           = os.environ.get('STREAM_LIVE_FALLBACK') or 'false'
-    UPLOAD_FOLDER                  = os.path.join(os.path.dirname(__file__), 'app', 'static', 'img')
+    UPLOAD_FOLDER                  = os.path.join(os.path.dirname(__file__), 'app', 'static', 'image', 'yigitgulyurt')
 
     # Telegram Bot Settings
     TELEGRAM_TOKEN                 = os.environ.get('TELEGRAM_TOKEN')
