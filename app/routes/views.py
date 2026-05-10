@@ -127,9 +127,9 @@ def extract_slug(url):
     return "link", None
 
 # --- Main Routes ---
-@main_bp.route('/subdomains')
-def subdomains():
-    subdomains_list = [
+@main_bp.route('/subdomain')
+def subdomain():
+    subdomain_list = [
         {
             "name": "Ana Site",
             "url": "https://yigitgulyurt.net.tr",
@@ -163,8 +163,8 @@ def subdomains():
     ]
     return jsonify({
         "status": "success",
-        "count": len(subdomains_list),
-        "subdomains": subdomains_list
+        "count": len(subdomain_list),
+        "subdomain": subdomain_list
     })
 
 @main_bp.route('/')
