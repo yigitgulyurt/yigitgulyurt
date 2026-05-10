@@ -11,8 +11,10 @@
   <div style="font-size:13px;font-weight:500;margin-bottom:16px">{{ message.subject }}</div>
   {% endif %}
   <div style="font-size:13px;line-height:1.8;color:var(--text2)">
-    {% for paragraph in message.message.split('\n\n') %}
-      <p style="margin:0 0 12px 0">{{ paragraph|replace('\n', '<br>')|safe }}</p>
+    {% for line in message.message.split('\n') %}
+      {% if line.strip() %}
+        <p style="margin:0 0 8px 0">{{ line }}</p>
+      {% endif %}
     {% endfor %}
   </div>
   <div style="margin-top:16px;font-size:11px;color:var(--text2)">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
