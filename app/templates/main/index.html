@@ -127,7 +127,7 @@
       <div class="proj-card">
         <a href="{{ url_for('projects.detail', slug=project.slug) }}" class="proj-title-link">
           {% if project.image %}
-          <img src="{{ url_for('static', filename='image/yigitgulyurt/projects/' + project.image) }}"
+          <img src="https://image.yigitgulyurt.net.tr/file/yigitgulyurt/projects/{{ project.image }}"
                alt="{{ project.title }}" class="proj-thumb">
           {% endif %}
           <div class="proj-head">
