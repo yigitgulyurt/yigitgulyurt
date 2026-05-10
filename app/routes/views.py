@@ -223,7 +223,8 @@ def sitemap():
         ('projects.index','0.9',  'weekly'),
         ('blog.index',    '0.9',  'weekly'),
         ('contact.index', '0.5',  'monthly'),
-        ('main.qr_okuyucu', '0.8',  'monthly')
+        ('main.qr_okuyucu', '0.8',  'monthly'),
+        ('font.index', '0.8',  'monthly'),
     ]
     for endpoint, priority, changefreq in static_pages:
         pages.append({
