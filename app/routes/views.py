@@ -539,6 +539,25 @@ def stream_viewers():
     except Exception: viewers = []
     return render_template('admin/stream_viewers.html', viewers=viewers)
 
+def split_long_lines(text, max_len=80):
+    lines = []
+    for line in text.split('\n'):
+        if len(line) <= max_len:
+            lines.append(line)
+        else:
+            words = line.split()
+            current_line = ''
+            for word in words:
+                if len(current_line) + len(word) + 1 <= max_len:
+                    current_line = (current_line + ' ' + word) if current_line else word
+                else:
+                    if current_line:
+                        lines.append(current_line)
+                    current_line = word
+            if current_line:
+                lines.append(current_line)
+    return lines
+
 @admin_bp.route('/mesajlar')
 @login_required
 def messages():
@@ -551,7 +570,8 @@ def message_detail(id):
     msg = ContactMessage.query.get_or_404(id)
     msg.read = True
     db.session.commit()
-    return render_template('admin/message_detail.html', message=msg)
+    formatted_message = split_long_lines(msg.message)
+    return render_template('admin/message_detail.html', message=msg, formatted_message=formatted_message)
 
 @admin_bp.route('/og')
 @login_required
