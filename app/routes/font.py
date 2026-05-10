@@ -124,11 +124,11 @@ def index():
     
     return render_template('fonts/index.html', fonts=unique_fonts)
 
-@font_bp.route('/css2')
-def css2():
+@font_bp.route('/cssy')
+def cssy():
     """
     Google Fonts benzeri CSS API'si.
-    Örnek: /css2?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap
+    Örnek: /cssy?family=Montserrat:ital,wght@0,100..900;1,100..900&display=swap 
     """
     families_param = request.args.getlist('family')
     display = request.args.get('display', 'swap')
