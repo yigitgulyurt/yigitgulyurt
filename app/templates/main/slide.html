@@ -1,0 +1,345 @@
+{% extends "base.html" %}
+
+{% block title %}Tanıtım Slaytları{% endblock %}
+{% block description %}Web siteme hoş geldiniz! Tanıtım slaytlarını inceleyin.{% endblock %}
+
+{% block content %}
+<style>
+    .slide-wrapper {
+        max-width: 1200px;
+        margin: 40px auto;
+        padding: 0 20px;
+    }
+
+    /* === Overlay === */
+    .tutorial-overlay {
+        position: fixed;
+        inset: 0;
+        background: rgba(0, 0, 0, 0.85);
+        backdrop-filter: blur(8px);
+        z-index: 10000;
+        justify-content: center;
+        align-items: center;
+        padding: 20px;
+        display: flex;
+    }
+
+    /* === Modal box === */
+    .tutorial-modal {
+        background: #1e1e1e;
+        border: 1px solid rgba(255, 193, 7, 0.2);
+        border-radius: 24px;
+        width: 100%;
+        max-width: 500px;
+        padding: 40px 30px 30px;
+        position: relative;
+        box-shadow: 0 20px 50px rgba(0, 0, 0, 0.5);
+        animation: modalPop 0.3s ease-out;
+    }
+
+    @keyframes modalPop {
+        from { opacity: 0; transform: scale(0.9); }
+        to   { opacity: 1; transform: scale(1);   }
+    }
+
+    /* === Close button === */
+    .tutorial-close {
+        position: absolute;
+        top: 20px;
+        right: 20px;
+        background: transparent;
+        border: none;
+        color: #888;
+        font-size: 1.5rem;
+        cursor: pointer;
+        transition: color 0.3s;
+        width: 40px;
+        height: 40px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        border-radius: 50%;
+    }
+    .tutorial-close:hover {
+        color: #e2e2e2;
+        background: rgba(255, 255, 255, 0.05);
+    }
+
+    /* === Icon box === */
+    .tutorial-icon-box {
+        width: 80px;
+        height: 80px;
+        background: rgba(255, 193, 7, 0.1);
+        border-radius: 50%;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        margin: 0 auto 25px;
+        color: #ffc107;
+        font-size: 2rem;
+        box-shadow: 0 0 20px rgba(255, 193, 7, 0.1);
+    }
+
+    /* === Content area === */
+    .tutorial-content {
+        text-align: center;
+        margin-bottom: 30px;
+        min-height: 250px;
+        display: flex;
+        flex-direction: column;
+        justify-content: center;
+        align-items: center;
+    }
+    .tutorial-step { width: 100%; }
+    .tutorial-step h3 { font-size: 1.8rem; margin-bottom: 15px; color: #e2e2e2; }
+    .tutorial-step p  { font-size: 1.1rem; color: #888; line-height: 1.6; }
+
+    /* === Footer: dots + buttons === */
+    .tutorial-footer {
+        display: flex;
+        flex-direction: column;
+        gap: 20px;
+        align-items: center;
+    }
+    .tutorial-dots { display: flex; gap: 8px; }
+
+    .step-dot {
+        width: 10px;
+        height: 10px;
+        border-radius: 50%;
+        background: rgba(255, 255, 255, 0.2);
+        transition: all 0.3s;
+    }
+    .step-dot.active {
+        background: #ffc107;
+        width: 25px;
+        border-radius: 10px;
+    }
+
+    .tutorial-actions {
+        display: flex;
+        gap: 15px;
+        width: 100%;
+        justify-content: center;
+    }
+
+    .btn-tutorial-pri,
+    .btn-tutorial-sec {
+        padding: 12px 30px;
+        border-radius: 12px;
+        font-size: 1rem;
+        font-weight: 600;
+        cursor: pointer;
+        transition: all 0.3s;
+        min-width: 120px;
+    }
+    .btn-tutorial-pri {
+        background: #ffc107;
+        color: #000;
+        border: none;
+    }
+    .btn-tutorial-pri:hover {
+        background: #e0a800;
+        transform: translateY(-2px);
+    }
+    .btn-tutorial-sec {
+        background: transparent;
+        border: 1px solid rgba(255, 255, 255, 0.1);
+        color: #e2e2e2;
+    }
+    .btn-tutorial-sec:hover {
+        background: rgba(255, 255, 255, 0.05);
+        border-color: rgba(255, 255, 255, 0.2);
+    }
+
+    /* === Responsive === */
+    @media (max-width: 768px) {
+        .tutorial-modal   { padding: 30px 20px 20px; max-width: 90%; }
+        .tutorial-step h3 { font-size: 1.5rem; }
+        .tutorial-step p  { font-size: 1rem; }
+        .tutorial-icon-box { width: 60px; height: 60px; font-size: 1.5rem; }
+    }
+
+    /* === Page header === */
+    .page-header {
+        text-align: center;
+        margin-bottom: 3rem;
+    }
+    .page-title {
+        font-size: 2.5rem;
+        margin-bottom: 1rem;
+        font-weight: 700;
+        color: #e2e2e2;
+    }
+    .page-subtitle {
+        color: #888;
+        font-size: 1.1rem;
+        max-width: 600px;
+        margin: 0 auto;
+        line-height: 1.6;
+    }
+    .open-slide-btn {
+        background: #ffc107;
+        color: #000;
+        border: none;
+        padding: 14px 32px;
+        border-radius: 12px;
+        font-weight: 700;
+        font-size: 1.1rem;
+        cursor: pointer;
+        transition: all 0.3s;
+        margin-top: 2rem;
+    }
+    .open-slide-btn:hover {
+        background: #e0a800;
+        transform: translateY(-2px);
+        box-shadow: 0 5px 15px rgba(255, 193, 7, 0.3);
+    }
+</style>
+
+<div class="slide-wrapper">
+    <div class="page-header">
+        <h1 class="page-title">
+            <span style="color: #ffc107;">Tanıtım</span> Slaytları
+        </h1>
+        <p class="page-subtitle">
+            Web sitemin tanıtım slaytlarını inceleyin. Slaytları açmak için aşağıdaki butona tıklayın.
+        </p>
+        <button class="open-slide-btn" onclick="openTutorialModal()">
+            Slaytları Aç
+        </button>
+    </div>
+</div>
+
+{# ---- Tutorial Modal Markup ---- #}
+<div id="tutorialModal" class="tutorial-overlay" style="display: none;">
+    <div class="tutorial-modal">
+        <button class="tutorial-close" onclick="closeTutorialModal()" aria-label="Tanıtımı Kapat">
+            <svg style="width:20px;height:20px;" viewBox="0 0 640 640"><use xlink:href="#fa-xmark"></use></svg>
+        </button>
+
+        <div class="tutorial-content">
+            {# Step 1 #}
+            <div id="step-1" class="tutorial-step" style="display: block;">
+                <div class="tutorial-icon-box">
+                    <svg style="width:40px;height:40px;" viewBox="0 0 640 640"><use xlink:href="#fa-user"></use></svg>
+                </div>
+                <h3>Hoş Geldiniz!</h3>
+                <p>Ben Yiğit Gülyurt. Bu web sitesi, portfolyo ve projelerimi sergilemek için tasarlandı.</p>
+            </div>
+
+            {# Step 2 #}
+            <div id="step-2" class="tutorial-step" style="display: none;">
+                <div class="tutorial-icon-box">
+                    <svg style="width:40px;height:40px;" viewBox="0 0 640 640"><use xlink:href="#fa-folder-open"></use></svg>
+                </div>
+                <h3>Projelerimi Keşfedin</h3>
+                <p>Projeler bölümünden tüm çalışmalarımı inceleyebilir, teknik detayları öğrenebilirsiniz.</p>
+            </div>
+
+            {# Step 3 #}
+            <div id="step-3" class="tutorial-step" style="display: none;">
+                <div class="tutorial-icon-box">
+                    <svg style="width:40px;height:40px;" viewBox="0 0 640 640"><use xlink:href="#fa-blog"></use></svg>
+                </div>
+                <h3>Blog Yazıları</h3>
+                <p>Teknik yazılarımı, düşüncelerimi ve deneyimlerimi blog bölümünden okuyabilirsiniz.</p>
+            </div>
+
+            {# Step 4 #}
+            <div id="step-4" class="tutorial-step" style="display: none;">
+                <div class="tutorial-icon-box">
+                    <svg style="width:40px;height:40px;" viewBox="0 0 640 640"><use xlink:href="#fa-tools"></use></svg>
+                </div>
+                <h3>Kullanışlı Araçlar</h3>
+                <p>Şifre oluşturucu, JSON formatlayıcı ve daha birçok aracı araçlar bölümünde bulabilirsiniz.</p>
+            </div>
+        </div>{# /.tutorial-content #}
+
+        <div class="tutorial-footer">
+            <div class="tutorial-dots">
+                <span class="step-dot active"></span>
+                <span class="step-dot"></span>
+                <span class="step-dot"></span>
+                <span class="step-dot"></span>
+            </div>
+            <div class="tutorial-actions">
+                <button id="tutorial-prev"   class="btn-tutorial-sec" onclick="prevStep()">Geri</button>
+                <button id="tutorial-next"   class="btn-tutorial-pri" onclick="nextStep()">İleri</button>
+                <button id="tutorial-finish" class="btn-tutorial-pri" onclick="closeTutorialModal()" style="display: none;">Başla</button>
+            </div>
+        </div>
+    </div>{# /.tutorial-modal #}
+</div>{# /#tutorialModal #}
+
+{# ---- Tutorial Modal Script ---- #}
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+    // Close when clicking the backdrop
+    const modal = document.getElementById('tutorialModal');
+    if (modal) {
+        modal.addEventListener('click', function (e) {
+            if (e.target === modal) closeTutorialModal();
+        });
+    }
+});
+
+/* ---- Public API ---- */
+function openTutorialModal() {
+    const modal = document.getElementById('tutorialModal');
+    if (modal) {
+        modal.style.display = 'flex';
+        showStep(1);
+    }
+}
+
+function closeTutorialModal() {
+    const modal = document.getElementById('tutorialModal');
+    if (modal) {
+        modal.style.display = 'none';
+    }
+}
+
+/* ---- Step navigation ---- */
+let currentStep = 1;
+const TOTAL_STEPS = 4;
+
+function showStep(step) {
+    // Hide all steps
+    document.querySelectorAll('.tutorial-step').forEach(el => {
+        el.style.display = 'none';
+    });
+
+    // Show the requested step
+    const stepEl = document.getElementById(`step-${step}`);
+    if (!stepEl) return;
+
+    stepEl.style.display = 'block';
+    currentStep = step;
+
+    // Sync dots
+    document.querySelectorAll('.step-dot').forEach((dot, i) => {
+        dot.classList.toggle('active', i + 1 === step);
+    });
+
+    // Sync buttons
+    const prevBtn   = document.getElementById('tutorial-prev');
+    const nextBtn   = document.getElementById('tutorial-next');
+    const finishBtn = document.getElementById('tutorial-finish');
+
+    prevBtn.style.visibility = step === 1 ? 'hidden' : 'visible';
+
+    const isLast = step === TOTAL_STEPS;
+    nextBtn.style.display   = isLast ? 'none'         : 'inline-block';
+    finishBtn.style.display = isLast ? 'inline-block' : 'none';
+}
+
+function nextStep() {
+    if (currentStep < TOTAL_STEPS) showStep(currentStep + 1);
+}
+
+function prevStep() {
+    if (currentStep > 1) showStep(currentStep - 1);
+}
+</script>
+{% endblock %}

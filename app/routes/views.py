@@ -255,6 +255,10 @@ def robots():
 def font_test():
     return render_template('main/font-test.html')
 
+@main_bp.route('/slide')
+def slide():
+    return render_template('main/slide.html')
+
 @main_bp.route('/sw.js')
 def serve_sw():
     version = "1.0.0"
