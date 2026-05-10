@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block title %}Görsel Galerisi | Yiğit Gülyurt{% endblock %}
+
+{% block head %}
+    <style>
+        :root {
+            --bg-color: #0d1117;
+            --card-bg: #161b22;
+            --card-border: #30363d;
+            --text-main: #c9d1d9;
+            --text-dim: #8b949e;
+            --accent: #58a6ff;
+            --accent-glow: rgba(88, 166, 255, 0.15);
+            --success: #238636;
+        }
+        
+        .images-page-wrapper {
+            padding: 3rem 0;
+            background-color: var(--bg-color);
+            min-height: 100vh;
+        }
+
+        .images-container {
+            max-width: 1300px;
+            margin: 0 auto;
+            padding: 0 1.5rem;
+        }
+
+        /* --- Header --- */
+        .images-header {
+            margin-bottom: 4rem;
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            flex-wrap: wrap;
+            gap: 2rem;
+            padding-bottom: 2rem;
+            border-bottom: 1px solid var(--card-border);
+        }
+
+        .header-left h1 {
+            font-size: 2.8rem;
+            margin: 0;
+            color: white;
+            font-weight: 800;
+            letter-spacing: -0.02em;
+        }
+
+        .header-left p {
+            margin: 0.5rem 0 0;
+            color: var(--text-dim);
+            font-size: 1.1rem;
+        }
+
+        /* --- Breadcrumb --- */
+        .breadcrumb {
+            display: flex;
+            align-items: center;
+            gap: 0.8rem;
+            padding: 1rem 1.5rem;
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 12px;
+            margin-bottom: 2rem;
+        }
+
+        .breadcrumb-item {
+            color: var(--text-dim);
+            text-decoration: none;
+            transition: color 0.2s;
+        }
+
+        .breadcrumb-item:hover {
+            color: var(--accent);
+        }
+
+        .breadcrumb-item.active {
+            color: white;
+            font-weight: 600;
+        }
+
+        .breadcrumb-separator {
+            color: var(--card-border);
+        }
+
+        /* --- Gallery Grid --- */
+        .gallery-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(250px, 1fr));
+            gap: 1.5rem;
+        }
+
+        .gallery-item {
+            background: var(--card-bg);
+            border: 1px solid var(--card-border);
+            border-radius: 16px;
+            overflow: hidden;
+            transition: all 0.2s;
+            cursor: pointer;
+        }
+
+        .gallery-item:hover {
+            border-color: var(--accent);
+            transform: translateY(-4px);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.4);
+        }
+
+        .gallery-item.folder {
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            padding: 3rem 1rem;
+            min-height: 200px;
+        }
+
+        .gallery-item.folder svg {
+            width: 64px;
+            height: 64px;
+            color: var(--accent);
+            margin-bottom: 1rem;
+        }
+
+        .gallery-item.folder span {
+            color: white;
+            font-weight: 600;
+            text-align: center;
+        }
+
+        .gallery-item.image img {
+            width: 100%;
+            height: 200px;
+            object-fit: cover;
+            display: block;
+        }
+
+        .gallery-item.image .image-info {
+            padding: 1rem;
+        }
+
+        .gallery-item.image .image-info .name {
+            color: white;
+            font-weight: 500;
+            margin-bottom: 0.5rem;
+            overflow: hidden;
+            text-overflow: ellipsis;
+            white-space: nowrap;
+        }
+
+        .gallery-item.image .image-info .size {
+            color: var(--text-dim);
+            font-size: 0.85rem;
+        }
+
+        @media (max-width: 900px) {
+            .header-left h1 { font-size: 2.2rem; }
+            .gallery-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); gap: 1rem; }
+        }
+    </style>
+{% endblock %}
+
+{% block content %}
+<div class="images-page-wrapper">
+    <div class="images-container">
+        
+        <header class="images-header">
+            <div class="header-left">
+                <h1>Görsel Galerisi</h1>
+                <p>{{ total_items }} öğe mevcut</p>
+            </div>
+        </header>
+
+        {% if breadcrumb %}
+        <nav class="breadcrumb">
+            <a href="{{ url_for('image.index') }}" class="breadcrumb-item">Ana Dizin</a>
+            {% for item in breadcrumb %}
+            <span class="breadcrumb-separator">/</span>
+            {% if loop.last %}
+            <span class="breadcrumb-item active">{{ item.name }}</span>
+            {% else %}
+            <a href="{{ url_for('image.index', path=item.path) }}" class="breadcrumb-item">{{ item.name }}</a>
+            {% endif %}
+            {% endfor %}
+        </nav>
+        {% endif %}
+
+        <div class="gallery-grid">
+            {% for item in items %}
+            {% if item.is_folder %}
+            <a href="{{ url_for('image.index', path=item.path) }}" class="gallery-item folder">
+                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2">
+                    <path d="M22 19a2 2 0 0 1-2 2H4a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h5l2 3h9a2 2 0 0 1 2 2z"></path>
+                </svg>
+                <span>{{ item.name }}</span>
+            </a>
+            {% else %}
+            <a href="{{ url_for('image.serve_image', filename=item.path) }}" class="gallery-item image" target="_blank">
+                <img src="{{ url_for('image.serve_image', filename=item.path) }}" alt="{{ item.name }}">
+                <div class="image-info">
+                    <div class="name">{{ item.name }}</div>
+                    <div class="size">{{ item.size }}</div>
+                </div>
+            </a>
+            {% endif %}
+            {% endfor %}
+        </div>
+
+    </div>
+</div>
+{% endblock %}
