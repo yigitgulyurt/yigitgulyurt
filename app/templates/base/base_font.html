@@ -1,0 +1,109 @@
+<!DOCTYPE html>
+<html lang="{{ lang | default('tr') }}" data-lang="{{ lang | default('tr') }}">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+  {# ---- Temel meta ---- #}
+  <title>{% block title %}Font Kütüphanesi{% endblock %} | Yiğit Gülyurt</title>
+  <meta name="description" content="{% block description %}Yiğit Gülyurt - Font Kütüphanesi{% endblock %}">
+  <meta name="author" content="Yiğit Gülyurt">
+  <link rel="canonical" href="https://font.yigitgulyurt.net.tr{{ request.path }}">
+
+  {# ---- Open Graph ---- #}
+  <meta property="og:type"        content="{% block og_type %}website{% endblock %}">
+  <meta property="og:title"       content="{% block og_title %}Font Kütüphanesi{% endblock %}">
+  <meta property="og:description" content="{% block og_description %}Yiğit Gülyurt - Font Kütüphanesi{% endblock %}">
+  <meta property="og:url"         content="https://font.yigitgulyurt.net.tr{{ request.path }}">
+  <meta property="og:site_name"   content="Font Kütüphanesi">
+  <meta property="og:image"       content="{% block og_image %}https://image.yigitgulyurt.net.tr/file/yigitgulyurt/main/favicon.svg{% endblock %}">
+  <meta property="og:image:width"  content="1200">
+  <meta property="og:image:height" content="630">
+  <meta property="og:locale"      content="tr_TR">
+
+  {# ---- Twitter Card ---- #}
+  <meta name="twitter:card"        content="summary_large_image">
+  <meta name="twitter:title"       content="{% block tw_title %}Font Kütüphanesi{% endblock %}">
+  <meta name="twitter:description" content="{% block tw_description %}Yiğit Gülyurt - Font Kütüphanesi{% endblock %}">
+  <meta name="twitter:image"       content="{% block tw_image %}https://image.yigitgulyurt.net.tr/file/yigitgulyurt/main/favicon.svg{% endblock %}">
+
+  {# ---- Favicon ---- #}
+  <link rel="icon" type="image/svg+xml" href="https://image.yigitgulyurt.net.tr/file/yigitgulyurt/main/favicon.svg">
+
+  {# ---- Styles & Fonts ---- #}
+  <link rel="preconnect" href="https://font.yigitgulyurt.net.tr">
+  <link rel="stylesheet" href="https://font.yigitgulyurt.net.tr/css2?family=Montserrat:ital,wght@0,100..900;1,100..900&family=JetBrains+Mono+NL:ital,wght@0,100..800;1,100..800&display=swap">
+  <link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css">
+  
+  <style>
+    :root {
+      --color-bg: #0d1117;
+      --color-bg-secondary: #161b22;
+      --color-border: #30363d;
+      --color-text: #c9d1d9;
+      --color-text-secondary: #8b949e;
+      --color-accent: #58a6ff;
+      --color-accent-glow: rgba(88, 166, 255, 0.15);
+      --color-success: #238636;
+      --color-warning: #d29922;
+      --color-error: #f85149;
+      --color-red: #f85149;
+    }
+  </style>
+  
+  {# ---- Structured Data ---- #}
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "WebSite",
+    "name": "Font Kütüphanesi",
+    "url": "https://font.yigitgulyurt.net.tr/",
+    "author": {
+      "@type": "Person",
+      "name": "Yiğit Gülyurt",
+      "url": "https://yigitgulyurt.net.tr/"
+    }
+  }
+  </script>
+  
+  {% block head %}{% endblock %}
+</head>
+<body>
+
+  <nav class="nav">
+    <a class="nav-logo" href="https://font.yigitgulyurt.net.tr">
+      Font Kütüphanesi<span class="cursor"></span>
+    </a>
+    <div class="nav-links">
+      <a href="https://yigitgulyurt.net.tr">ana site</a>
+      <a href="https://yigitgulyurt.net.tr/projects">projeler</a>
+      <a href="https://yigitgulyurt.net.tr/blog">blog</a>
+    </div>
+  </nav>
+
+  {% with messages = get_flashed_messages(with_categories=true) %}
+    {% if messages %}
+      <div class="flash-messages">
+        {% for category, message in messages %}
+          <div class="flash flash-{{ category }}">{{ message }}</div>
+        {% endfor %}
+      </div>
+    {% endif %}
+  {% endwith %}
+
+  <main>
+    {% block content %}{% endblock %}
+  </main>
+
+  <footer class="footer">
+    <div class="footer-copy">© {{ now.year }} Yiğit Gülyurt</div>
+    <div class="footer-links">
+      <a href="https://github.com/yigitgulyurt" target="_blank" rel="noopener">GitHub</a>
+      <a href="https://yigitgulyurt.net.tr/contact">iletişim</a>
+    </div>
+  </footer>
+
+  <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

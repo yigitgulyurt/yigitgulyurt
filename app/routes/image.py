@@ -122,7 +122,7 @@ def index(path=''):
     breadcrumb = build_breadcrumb(path)
     total_items = len(items)
 
-    return render_template('images/index.html',
+    return render_template('image/index.html',
                            items=items,
                            breadcrumb=breadcrumb,
                            total_items=total_items)
