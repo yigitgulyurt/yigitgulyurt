@@ -10,7 +10,7 @@
   {% if message.subject %}
   <div style="font-size:13px;font-weight:500;margin-bottom:16px">{{ message.subject }}</div>
   {% endif %}
-  <div style="font-size:13px;line-height:1.8;color:var(--text2)">{{ message.message|replace('\n', '<br>')|safe }}</div>
+  <div style="font-size:13px;line-height:1.8;color:var(--text2);white-space:pre-wrap">{{ message.message }}</div>
   <div style="margin-top:16px;font-size:11px;color:var(--text2)">{{ message.created_at.strftime('%Y-%m-%d %H:%M') }}</div>
 </div>
 {% endblock %}
