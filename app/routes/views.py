@@ -548,6 +548,12 @@ def split_long_lines(text, max_len=80):
             words = line.split()
             current_line = ''
             for word in words:
+                while len(word) > max_len:
+                    if current_line:
+                        lines.append(current_line)
+                        current_line = ''
+                    lines.append(word[:max_len])
+                    word = word[max_len:]
                 if len(current_line) + len(word) + 1 <= max_len:
                     current_line = (current_line + ' ' + word) if current_line else word
                 else:
