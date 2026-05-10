@@ -224,7 +224,6 @@ def sitemap():
         ('blog.index',    '0.9',  'weekly'),
         ('contact.index', '0.5',  'monthly'),
         ('main.qr_okuyucu', '0.8',  'monthly'),
-        ('font.index', '0.8',  'monthly'),
     ]
     for endpoint, priority, changefreq in static_pages:
         pages.append({
@@ -233,6 +232,12 @@ def sitemap():
             'changefreq': changefreq,
             'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
         })
+    pages.append({
+        'loc': 'https://font.yigitgulyurt.net.tr/',
+        'priority': '0.9',
+        'changefreq': 'weekly',
+        'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
+    })
     for p in Project.query.all():
         pages.append({
             'loc': base + url_for('projects.detail', slug=p.slug),
