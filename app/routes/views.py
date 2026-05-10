@@ -338,12 +338,12 @@ def index():
 # --- Admin Routes ---
 @admin_bp.route('/giris', methods=['GET', 'POST'])
 def login():
-    if current_user.is_authenticated: return redirect(url_for('admin.dashboard'))
+    if current_user.is_authenticated: return redirect(url_for('admin.index'))
     if request.method == 'POST':
         user = Admin.query.filter_by(username=request.form['username']).first()
         if user and user.check_password(request.form['password']):
             login_user(user)
-            return redirect(url_for('admin.dashboard'))
+            return redirect(url_for('admin.index'))
         flash('Hatalı kullanıcı adı veya şifre.', 'error')
     return render_template('admin/login.html')
 
@@ -355,14 +355,14 @@ def logout():
 
 @admin_bp.route('/')
 @login_required
-def dashboard():
+def index():
     stats = {
         'projects': Project.query.count(),
         'posts': BlogPost.query.count(),
         'messages': ContactMessage.query.filter_by(read=False).count(),
         'ip_logs': IpLog.query.count(),
     }
-    return render_template('admin/dashboard.html', stats=stats)
+    return render_template('admin/index.html', stats=stats)
 
 @admin_bp.route('/ip-logs/merge', methods=['POST'])
 @login_required
@@ -376,7 +376,7 @@ def merge_ip_logs():
     db.session.commit()
     
     flash(f'{deleted_count} adet mükerrer IP kaydı başarıyla birleştirildi.', 'success')
-    return redirect(url_for('admin.dashboard'))
+    return redirect(url_for('admin.index'))
 
 @admin_bp.route('/projeler')
 @login_required

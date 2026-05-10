@@ -4,20 +4,9 @@
 
 {% block head %}
     <style>
-        :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --card-border: #30363d;
-            --text-main: #c9d1d9;
-            --text-dim: #8b949e;
-            --accent: #58a6ff;
-            --accent-glow: rgba(88, 166, 255, 0.15);
-            --success: #238636;
-        }
-        
         .images-page-wrapper {
             padding: 3rem 0;
-            background-color: var(--bg-color);
+            background-color: var(--color-bg);
             min-height: 100vh;
         }
 
@@ -36,7 +25,7 @@
             flex-wrap: wrap;
             gap: 2rem;
             padding-bottom: 2rem;
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--color-border);
         }
 
         .header-left h1 {
@@ -49,7 +38,7 @@
 
         .header-left p {
             margin: 0.5rem 0 0;
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             font-size: 1.1rem;
         }
 
@@ -59,20 +48,20 @@
             align-items: center;
             gap: 0.8rem;
             padding: 1rem 1.5rem;
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
             border-radius: 12px;
             margin-bottom: 2rem;
         }
 
         .breadcrumb-item {
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             text-decoration: none;
             transition: color 0.2s;
         }
 
         .breadcrumb-item:hover {
-            color: var(--accent);
+            color: var(--color-accent);
         }
 
         .breadcrumb-item.active {
@@ -81,7 +70,7 @@
         }
 
         .breadcrumb-separator {
-            color: var(--card-border);
+            color: var(--color-border);
         }
 
         /* --- Gallery Grid --- */
@@ -92,8 +81,8 @@
         }
 
         .gallery-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
             border-radius: 16px;
             overflow: hidden;
             transition: all 0.2s;
@@ -101,7 +90,7 @@
         }
 
         .gallery-item:hover {
-            border-color: var(--accent);
+            border-color: var(--color-accent);
             transform: translateY(-4px);
             box-shadow: 0 12px 40px rgba(0,0,0,0.4);
         }
@@ -118,7 +107,7 @@
         .gallery-item.folder svg {
             width: 64px;
             height: 64px;
-            color: var(--accent);
+            color: var(--color-accent);
             margin-bottom: 1rem;
         }
 
@@ -149,7 +138,7 @@
         }
 
         .gallery-item.image .image-info .size {
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             font-size: 0.85rem;
         }
 

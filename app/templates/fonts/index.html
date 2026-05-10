@@ -4,20 +4,9 @@
 
 {% block head %}
     <style>
-        :root {
-            --bg-color: #0d1117;
-            --card-bg: #161b22;
-            --card-border: #30363d;
-            --text-main: #c9d1d9;
-            --text-dim: #8b949e;
-            --accent: #58a6ff;
-            --accent-glow: rgba(88, 166, 255, 0.15);
-            --success: #238636;
-        }
-        
         .fonts-page-wrapper {
             padding: 3rem 0;
-            background-color: var(--bg-color);
+            background-color: var(--color-bg);
             min-height: 100vh;
         }
 
@@ -36,7 +25,7 @@
             flex-wrap: wrap;
             gap: 2rem;
             padding-bottom: 2rem;
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--color-border);
         }
 
         .header-left h1 {
@@ -49,7 +38,7 @@
 
         .header-left p {
             margin: 0.5rem 0 0;
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             font-size: 1.1rem;
         }
 
@@ -63,8 +52,8 @@
         }
 
         .control-item {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
             padding: 0.8rem 1.2rem;
             border-radius: 12px;
             display: flex;
@@ -75,7 +64,7 @@
         }
 
         .control-item:focus-within {
-            border-color: var(--accent);
+            border-color: var(--color-accent);
         }
 
         .control-item input {
@@ -92,7 +81,7 @@
             font-size: 0.7rem;
             font-weight: 800;
             text-transform: uppercase;
-            color: var(--accent);
+            color: var(--color-accent);
             letter-spacing: 0.05em;
             white-space: nowrap;
         }
@@ -131,15 +120,15 @@
             text-transform: uppercase;
             letter-spacing: 0.1em;
             padding: 0.3rem 0.8rem;
-            background: rgba(88, 166, 255, 0.1);
-            color: var(--accent);
-            border: 1px solid rgba(88, 166, 255, 0.2);
+            background: var(--color-accent-glow);
+            color: var(--color-accent);
+            border: 1px solid var(--color-border);
             border-radius: 99px;
             font-weight: 600;
         }
 
         .family-info .meta {
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             font-size: 0.95rem;
             margin-top: 0.4rem;
         }
@@ -150,9 +139,9 @@
         }
 
         .action-btn {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
-            color: var(--text-main);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
+            color: var(--color-text);
             padding: 0.6rem 1.2rem;
             border-radius: 8px;
             font-size: 0.85rem;
@@ -165,15 +154,15 @@
         }
 
         .action-btn:hover {
-            border-color: var(--accent);
-            background: var(--accent-glow);
-            color: var(--accent);
+            border-color: var(--color-accent);
+            background: var(--color-accent-glow);
+            color: var(--color-accent);
         }
 
         /* --- Variants List --- */
         .variants-container {
-            background: var(--card-bg);
-            border: 1px solid var(--card-border);
+            background: var(--color-bg-secondary);
+            border: 1px solid var(--color-border);
             border-radius: 20px;
             overflow: hidden;
             box-shadow: 0 10px 30px rgba(0,0,0,0.3);
@@ -184,7 +173,7 @@
             grid-template-columns: 200px 1fr 120px;
             align-items: center;
             padding: 2rem 2.5rem;
-            border-bottom: 1px solid var(--card-border);
+            border-bottom: 1px solid var(--color-border);
             transition: background 0.2s;
         }
 
@@ -198,7 +187,7 @@
 
         .variant-label {
             font-size: 0.85rem;
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
         }
 
         .variant-label .weight-name {
@@ -224,8 +213,8 @@
 
         .copy-variant-btn {
             background: transparent;
-            border: 1px solid var(--card-border);
-            color: var(--text-dim);
+            border: 1px solid var(--color-border);
+            color: var(--color-text-secondary);
             width: 42px;
             height: 42px;
             border-radius: 10px;
@@ -237,15 +226,15 @@
         }
 
         .copy-variant-btn:hover {
-            border-color: var(--accent);
-            color: var(--accent);
-            background: var(--accent-glow);
+            border-color: var(--color-accent);
+            color: var(--color-accent);
+            background: var(--color-accent-glow);
             transform: scale(1.05);
         }
 
         .copy-variant-btn.success {
-            background: var(--success);
-            border-color: var(--success);
+            background: var(--color-success);
+            border-color: var(--color-success);
             color: white;
         }
 
@@ -254,7 +243,7 @@
             display: none;
             text-align: center;
             padding: 5rem;
-            color: var(--text-dim);
+            color: var(--color-text-secondary);
             font-size: 1.2rem;
         }
 
