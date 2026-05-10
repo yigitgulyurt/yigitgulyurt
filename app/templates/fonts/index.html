@@ -409,14 +409,14 @@
 
         function copyFullFamily(btn, family) {
             const cleanFamily = family.replace(/ /g, '+');
-            const code = `<link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@0,100..900;1,100..900&display=swap">`;
+            const code = `<link rel="stylesheet" href="https://font.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@0,100..900;1,100..900&display=swap">`;
             copyToClipboard(code, btn);
         }
 
         function copyVariant(btn, family, weight, style) {
             const cleanFamily = family.replace(/ /g, '+');
             const italVal = style === 'italic' ? '1' : '0';
-            const code = `<link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@${italVal},${weight}&display=swap">`;
+            const code = `<link rel="stylesheet" href="https://font.yigitgulyurt.net.tr/css2?family=${cleanFamily}:ital,wght@${italVal},${weight}&display=swap">`;
             copyToClipboard(code, btn);
         }
     </script>

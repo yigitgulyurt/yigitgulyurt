@@ -83,7 +83,7 @@ html = """
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>OG Image Dashboard</title>
-<link rel="stylesheet" href="https://fonts.yigitgulyurt.net.tr/css2?family=montserrat:ital,wght@0,400;0,700;1,400;1,700&display=swap">
+<link rel="stylesheet" href="https://font.yigitgulyurt.net.tr/css2?family=montserrat:ital,wght@0,400;0,700;1,400;1,700&display=swap">
 
 <style>
 :root {

@@ -1,7 +1,7 @@
 import os
 import re
 
-def generate_font_css(fonts_dir, base_url="https://fonts.yigitgulyurt.net.tr"):
+def generate_font_css(fonts_dir, base_url="https://font.yigitgulyurt.net.tr"):
     """
     Belirtilen dizindeki font dosyalarını tarar ve her font ailesi için 
     kendi klasöründe ayrı bir CSS dosyası oluşturur.
