@@ -146,19 +146,7 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
     <svg id="theme-toggle-light-icon" class="w-5 h-5" fill="currentColor" viewBox="0 -960 960 960"><path d="M480-280q-83 0-141.5-58.5T280-480q0-83 58.5-141.5T480-680q83 0 141.5 58.5T680-480q0 83-58.5 141.5T480-280ZM200-440H40v-80h160v80Zm720 0H760v-80h160v80ZM440-760v-160h80v-160h-80Zm0 720v-160h80v-160h-80ZM256-650l-101-97 57-59 96 100-52 56Zm492 496-97-101 53-55 101 97-57 59Zm-98-550 97-101 59 57-100 96-56-52ZM154-212l101-97 55 53-97 101-59-57Z"></path></svg>
 </button>
 
-<div id="nav-controls" class="relative flex-shrink-0 w-full flex justify-center items-center p-4">
-    <span id="slide-counter" class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 font-sans">Slide 1 of 13</span>
-    <div class="flex items-center space-x-2">
-        <button id="prev-slide" class="bg-white hover:bg-gray-100 text-gray-700 p-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md border-none cursor-pointer" disabled>
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
-        </button>
-        <button id="next-slide" class="bg-white hover:bg-gray-100 text-gray-700 p-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md border-none cursor-pointer">
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
-        </button>
-    </div>
-</div>
-
-<div id="slideshow-holder">
+<div id="slideshow-holder" style="flex-grow: 1;">
 <div id="slideshow-wrapper">
 <div class="slide-container active" id="slide1">
     <div class="title-layout">
@@ -337,6 +325,18 @@ button:disabled { cursor: not-allowed; opacity: 0.5; }
     </div>
 </div>
 </div>
+</div>
+
+<div id="nav-controls" class="relative flex-shrink-0 w-full flex justify-center items-center p-4" style="z-index: 10;">
+    <span id="slide-counter" class="absolute left-4 top-1/2 -translate-y-1/2 text-sm font-medium text-gray-600 font-sans">Slide 1 of 13</span>
+    <div class="flex items-center space-x-2">
+        <button id="prev-slide" class="bg-white hover:bg-gray-100 text-gray-700 p-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md border-none cursor-pointer" disabled>
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M15 19l-7-7 7-7"></path></svg>
+        </button>
+        <button id="next-slide" class="bg-white hover:bg-gray-100 text-gray-700 p-2 rounded-md transition-colors duration-300 disabled:opacity-50 disabled:cursor-not-allowed shadow-md border-none cursor-pointer">
+            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor" stroke-width="2"><path stroke-linecap="round" stroke-linejoin="round" d="M9 5l7 7-7 7"></path></svg>
+        </button>
+    </div>
 </div>
 
 <script>
