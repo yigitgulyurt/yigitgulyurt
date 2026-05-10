@@ -64,7 +64,7 @@
     {% if current_user.is_authenticated %}
       <a href="{{ url_for('obsidian.index') }}">obsidian</a>
       <a href="{{ url_for('main.subdomain') }}">subdomainler</a>
-      <a href="{{ url_for('admin.image') }}">görseller</a>
+      <a href="{{ url_for('image.index') }}">görseller</a>
       <a href="{{ url_for('font.index') }}">fontlar</a>
       <a href="{{ url_for('admin.index') }}">admin</a>
     {% endif %}
