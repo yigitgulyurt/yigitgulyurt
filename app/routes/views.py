@@ -765,6 +765,7 @@ def unit_converter():
 def file_converter():
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
     MAX_URL_RESPONSE_SIZE = 50 * 1024 * 1024  # 50 MB
+    PBKDF2_ITERATIONS = 100000
 
     if request.method == 'POST':
         from io import BytesIO
@@ -780,6 +781,11 @@ def file_converter():
         import openpyxl
         from pptx import Presentation
         from urllib.parse import urlparse
+        from cryptography.hazmat.primitives.kdf.pbkdf2 import PBKDF2HMAC
+        from cryptography.hazmat.primitives import hashes
+        from cryptography.hazmat.backends import default_backend
+        from cryptography.hazmat.primitives.ciphers.aead import AESGCM
+        import os
 
         files = []
         target_format = request.form.get('target_format')
@@ -886,6 +892,115 @@ def file_converter():
                     download_name='birlesmis.pdf',
                     mimetype='application/pdf'
                 )
+            elif operation == 'encrypt':
+                password = request.form.get('password', '')
+                if not password or len(password) < 8:
+                    return jsonify({'error': 'Şifre en az 8 karakter olmalı'}), 400
+                
+                processed_files = []
+                for file in files:
+                    if file.filename == '':
+                        continue
+                    
+                    file_content = file.read()
+                    salt = os.urandom(16)
+                    iv = os.urandom(12)
+                    
+                    kdf = PBKDF2HMAC(
+                        algorithm=hashes.SHA256(),
+                        length=32,
+                        salt=salt,
+                        iterations=PBKDF2_ITERATIONS,
+                        backend=default_backend()
+                    )
+                    key = kdf.derive(password.encode('utf-8'))
+                    aesgcm = AESGCM(key)
+                    encrypted_data = aesgcm.encrypt(iv, file_content, associated_data=None)
+                    final_data = salt + iv + encrypted_data
+                    
+                    processed_files.append((file.filename + '.encrypted', final_data))
+                
+                if len(processed_files) == 1:
+                    filename, content = processed_files[0]
+                    output_buffer = BytesIO(content)
+                    output_buffer.seek(0)
+                    return send_file(
+                        output_buffer,
+                        as_attachment=True,
+                        download_name=filename,
+                        mimetype='application/octet-stream'
+                    )
+                else:
+                    zip_buffer = BytesIO()
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for filename, content in processed_files:
+                            zipf.writestr(filename, content)
+                    zip_buffer.seek(0)
+                    return send_file(
+                        zip_buffer,
+                        as_attachment=True,
+                        download_name='sifreli_dosyalar.zip',
+                        mimetype='application/zip'
+                    )
+            elif operation == 'decrypt':
+                password = request.form.get('password', '')
+                if not password:
+                    return jsonify({'error': 'Lütfen şifrenizi girin'}), 400
+                
+                processed_files = []
+                for file in files:
+                    if file.filename == '':
+                        continue
+                    
+                    file_content = file.read()
+                    if len(file_content) < 28:
+                        return jsonify({'error': f'{file.filename} geçersiz şifreli dosya'}), 400
+                    
+                    salt = file_content[:16]
+                    iv = file_content[16:28]
+                    encrypted_data = file_content[28:]
+                    
+                    try:
+                        kdf = PBKDF2HMAC(
+                            algorithm=hashes.SHA256(),
+                            length=32,
+                            salt=salt,
+                            iterations=PBKDF2_ITERATIONS,
+                            backend=default_backend()
+                        )
+                        key = kdf.derive(password.encode('utf-8'))
+                        aesgcm = AESGCM(key)
+                        decrypted_data = aesgcm.decrypt(iv, encrypted_data, associated_data=None)
+                        
+                        original_filename = file.filename.replace('.encrypted', '')
+                        if original_filename == file.filename:
+                            original_filename = f'decrypted_{file.filename}'
+                        
+                        processed_files.append((original_filename, decrypted_data))
+                    except Exception:
+                        return jsonify({'error': 'Hatalı şifre veya bozuk dosya'}), 400
+                
+                if len(processed_files) == 1:
+                    filename, content = processed_files[0]
+                    output_buffer = BytesIO(content)
+                    output_buffer.seek(0)
+                    return send_file(
+                        output_buffer,
+                        as_attachment=True,
+                        download_name=filename
+                    )
+                else:
+                    zip_buffer = BytesIO()
+                    with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                        for filename, content in processed_files:
+                            zipf.writestr(filename, content)
+                    zip_buffer.seek(0)
+                    return send_file(
+                        zip_buffer,
+                        as_attachment=True,
+                        download_name='cozulmus_dosyalar.zip',
+                        mimetype='application/zip'
+                    )
 
             for file in files:
                 if file.filename == '':

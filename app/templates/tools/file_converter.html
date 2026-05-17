@@ -1604,15 +1604,16 @@ function updateProgress(percent, label) {
 }
 
 async function processFiles() {
-    if (!selectedFiles.length) return;
+    if (currentUploadMode === 'file' && !selectedFiles.length) return;
+    if (currentUploadMode === 'url' && !selectedUrl) return;
     
-    if (currentOperation === 'merge_pdf') {
+    if (currentUploadMode === 'file' && currentOperation === 'merge_pdf') {
         const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
         if (!allPdf) {
             showToast('Sadece PDF dosyalarını seçin!', 'error');
             return;
         }
-    } else if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
+    } else if (currentUploadMode === 'file' && (currentOperation === 'encrypt' || currentOperation === 'decrypt')) {
         const password = encryptionPassword.value;
         if (!password || (currentOperation === 'encrypt' && password.length < 8)) {
             showToast(
@@ -1704,7 +1705,7 @@ async function processFiles() {
         }
         
         return;
-    } else if (!targetFormat.value) {
+    } else if (currentUploadMode === 'file' && !targetFormat.value) {
         return;
     }
 
@@ -1770,9 +1771,21 @@ async function processFiles() {
             }
         } else if (currentOperation === 'merge_pdf') {
             finalFilename = 'birlesmis.pdf';
-        } else if (selectedFiles.length === 1) {
+        } else if (currentUploadMode === 'file' && selectedFiles.length === 1) {
             const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, '');
             finalFilename = `${baseName}.${targetFormat.value}`;
+        } else if (currentUploadMode === 'url') {
+            const urlFilename = selectedUrl.split('/').pop() || 'indirilen_dosya';
+            const baseName = urlFilename.replace(/\.[^/.]+$/, '');
+            if (currentOperation === 'encrypt') {
+                finalFilename = `${baseName}.encrypted`;
+            } else if (currentOperation === 'decrypt') {
+                finalFilename = baseName.replace('.encrypted', '') || `decrypted_${baseName}`;
+            } else if (targetFormat.value) {
+                finalFilename = `${baseName}.${targetFormat.value}`;
+            } else {
+                finalFilename = baseName;
+            }
         } else {
             finalFilename = 'islenmis_dosyalar.zip';
         }
@@ -1788,13 +1801,22 @@ async function processFiles() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
-        if (currentOperation === 'convert' && selectedFiles.length > 0) {
-            const fromFormat = getFileType(selectedFiles[0].name);
-            const toFormat = targetFormat.value;
-            addToHistory(fromFormat, toFormat, currentOperation, selectedFiles.length);
-            addToFavorite(toFormat);
+        if (currentOperation === 'convert') {
+            let fromFormat;
+            if (currentUploadMode === 'file' && selectedFiles.length > 0) {
+                fromFormat = getFileType(selectedFiles[0].name);
+                addToHistory(fromFormat, targetFormat.value, currentOperation, selectedFiles.length);
+            } else if (currentUploadMode === 'url') {
+                const urlFilename = selectedUrl.split('/').pop() || 'indirilen_dosya';
+                fromFormat = getFileType(urlFilename);
+                addToHistory(fromFormat, targetFormat.value, currentOperation, 1);
+            }
+            addToFavorite(targetFormat.value);
         } else if (currentOperation === 'merge_pdf') {
             addToHistory(null, null, currentOperation, selectedFiles.length);
+        } else if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
+            let count = currentUploadMode === 'file' ? selectedFiles.length : 1;
+            addToHistory(null, null, currentOperation, count);
         }
         
         showToast(
