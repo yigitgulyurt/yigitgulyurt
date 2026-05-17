@@ -7,7 +7,7 @@ class Config:
     ADMIN_PASSWORD_HASH            = os.environ.get('ADMIN_PASSWORD_HASH')
     ADMIN_USERNAME                 = os.environ.get('ADMIN_USERNAME')       or 'admin'
     CONTACT_EMAIL                  = os.environ.get('CONTACT_EMAIL')        or 'yigit@yigitgulyurt.net.tr'
-    MAX_CONTENT_LENGTH             = 5 * 1024 * 1024  # 5MB
+    MAX_CONTENT_LENGTH             = 50 * 1024 * 1024  # 50MB
     OBSIDIAN_PASSWORD              = os.environ.get('OBSIDIAN_PASSWORD')    or ''
     OBSIDIAN_VAULT_PATH            = os.environ.get('OBSIDIAN_VAULT_PATH')  or '/mnt/obsidian'
     REDIS_URL                      = os.environ.get('REDIS_URL')            or 'redis://localhost:6379/0'

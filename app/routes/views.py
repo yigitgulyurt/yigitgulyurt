@@ -826,6 +826,7 @@ def file_converter():
                 file_content = file.read()
 
                 is_image = False
+                is_svg = False
                 is_text = False
                 is_docx = False
                 is_pdf = False
@@ -837,6 +838,10 @@ def file_converter():
                     is_image = True
                 except Exception:
                     pass
+
+                if file_ext == 'svg':
+                    is_svg = True
+                    is_image = True
 
                 text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs']
                 is_text = file_ext in text_extensions
@@ -855,7 +860,13 @@ def file_converter():
 
                 if operation == 'convert':
                     if target_format == 'pdf':
-                        if is_image:
+                        if is_svg:
+                            from svglib.svglib import svg2rlg
+                            from reportlab.graphics import renderPDF
+                            drawing = svg2rlg(BytesIO(file_content))
+                            renderPDF.drawToFile(drawing, output_buffer)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                        elif is_image:
                             img = Image.open(BytesIO(file_content))
                             if img.mode in ('RGBA', 'P'):
                                 img = img.convert('RGB')
@@ -950,7 +961,36 @@ def file_converter():
                             return jsonify({'error': f'{original_filename} bu dosya türü PDF\'ye dönüştürülemez'}), 400
 
                     elif target_format in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']:
-                        if is_image:
+                        if is_svg:
+                            from svglib.svglib import svg2rlg
+                            from reportlab.graphics import renderPDF
+                            from pdf2image import convert_from_bytes
+                            import os
+                            temp_pdf_buffer = BytesIO()
+                            drawing = svg2rlg(BytesIO(file_content))
+                            renderPDF.drawToFile(drawing, temp_pdf_buffer)
+                            temp_pdf_buffer.seek(0)
+                            poppler_path = None
+                            if os.path.exists('/usr/bin'):
+                                poppler_path = '/usr/bin'
+                            elif os.path.exists('/usr/local/bin'):
+                                poppler_path = '/usr/local/bin'
+                            convert_kwargs = {}
+                            if poppler_path:
+                                convert_kwargs['poppler_path'] = poppler_path
+                            images = convert_from_bytes(temp_pdf_buffer.getvalue(), **convert_kwargs)
+                            img = images[0]
+                            if target_format in ['jpg', 'jpeg']:
+                                if img.mode in ('RGBA', 'P'):
+                                    img = img.convert('RGB')
+                                img.save(output_buffer, format='JPEG', quality=95)
+                            else:
+                                if target_format == 'webp' and img.mode in ('RGBA', 'P'):
+                                    img.save(output_buffer, format='WEBP', quality=90)
+                                else:
+                                    img.save(output_buffer, format=target_format.upper())
+                            output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                        elif is_image:
                             img = Image.open(BytesIO(file_content))
                             if target_format in ['jpg', 'jpeg']:
                                 if img.mode in ('RGBA', 'P'):
