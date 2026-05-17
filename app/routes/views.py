@@ -281,6 +281,37 @@ def shorten():
     db.session.commit()
     return jsonify({'short_id': short_id, 'short_domain': short_domain_val})
 
+@main_bp.route('/api/qr', methods=['POST'])
+@limiter.limit("60 per hour", methods=['POST'])
+def generate_qr():
+    import qrcode
+    from io import BytesIO
+    
+    data = request.get_json(silent=True, force=True) or {}
+    text = data.get('text', data.get('url', '')).strip()
+    if not text:
+        return jsonify({'error': 'Metin veya URL gerekli'}), 400
+    
+    size = int(data.get('size', 256))
+    border = int(data.get('border', 2))
+    
+    qr = qrcode.QRCode(
+        version=1,
+        error_correction=qrcode.constants.ERROR_CORRECT_L,
+        box_size=10,
+        border=border,
+    )
+    qr.add_data(text)
+    qr.make(fit=True)
+    
+    img = qr.make_image(fill_color="black", back_color="white")
+    
+    buffer = BytesIO()
+    img.save(buffer, format='PNG')
+    buffer.seek(0)
+    
+    return send_file(buffer, mimetype='image/png')
+
 @main_bp.route('/r/<short_id>')
 @main_bp.route('/r/<short_domain>/<short_id>')
 def redirect_url(short_id, short_domain=None):
