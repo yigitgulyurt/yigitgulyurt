@@ -830,10 +830,25 @@ def file_converter():
                         def __init__(self, filename, content):
                             self.filename = filename
                             self._content = content
-                        def read(self):
-                            return self._content
-                        def seek(self, pos):
-                            pass
+                            self._pos = 0
+                            self.content_length = len(content)
+                        def read(self, size=None):
+                            if size is None:
+                                result = self._content[self._pos:]
+                                self._pos = len(self._content)
+                                return result
+                            result = self._content[self._pos:self._pos + size]
+                            self._pos += len(result)
+                            return result
+                        def seek(self, pos, whence=0):
+                            if whence == 0:
+                                self._pos = pos
+                            elif whence == 1:
+                                self._pos += pos
+                            elif whence == 2:
+                                self._pos = len(self._content) + pos
+                        def tell(self):
+                            return self._pos
                     
                     files.append(FileObj(filename, content))
                     
@@ -876,13 +891,27 @@ def file_converter():
                 if file.filename == '':
                     continue
 
-                if len(file.read()) > MAX_FILE_SIZE:
+                file_size = 0
+                pre_read_content = None
+                if hasattr(file, 'content_length') and file.content_length:
+                    file_size = file.content_length
+                elif hasattr(file, 'seek') and hasattr(file, 'tell'):
+                    file.seek(0, 2)
+                    file_size = file.tell()
+                    file.seek(0)
+                else:
+                    pre_read_content = file.read()
+                    file_size = len(pre_read_content)
+                
+                if file_size > MAX_FILE_SIZE:
                     return jsonify({'error': f'{file.filename} çok büyük (max 50 MB)'}), 400
-                file.seek(0)
 
                 original_filename = secure_filename(file.filename)
                 file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
-                file_content = file.read()
+                if pre_read_content is not None:
+                    file_content = pre_read_content
+                else:
+                    file_content = file.read()
 
                 is_image = False
                 is_svg = False
