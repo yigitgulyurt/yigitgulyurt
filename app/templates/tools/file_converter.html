@@ -925,6 +925,7 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://js.yigitgulyurt"></script>
 <script>
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
@@ -1636,6 +1637,7 @@ async function processFiles() {
         }
         
         try {
+            const results = [];
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
                 const arrayBuffer = await file.arrayBuffer();
@@ -1654,7 +1656,19 @@ async function processFiles() {
                     }
                 }
                 
-                const resultBlob = new Blob([resultBuffer], { type: 'application/octet-stream' });
+                results.push({ filename, data: resultBuffer });
+                
+                const progress = Math.round(((i + 1) / selectedFiles.length) * 100);
+                if (currentOperation === 'encrypt') {
+                    updateProgress(progress, `<span class="lang-tr">Şifreleniyor... %${progress}</span><span class="lang-en">Encrypting... %${progress}</span>`);
+                } else {
+                    updateProgress(progress, `<span class="lang-tr">Şifre çözülüyor... %${progress}</span><span class="lang-en">Decrypting... %${progress}</span>`);
+                }
+            }
+            
+            if (results.length === 1) {
+                const { filename, data } = results[0];
+                const resultBlob = new Blob([data], { type: 'application/octet-stream' });
                 const url = window.URL.createObjectURL(resultBlob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1663,13 +1677,21 @@ async function processFiles() {
                 a.click();
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
-                
-                const progress = Math.round(((i + 1) / selectedFiles.length) * 100);
-                if (currentOperation === 'encrypt') {
-                    updateProgress(progress, `<span class="lang-tr">Şifreleniyor... %${progress}</span><span class="lang-en">Encrypting... %${progress}</span>`);
-                } else {
-                    updateProgress(progress, `<span class="lang-tr">Şifre çözülüyor... %${progress}</span><span class="lang-en">Decrypting... %${progress}</span>`);
-                }
+            } else {
+                const zip = new JSZip();
+                results.forEach(({ filename, data }) => {
+                    zip.file(filename, data);
+                });
+                const zipBlob = await zip.generateAsync({ type: 'blob' });
+                const zipFilename = currentOperation === 'encrypt' ? 'sifreli_dosyalar.zip' : 'cozulmus_dosyalar.zip';
+                const url = window.URL.createObjectURL(zipBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = zipFilename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
             }
             
             updateProgress(100, `<span class="lang-tr">Tamamlandı!</span><span class="lang-en">Completed!</span>`);
