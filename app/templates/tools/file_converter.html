@@ -859,8 +859,8 @@ async function processFiles() {
             const currentWidth = parseInt(progressBar.style.width) || 0;
             if (currentWidth < 99) {
                 progressStep++;
-                const exponent = progressStep / 20;
-                const newWidth = Math.min(Math.round(99 * (1 - Math.pow(0.995, exponent))), 99);
+                const exponent = progressStep / 12;
+                const newWidth = Math.min(Math.round(99 * (1 - Math.pow(0.99, exponent))), 99);
                 const percentText = Math.round(newWidth);
                 updateProgress(
                     newWidth, 
