@@ -1791,7 +1791,7 @@ async function processFiles() {
             }
         }, 80);
 
-        const response = await fetch('/api/file-converter', {
+        const response = await fetch(window.location.href, {
             method: 'POST',
             body: formData
         });

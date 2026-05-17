@@ -312,15 +312,6 @@ def generate_qr():
     
     return send_file(buffer, mimetype='image/png')
 
-@main_bp.route('/api/file-converter', methods=['POST'])
-@tools_bp.route('/api/file-converter', methods=['POST'])
-@limiter.limit("30 per hour", methods=['POST'])
-def api_file_converter():
-    from flask import request
-    
-    global file_converter
-    return file_converter() if request.method == 'POST' else jsonify({'error': 'Sadece POST istekleri kabul edilir'}), 405
-
 @main_bp.route('/r/<short_id>')
 @main_bp.route('/r/<short_domain>/<short_id>')
 def redirect_url(short_id, short_domain=None):
