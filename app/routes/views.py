@@ -1154,7 +1154,7 @@ def file_converter():
                         if is_video:
                             import tempfile
                             import os
-                            import ffmpeg
+                            import subprocess
                             try:
                                 with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as temp_in:
                                     temp_in.write(file_content)
@@ -1162,9 +1162,15 @@ def file_converter():
                                 
                                 temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
                                 
-                                stream = ffmpeg.input(temp_in_path)
-                                stream = ffmpeg.output(stream, temp_out_path)
-                                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+                                ffmpeg_path = '/usr/bin/ffmpeg'
+                                if not os.path.exists(ffmpeg_path):
+                                    ffmpeg_path = 'ffmpeg'
+                                
+                                cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
+                                result = subprocess.run(cmd, capture_output=True, text=True)
+                                
+                                if result.returncode != 0:
+                                    raise Exception(f'FFmpeg hatası: {result.stderr}')
                                 
                                 with open(temp_out_path, 'rb') as f:
                                     output_buffer.write(f.read())
@@ -1182,7 +1188,7 @@ def file_converter():
                         if is_audio or is_video:
                             import tempfile
                             import os
-                            import ffmpeg
+                            import subprocess
                             try:
                                 input_ext = file_ext
                                 with tempfile.NamedTemporaryFile(suffix=f'.{input_ext}', delete=False) as temp_in:
@@ -1191,9 +1197,15 @@ def file_converter():
                                 
                                 temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
                                 
-                                stream = ffmpeg.input(temp_in_path)
-                                stream = ffmpeg.output(stream, temp_out_path)
-                                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+                                ffmpeg_path = '/usr/bin/ffmpeg'
+                                if not os.path.exists(ffmpeg_path):
+                                    ffmpeg_path = 'ffmpeg'
+                                
+                                cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
+                                result = subprocess.run(cmd, capture_output=True, text=True)
+                                
+                                if result.returncode != 0:
+                                    raise Exception(f'FFmpeg hatası: {result.stderr}')
                                 
                                 with open(temp_out_path, 'rb') as f:
                                     output_buffer.write(f.read())
