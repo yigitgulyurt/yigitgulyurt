@@ -4,23 +4,7 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
-  <style>
-    .theme-toggle {
-      background: transparent;
-      border: 0.5px solid var(--border);
-      border-radius: 4px;
-      padding: 3px 8px;
-      font-size: 12px;
-      cursor: pointer;
-      transition: all .15s;
-      color: var(--text2);
-    }
 
-    .theme-toggle:hover {
-      color: var(--text);
-      border-color: var(--text2);
-    }
-  </style>
 
   {# ---- Temel meta ---- #}
   <title>{% block title %}Yiğit Gülyurt{% endblock %} | Portfolyo</title>
@@ -110,9 +94,6 @@
         <span class="lang-en">live</span>
       </a>
       {% endif %}
-      <button class="theme-toggle" id="themeToggle" title="Temayı değiştir">
-        🌙
-      </button>
       <button class="lang-btn" id="langbtn" onclick="toggleLang()">EN</button>
     </div>
   </nav>
@@ -145,32 +126,6 @@
   </footer>
 
   <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.js"></script>
-  <script>
-    const themeToggle = document.getElementById('themeToggle');
-
-    function initTheme() {
-      const savedTheme = localStorage.getItem('siteTheme');
-      if (savedTheme) {
-        document.documentElement.setAttribute('data-theme', savedTheme);
-        updateThemeIcon(savedTheme);
-      }
-    }
-
-    function toggleTheme() {
-      const currentTheme = document.documentElement.getAttribute('data-theme');
-      const newTheme = currentTheme === 'light' ? 'dark' : 'light';
-      document.documentElement.setAttribute('data-theme', newTheme);
-      localStorage.setItem('siteTheme', newTheme);
-      updateThemeIcon(newTheme);
-    }
-
-    function updateThemeIcon(theme) {
-      themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
-    }
-
-    initTheme();
-    themeToggle.addEventListener('click', toggleTheme);
-  </script>
   <script>
     if ('serviceWorker' in navigator) {
       window.addEventListener('load', function() {
