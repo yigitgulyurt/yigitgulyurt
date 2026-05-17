@@ -550,6 +550,67 @@
     color: var(--text2);
 }
 
+.header-section {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    position: relative;
+}
+
+.sound-toggle-wrapper {
+    position: absolute;
+    top: 0;
+    right: 0;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.sound-icon {
+    font-size: 1.5rem;
+    cursor: pointer;
+    user-select: none;
+    transition: transform 0.2s;
+}
+
+.sound-icon:hover {
+    transform: scale(1.1);
+}
+
+.sound-toggle {
+    width: 48px;
+    height: 26px;
+    background: var(--bg3);
+    border-radius: 13px;
+    position: relative;
+    cursor: pointer;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
+}
+
+.sound-toggle.active {
+    background: linear-gradient(135deg, #3b82f6 0%, #1d4ed8 100%);
+    border-color: rgba(37, 99, 235, 0.5);
+    box-shadow: 0 4px 12px rgba(37, 99, 235, 0.3);
+}
+
+.sound-toggle-knob {
+    width: 20px;
+    height: 20px;
+    background: white;
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
+}
+
+.sound-toggle.active .sound-toggle-knob {
+    left: 24px;
+}
+
 .keyboard-hint-item {
     display: flex;
     align-items: center;
@@ -589,6 +650,12 @@
             <span class="lang-tr">Resimleri, metinleri, PDF, Excel ve PowerPoint dosyalarını dönüştürün ve birleştirin</span>
             <span class="lang-en">Convert and merge images, text, PDF, Excel, and PowerPoint files</span>
         </p>
+        <div class="sound-toggle-wrapper">
+            <span class="sound-icon" id="soundIcon">🔊</span>
+            <div class="sound-toggle" id="soundToggle" onclick="toggleSound()">
+                <div class="sound-toggle-knob"></div>
+            </div>
+        </div>
     </div>
 
     <div class="operation-tabs">
@@ -780,9 +847,48 @@ const operationTabs = document.querySelectorAll('.operation-tab');
 const uploadHint = document.getElementById('uploadHint');
 const historyList = document.getElementById('historyList');
 const encryptionPassword = document.getElementById('encryptionPassword');
+const soundToggle = document.getElementById('soundToggle');
+const soundIcon = document.getElementById('soundIcon');
+
+let audioContext = null;
+let soundEnabled = true;
 
 let selectedFiles = [];
 let currentOperation = 'convert';
+
+function toggleSound() {
+    soundEnabled = !soundEnabled;
+    soundToggle.classList.toggle('active', soundEnabled);
+    soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
+    localStorage.setItem('soundEnabled', soundEnabled);
+}
+
+function playNotificationSound() {
+    if (!soundEnabled) return;
+    
+    try {
+        if (!audioContext) {
+            audioContext = new (window.AudioContext || window.webkitAudioContext)();
+        }
+        
+        const oscillator = audioContext.createOscillator();
+        const gainNode = audioContext.createGain();
+        
+        oscillator.connect(gainNode);
+        gainNode.connect(audioContext.destination);
+        
+        oscillator.frequency.value = 880;
+        oscillator.type = 'sine';
+        
+        gainNode.gain.setValueAtTime(0.4, audioContext.currentTime);
+        gainNode.gain.exponentialRampToValueAtTime(0.01, audioContext.currentTime + 0.3);
+        
+        oscillator.start(audioContext.currentTime);
+        oscillator.stop(audioContext.currentTime + 0.3);
+    } catch (e) {
+        console.error('Error playing sound:', e);
+    }
+}
 
 async function deriveKey(password, salt) {
     const encoder = new TextEncoder();
@@ -1381,6 +1487,7 @@ async function processFiles() {
                     'success'
                 );
             }
+            playNotificationSound();
         } catch (error) {
             showToast(
                 document.documentElement.getAttribute('data-lang') === 'en' 
@@ -1485,6 +1592,7 @@ async function processFiles() {
                 : (selectedFiles.length > 1 ? "Dosyalar başarıyla dönüştürüldü!" : "Dosya başarıyla dönüştürüldü!"), 
             "success"
         );
+        playNotificationSound();
     } catch (error) {
         showToast(error.message, "error");
     } finally {
@@ -1580,6 +1688,13 @@ const savedHistoryCollapsed = localStorage.getItem('historyCollapsed');
 if (savedHistoryCollapsed === 'true') {
     document.getElementById('historyHeader').classList.add('collapsed');
     document.getElementById('historyContent').classList.add('collapsed');
+}
+
+const savedSoundEnabled = localStorage.getItem('soundEnabled');
+if (savedSoundEnabled !== null) {
+    soundEnabled = savedSoundEnabled === 'true';
+    soundToggle.classList.toggle('active', soundEnabled);
+    soundIcon.textContent = soundEnabled ? '🔊' : '🔇';
 }
 </script>
 {% endblock %}
