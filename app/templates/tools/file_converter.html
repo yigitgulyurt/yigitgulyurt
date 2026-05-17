@@ -559,6 +559,32 @@
     font-weight: 700;
 }
 
+.keyboard-hints {
+    margin-top: 30px;
+    padding-top: 25px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    flex-wrap: wrap;
+    gap: 10px 20px;
+    font-size: 11px;
+    color: var(--text2);
+}
+
+.keyboard-hint-item {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.keyboard-key {
+    font-family: var(--mono);
+    padding: 3px 8px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 6px;
+    font-size: 10px;
+}
+
 @media (max-width: 600px) {
     .tool-container {
         padding: 20px;
@@ -731,6 +757,34 @@
             <span class="privacy-icon">🔐</span>
             <span class="lang-tr">Bu bilgiler sadece sizin cihazınızda (localStorage) saklanır. Hiçbir sunucuya gönderilmez.</span>
             <span class="lang-en">This information is stored only on your device (localStorage). It is never sent to any server.</span>
+        </div>
+    </div>
+    
+    <div class="keyboard-hints">
+        <div class="keyboard-hint-item">
+            <span class="keyboard-key">Ctrl</span> <span class="keyboard-key">O</span>
+            <span class="lang-tr">Dosya Seç</span>
+            <span class="lang-en">Select File</span>
+        </div>
+        <div class="keyboard-hint-item">
+            <span class="keyboard-key">Ctrl</span> <span class="keyboard-key">Enter</span>
+            <span class="lang-tr">İşlemi Başlat</span>
+            <span class="lang-en">Start Process</span>
+        </div>
+        <div class="keyboard-hint-item">
+            <span class="keyboard-key">Ctrl</span> <span class="keyboard-key">E</span>
+            <span class="lang-tr">Şifreleme Aç/Kapat</span>
+            <span class="lang-en">Toggle Encryption</span>
+        </div>
+        <div class="keyboard-hint-item">
+            <span class="keyboard-key">1</span> <span class="keyboard-key">2</span> <span class="keyboard-key">3</span>
+            <span class="lang-tr">Sekme Değiştir</span>
+            <span class="lang-en">Switch Tab</span>
+        </div>
+        <div class="keyboard-hint-item">
+            <span class="keyboard-key">Esc</span>
+            <span class="lang-tr">Dosyaları Temizle</span>
+            <span class="lang-en">Clear Files</span>
         </div>
     </div>
 </div>
@@ -1486,6 +1540,72 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+document.addEventListener('keydown', (e) => {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA') {
+        if (e.key === 'Escape') {
+            e.target.blur();
+        }
+        return;
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && e.key === 'o') {
+        e.preventDefault();
+        fileInput.click();
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+        e.preventDefault();
+        if (!convertBtn.disabled) {
+            processFiles();
+        }
+    }
+    
+    if ((e.ctrlKey || e.metaKey) && e.key === 'e') {
+        e.preventDefault();
+        if (currentOperation !== 'decrypt') {
+            toggleEncryption();
+        }
+    }
+    
+    if (e.key === '1') {
+        e.preventDefault();
+        setOperation('convert');
+    }
+    
+    if (e.key === '2') {
+        e.preventDefault();
+        setOperation('merge_pdf');
+    }
+    
+    if (e.key === '3') {
+        e.preventDefault();
+        setOperation('decrypt');
+    }
+    
+    if (e.key === 'Escape') {
+        e.preventDefault();
+        selectedFiles = [];
+        updateFilesList();
+        checkProcessEnabled();
+        showToast(
+            document.documentElement.getAttribute('data-lang') === 'en' 
+                ? 'Files cleared!' 
+                : 'Dosyalar temizlendi!', 
+            'success'
+        );
+    }
+});
+
+function setOperation(op) {
+    currentOperation = op;
+    operationTabs.forEach(t => t.classList.remove('active'));
+    const activeTab = Array.from(operationTabs).find(t => t.dataset.operation === op);
+    if (activeTab) {
+        activeTab.classList.add('active');
+    }
+    updateUI();
+}
 
 updateUI();
 renderHistory();
