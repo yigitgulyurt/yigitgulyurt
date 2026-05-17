@@ -302,15 +302,21 @@ const cameraFacingMode = { facingMode: "environment" };
 const isValidUrl = s => { try { new URL(s); return true; } catch { return false; }; };
 
 function setTab(tab) {
+    console.log('setTab called with:', tab);
+    
     if (tab === 'scan') {
         scanTab.classList.add('active');
         generateTab.classList.remove('active');
         scanSection.style.display = 'block';
         generateSection.classList.remove('active');
         
+        console.log('Before scan check - isScanning:', isScanning);
+        
         if (!isScanning) {
+            console.log('Starting scan...');
             startScanning();
         } else {
+            console.log('Stopping and restarting scan...');
             html5QrCode.stop().catch(() => {});
             isScanning = false;
             startScanning();
