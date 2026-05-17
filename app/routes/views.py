@@ -860,6 +860,7 @@ def file_converter():
                             if img.mode in ('RGBA', 'P'):
                                 img = img.convert('RGB')
                             img.save(output_buffer, format='PDF')
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                         elif is_docx:
                             doc = Document(BytesIO(file_content))
                             styles = getSampleStyleSheet()
@@ -889,6 +890,7 @@ def file_converter():
                                     story.append(t)
                                     story.append(Spacer(1, 12))
                             doc_pdf.build(story)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                         elif is_xlsx:
                             wb = openpyxl.load_workbook(BytesIO(file_content))
                             styles = getSampleStyleSheet()
@@ -916,6 +918,7 @@ def file_converter():
                                     story.append(t)
                                     story.append(Spacer(1, 12))
                             doc_pdf.build(story)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                         elif is_pptx:
                             prs = Presentation(BytesIO(file_content))
                             styles = getSampleStyleSheet()
@@ -930,6 +933,7 @@ def file_converter():
                                         story.append(Spacer(1, 6))
                                 story.append(Spacer(1, 12))
                             doc_pdf.build(story)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                         elif is_text or file_ext == 'txt':
                             text = file_content.decode('utf-8', errors='replace')
                             styles = getSampleStyleSheet()
@@ -941,6 +945,7 @@ def file_converter():
                                 else:
                                     story.append(Spacer(1, 6))
                             doc_pdf.build(story)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                         else:
                             return jsonify({'error': f'{original_filename} bu dosya türü PDF\'ye dönüştürülemez'}), 400
 
@@ -956,6 +961,7 @@ def file_converter():
                                     img.save(output_buffer, format='WEBP', quality=90)
                                 else:
                                     img.save(output_buffer, format=target_format.upper())
+                            output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
                         elif is_pdf:
                             try:
                                 from pdf2image import convert_from_bytes
@@ -977,6 +983,7 @@ def file_converter():
                                         img.save(output_buffer, format='JPEG', quality=95)
                                     else:
                                         img.save(output_buffer, format=target_format.upper())
+                                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
                                 else:
                                     zip_buffer = BytesIO()
                                     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -989,12 +996,8 @@ def file_converter():
                                             img_buffer.seek(0)
                                             zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_sayfa_{i}.{target_format}', img_buffer.getvalue())
                                     zip_buffer.seek(0)
-                                    return send_file(
-                                        zip_buffer,
-                                        as_attachment=True,
-                                        download_name=f'{original_filename.rsplit(".", 1)[0]}_sayfalar.zip',
-                                        mimetype='application/zip'
-                                    )
+                                    output_buffer = zip_buffer
+                                    output_filename = original_filename.rsplit('.', 1)[0] + '_sayfalar.zip'
                             except Exception as e:
                                 import os
                                 poppler_paths = ['/usr/bin', '/usr/local/bin']
@@ -1009,12 +1012,14 @@ def file_converter():
                             doc = Document(BytesIO(file_content))
                             text_content = '\n'.join([para.text for para in doc.paragraphs])
                             output_buffer.write(text_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
                         elif is_pdf:
                             pdf_reader = PdfReader(BytesIO(file_content))
                             text_content = ''
                             for page in pdf_reader.pages:
                                 text_content += page.extract_text() + '\n'
                             output_buffer.write(text_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
                         elif is_xlsx:
                             wb = openpyxl.load_workbook(BytesIO(file_content))
                             text_content = ''
@@ -1026,8 +1031,10 @@ def file_converter():
                                     text_content += '\t'.join(row_data) + '\n'
                                 text_content += '\n'
                             output_buffer.write(text_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
                         elif is_text or file_ext == 'txt':
                             output_buffer.write(file_content)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
                         else:
                             return jsonify({'error': f'{original_filename} bu dosya türü TXT\'ye dönüştürülemez'}), 400
 
@@ -1041,6 +1048,7 @@ def file_converter():
                                     row_data = [str(cell) if cell is not None else '' for cell in row]
                                     text_content += ','.join(row_data) + '\n'
                                 output_buffer.write(text_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.csv'
                             else:
                                 zip_buffer = BytesIO()
                                 with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
@@ -1052,12 +1060,8 @@ def file_converter():
                                             text_content += ','.join(row_data) + '\n'
                                         zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_{sheet_name}.csv', text_content.encode('utf-8'))
                                 zip_buffer.seek(0)
-                                return send_file(
-                                    zip_buffer,
-                                    as_attachment=True,
-                                    download_name=f'{original_filename.rsplit(".", 1)[0]}_sayfalar.zip',
-                                    mimetype='application/zip'
-                                )
+                                output_buffer = zip_buffer
+                                output_filename = original_filename.rsplit('.', 1)[0] + '_sayfalar.zip'
                         else:
                             return jsonify({'error': f'{original_filename} sadece Excel dosyaları CSV\'ye dönüştürülebilir'}), 400
 
@@ -1069,6 +1073,7 @@ def file_converter():
                                 html_content += f'<p>{para.text}</p>'
                             html_content += '</body></html>'
                             output_buffer.write(html_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.html'
                         elif is_text or file_ext == 'txt':
                             text = file_content.decode('utf-8', errors='replace')
                             html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title></head><body>'
@@ -1079,6 +1084,7 @@ def file_converter():
                                     html_content += '<br>'
                             html_content += '</body></html>'
                             output_buffer.write(html_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.html'
                         else:
                             return jsonify({'error': f'{original_filename} bu dosya türü HTML\'ye dönüştürülemez'}), 400
 
@@ -1089,8 +1095,10 @@ def file_converter():
                             for para in doc.paragraphs:
                                 md_content += para.text + '\n\n'
                             output_buffer.write(md_content.encode('utf-8'))
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.md'
                         elif is_text or file_ext == 'txt':
                             output_buffer.write(file_content)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '.md'
                         else:
                             return jsonify({'error': f'{original_filename} bu dosya türü Markdown\'a dönüştürülemez'}), 400
 
