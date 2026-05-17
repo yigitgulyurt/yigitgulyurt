@@ -959,7 +959,18 @@ def file_converter():
                         elif is_pdf:
                             try:
                                 from pdf2image import convert_from_bytes
-                                images = convert_from_bytes(file_content)
+                                import os
+                                poppler_path = None
+                                if os.path.exists('/usr/bin'):
+                                    poppler_path = '/usr/bin'
+                                elif os.path.exists('/usr/local/bin'):
+                                    poppler_path = '/usr/local/bin'
+                                
+                                convert_kwargs = {}
+                                if poppler_path:
+                                    convert_kwargs['poppler_path'] = poppler_path
+                                
+                                images = convert_from_bytes(file_content, **convert_kwargs)
                                 if len(images) == 1:
                                     img = images[0]
                                     if target_format in ['jpg', 'jpeg']:
@@ -985,7 +996,11 @@ def file_converter():
                                         mimetype='application/zip'
                                     )
                             except Exception as e:
-                                return jsonify({'error': f'PDF\'den resim dönüşümü için poppler yüklü olmalı. Hata: {str(e)}'}), 400
+                                import os
+                                poppler_paths = ['/usr/bin', '/usr/local/bin']
+                                available_paths = [p for p in poppler_paths if os.path.exists(p)]
+                                path_info = f" (Poppler yolları kontrol edildi: {', '.join(available_paths) if available_paths else 'yol bulunamadı'})"
+                                return jsonify({'error': f'PDF\'den resim dönüşümü için poppler yüklü ve PATH\'de olmalı. Hata: {str(e)}{path_info}'}), 400
                         else:
                             return jsonify({'error': f'{original_filename} sadece resim ve PDF dosyaları resim formatlarına dönüştürülebilir'}), 400
 
