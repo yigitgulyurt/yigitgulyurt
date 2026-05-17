@@ -3,14 +3,14 @@
 {% block title %}Dosya Dönüştürücü | Ücretsiz ve Hızlı{% endblock %}
 
 {% block og_title %}Dosya Dönüştürücü{% endblock %}
-{% block og_description %}Resimleri, metinleri ve DOCX dosyalarını PDF, JPG, PNG ve daha fazlasına dönüştürün. Ücretsiz ve hızlı.{% endblock %}
+{% block og_description %}Resimleri, metinleri, PDF, Excel ve PowerPoint dosyalarını dönüştürün ve birleştirin. Ücretsiz ve hızlı.{% endblock %}
 {% block tw_title %}Dosya Dönüştürücü{% endblock %}
-{% block tw_description %}Resimleri, metinleri ve DOCX dosyalarını PDF, JPG, PNG ve daha fazlasına dönüştürün. Ücretsiz ve hızlı.{% endblock %}
+{% block tw_description %}Resimleri, metinleri, PDF, Excel ve PowerPoint dosyalarını dönüştürün ve birleştirin. Ücretsiz ve hızlı.{% endblock %}
 
 {% block head %}
 <style>
 .tool-container {
-    max-width: 900px;
+    max-width: 1000px;
     margin: 40px auto;
     padding: 30px;
     background: var(--card-bg);
@@ -35,6 +35,37 @@
 .header-section p {
     color: var(--text-dim);
     font-size: 1.1rem;
+}
+
+.operation-tabs {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 30px;
+    flex-wrap: wrap;
+}
+
+.operation-tab {
+    flex: 1;
+    min-width: 120px;
+    padding: 14px 20px;
+    border-radius: 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 2px solid transparent;
+    color: var(--text);
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    text-align: center;
+}
+
+.operation-tab:hover {
+    background: rgba(0, 0, 0, 0.3);
+}
+
+.operation-tab.active {
+    background: rgba(var(--primary-rgb), 0.2);
+    border-color: var(--primary);
+    color: var(--primary);
 }
 
 .upload-area {
@@ -248,6 +279,10 @@
     .header-section h1 {
         font-size: 1.8rem;
     }
+    
+    .operation-tabs {
+        flex-direction: column;
+    }
 }
 </style>
 {% endblock %}
@@ -257,9 +292,20 @@
     <div class="header-section">
         <h1>📄 Dosya Dönüştürücü</h1>
         <p>
-            <span class="lang-tr">Resimleri, metinleri ve DOCX dosyalarını hızlıca dönüştürün</span>
-            <span class="lang-en">Quickly convert images, text, and DOCX files</span>
+            <span class="lang-tr">Resimleri, metinleri, PDF, Excel ve PowerPoint dosyalarını dönüştürün ve birleştirin</span>
+            <span class="lang-en">Convert and merge images, text, PDF, Excel, and PowerPoint files</span>
         </p>
+    </div>
+
+    <div class="operation-tabs">
+        <button class="operation-tab active" data-operation="convert">
+            <span class="lang-tr">🔄 Dönüştür</span>
+            <span class="lang-en">🔄 Convert</span>
+        </button>
+        <button class="operation-tab" data-operation="merge_pdf">
+            <span class="lang-tr">📎 PDF Birleştir</span>
+            <span class="lang-en">📎 Merge PDF</span>
+        </button>
     </div>
 
     <div class="upload-area" id="uploadArea">
@@ -268,41 +314,34 @@
             <span class="lang-tr">Dosyalarınızı buraya sürükleyin veya tıklayın</span>
             <span class="lang-en">Drag and drop your files here or click</span>
         </p>
-        <p class="upload-hint">
-            <span class="lang-tr">Desteklenen formatlar: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX (max 50 MB)</span>
-            <span class="lang-en">Supported formats: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX (max 50 MB)</span>
+        <p class="upload-hint" id="uploadHint">
+            <span class="lang-tr">Desteklenen formatlar: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX, PDF, XLSX, PPTX (max 50 MB)</span>
+            <span class="lang-en">Supported formats: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX, PDF, XLSX, PPTX (max 50 MB)</span>
         </p>
         <input type="file" id="fileInput" multiple style="display: none;">
     </div>
 
     <div class="files-list" id="filesList"></div>
 
-    <div class="format-section">
+    <div class="format-section" id="formatSection">
         <label class="format-label">
             <span class="lang-tr">Hedef Format:</span>
             <span class="lang-en">Target Format:</span>
         </label>
         <select class="format-select" id="targetFormat">
-            <option value="pdf">PDF</option>
-            <option value="jpg">JPG</option>
-            <option value="png">PNG</option>
-            <option value="webp">WEBP</option>
-            <option value="gif">GIF</option>
-            <option value="bmp">BMP</option>
-            <option value="tiff">TIFF</option>
-            <option value="txt">TXT</option>
+            <option value="">Hedef format seçin</option>
         </select>
     </div>
 
-    <button class="convert-btn" id="convertBtn" onclick="convertFiles()" disabled>
-        <span class="lang-tr">Dönüştür</span>
-        <span class="lang-en">Convert</span>
+    <button class="convert-btn" id="convertBtn" onclick="processFiles()" disabled>
+        <span class="lang-tr">İşlemi Başlat</span>
+        <span class="lang-en">Start Process</span>
     </button>
 
     <div class="loading" id="loading">
         <div class="spinner"></div>
-        <span class="lang-tr">Dosyalar dönüştürülüyor...</span>
-        <span class="lang-en">Converting files...</span>
+        <span class="lang-tr">İşlem yapılıyor...</span>
+        <span class="lang-en">Processing...</span>
     </div>
 
     <div class="features-grid">
@@ -331,8 +370,8 @@
         <div class="feature-item">
             <div class="feature-icon">📦</div>
             <div class="feature-title">
-                <span class="lang-tr">Toplu Dönüşüm</span>
-                <span class="lang-en">Batch Conversion</span>
+                <span class="lang-tr">Toplu İşlem</span>
+                <span class="lang-en">Batch Processing</span>
             </div>
             <div class="feature-desc">
                 <span class="lang-tr">Birden fazla dosya aynı anda</span>
@@ -362,18 +401,48 @@ const filesList = document.getElementById('filesList');
 const targetFormat = document.getElementById('targetFormat');
 const convertBtn = document.getElementById('convertBtn');
 const loading = document.getElementById('loading');
+const formatSection = document.getElementById('formatSection');
+const operationTabs = document.querySelectorAll('.operation-tab');
+const uploadHint = document.getElementById('uploadHint');
 
 let selectedFiles = [];
+let currentOperation = 'convert';
 
 const FORMAT_MAPPING = {
     image: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
-    docx: ['pdf', 'txt'],
-    text: ['pdf', 'txt']
+    docx: ['pdf', 'txt', 'html', 'md'],
+    text: ['pdf', 'txt', 'html', 'md'],
+    pdf: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'txt'],
+    xlsx: ['pdf', 'csv', 'txt'],
+    pptx: ['pdf', 'txt']
 };
 
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg', 'ico'];
 const DOCX_EXTS = ['docx'];
 const TEXT_EXTS = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs'];
+const PDF_EXTS = ['pdf'];
+const XLSX_EXTS = ['xlsx'];
+const PPTX_EXTS = ['pptx'];
+
+const FORMAT_NAMES = {
+    pdf: 'PDF',
+    jpg: 'JPG',
+    jpeg: 'JPEG',
+    png: 'PNG',
+    webp: 'WEBP',
+    gif: 'GIF',
+    bmp: 'BMP',
+    tiff: 'TIFF',
+    txt: 'TXT',
+    csv: 'CSV',
+    html: 'HTML',
+    md: 'Markdown'
+};
+
+const OPERATION_HINTS = {
+    convert: 'Desteklenen formatlar: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX, PDF, XLSX, PPTX (max 50 MB)',
+    merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)'
+};
 
 function showToast(message, type) {
     const toast = document.createElement('div');
@@ -396,6 +465,28 @@ function showToast(message, type) {
         toast.style.animation = 'slideOut 0.3s ease';
         setTimeout(() => toast.remove(), 300);
     }, 3000);
+}
+
+operationTabs.forEach(tab => {
+    tab.addEventListener('click', () => {
+        operationTabs.forEach(t => t.classList.remove('active'));
+        tab.classList.add('active');
+        currentOperation = tab.dataset.operation;
+        updateUI();
+    });
+});
+
+function updateUI() {
+    if (currentOperation === 'merge_pdf') {
+        formatSection.style.display = 'none';
+    } else {
+        formatSection.style.display = 'block';
+    }
+    
+    uploadHint.innerHTML = `<span class="lang-tr">${OPERATION_HINTS[currentOperation]}</span><span class="lang-en">${OPERATION_HINTS[currentOperation]}</span>`;
+    
+    updateFormatOptions();
+    checkProcessEnabled();
 }
 
 uploadArea.addEventListener('click', () => fileInput.click());
@@ -428,6 +519,9 @@ function getFileType(filename) {
     if (IMAGE_EXTS.includes(ext)) return 'image';
     if (DOCX_EXTS.includes(ext)) return 'docx';
     if (TEXT_EXTS.includes(ext)) return 'text';
+    if (PDF_EXTS.includes(ext)) return 'pdf';
+    if (XLSX_EXTS.includes(ext)) return 'xlsx';
+    if (PPTX_EXTS.includes(ext)) return 'pptx';
     return 'unknown';
 }
 
@@ -452,6 +546,10 @@ function getAvailableFormats(files) {
 }
 
 function updateFormatOptions() {
+    if (currentOperation === 'merge_pdf') {
+        return;
+    }
+    
     const availableFormats = getAvailableFormats(selectedFiles);
     
     targetFormat.innerHTML = '';
@@ -467,27 +565,15 @@ function updateFormatOptions() {
         defaultOption.textContent = 'Hedef format seçin';
         targetFormat.appendChild(defaultOption);
         
-        const formatNames = {
-            pdf: 'PDF',
-            jpg: 'JPG',
-            jpeg: 'JPEG',
-            png: 'PNG',
-            webp: 'WEBP',
-            gif: 'GIF',
-            bmp: 'BMP',
-            tiff: 'TIFF',
-            txt: 'TXT'
-        };
-        
         availableFormats.forEach(format => {
             const option = document.createElement('option');
             option.value = format;
-            option.textContent = formatNames[format] || format.toUpperCase();
+            option.textContent = FORMAT_NAMES[format] || format.toUpperCase();
             targetFormat.appendChild(option);
         });
     }
     
-    checkConvertEnabled();
+    checkProcessEnabled();
 }
 
 function addFiles(newFiles) {
@@ -534,6 +620,9 @@ function getFileIcon(filename) {
     if (type === 'image') return '🖼️';
     if (type === 'docx') return '📄';
     if (type === 'text') return '📝';
+    if (type === 'pdf') return '📑';
+    if (type === 'xlsx') return '📊';
+    if (type === 'pptx') return '📽️';
     return '📁';
 }
 
@@ -551,20 +640,38 @@ function escapeHtml(text) {
     return div.innerHTML;
 }
 
-targetFormat.addEventListener('change', checkConvertEnabled);
+targetFormat.addEventListener('change', checkProcessEnabled);
 
-function checkConvertEnabled() {
-    convertBtn.disabled = !(selectedFiles.length > 0 && targetFormat.value);
+function checkProcessEnabled() {
+    if (currentOperation === 'merge_pdf') {
+        const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
+        convertBtn.disabled = !(selectedFiles.length > 0 && allPdf);
+    } else {
+        convertBtn.disabled = !(selectedFiles.length > 0 && targetFormat.value);
+    }
 }
 
-async function convertFiles() {
-    if (!selectedFiles.length || !targetFormat.value) return;
+async function processFiles() {
+    if (!selectedFiles.length) return;
+    
+    if (currentOperation === 'merge_pdf') {
+        const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
+        if (!allPdf) {
+            showToast('Sadece PDF dosyalarını seçin!', 'error');
+            return;
+        }
+    } else if (!targetFormat.value) {
+        return;
+    }
 
     const formData = new FormData();
     selectedFiles.forEach(file => {
         formData.append('files', file);
     });
-    formData.append('target_format', targetFormat.value);
+    formData.append('operation', currentOperation);
+    if (currentOperation === 'convert') {
+        formData.append('target_format', targetFormat.value);
+    }
 
     loading.classList.add('show');
     convertBtn.disabled = true;
@@ -586,17 +693,19 @@ async function convertFiles() {
         a.href = url;
         
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'donusturulmus_dosya';
+        let filename = 'islenmis_dosya';
         if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
             if (filenameMatch && filenameMatch[1]) {
                 filename = filenameMatch[1].replace(/['"]/g, '');
             }
+        } else if (currentOperation === 'merge_pdf') {
+            filename = 'birlesmis.pdf';
         } else if (selectedFiles.length === 1) {
             const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, '');
             filename = `${baseName}.${targetFormat.value}`;
         } else {
-            filename = 'donusturulmus_dosyalar.zip';
+            filename = 'islenmis_dosyalar.zip';
         }
         
         a.download = filename;
@@ -606,9 +715,9 @@ async function convertFiles() {
         window.URL.revokeObjectURL(url);
 
         showToast(
-            selectedFiles.length > 1 
-                ? "Dosyalar başarıyla dönüştürüldü!" 
-                : "Dosya başarıyla dönüştürüldü!", 
+            currentOperation === 'merge_pdf' 
+                ? "PDF'ler başarıyla birleştirildi!" 
+                : (selectedFiles.length > 1 ? "Dosyalar başarıyla dönüştürüldü!" : "Dosya başarıyla dönüştürüldü!"), 
             "success"
         );
     } catch (error) {
@@ -631,5 +740,7 @@ style.textContent = `
     }
 `;
 document.head.appendChild(style);
+
+updateUI();
 </script>
 {% endblock %}
