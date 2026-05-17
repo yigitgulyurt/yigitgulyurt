@@ -438,6 +438,102 @@
     font-size: 1.3rem;
 }
 
+.encryption-section {
+    margin-top: 20px;
+    padding: 18px;
+    background: rgba(74, 222, 128, 0.06);
+    border: 1px solid rgba(74, 222, 128, 0.15);
+    border-radius: 12px;
+}
+
+.encryption-toggle-wrapper {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    margin-bottom: 12px;
+}
+
+.encryption-toggle {
+    width: 44px;
+    height: 24px;
+    background: var(--bg3);
+    border-radius: 12px;
+    position: relative;
+    cursor: pointer;
+    transition: background 0.3s;
+    border: 1px solid var(--border);
+}
+
+.encryption-toggle.active {
+    background: rgba(74, 222, 128, 0.4);
+}
+
+.encryption-toggle-knob {
+    width: 18px;
+    height: 18px;
+    background: var(--text2);
+    border-radius: 50%;
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    transition: all 0.3s;
+}
+
+.encryption-toggle.active .encryption-toggle-knob {
+    left: 22px;
+    background: var(--accent);
+}
+
+.encryption-label {
+    font-size: 13px;
+    font-weight: 600;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+}
+
+.encryption-input-wrapper {
+    display: none;
+}
+
+.encryption-input-wrapper.show {
+    display: block;
+}
+
+.encryption-input-group {
+    display: flex;
+    gap: 10px;
+    align-items: flex-end;
+}
+
+.encryption-input {
+    flex: 1;
+    padding: 12px 14px;
+    border-radius: 8px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    color: var(--text);
+    font-family: var(--mono);
+    font-size: 13px;
+    outline: none;
+    transition: border-color 0.15s;
+}
+
+.encryption-input:focus {
+    border-color: var(--accent);
+}
+
+.encryption-note {
+    margin-top: 10px;
+    font-size: 11px;
+    color: var(--text2);
+    line-height: 1.6;
+}
+
+.encryption-note strong {
+    color: var(--accent);
+}
+
 @media (max-width: 600px) {
     .tool-container {
         padding: 20px;
@@ -473,6 +569,10 @@
             <span class="lang-tr">📎 PDF Birleştir</span>
             <span class="lang-en">📎 Merge PDF</span>
         </button>
+        <button class="operation-tab" data-operation="decrypt">
+            <span class="lang-tr">🔓 Şifre Çöz</span>
+            <span class="lang-en">🔓 Decrypt</span>
+        </button>
     </div>
 
     <div class="upload-area" id="uploadArea">
@@ -498,6 +598,28 @@
         <select class="format-select" id="targetFormat">
             <option value="">Hedef format seçin</option>
         </select>
+    </div>
+
+    <div class="encryption-section">
+        <div class="encryption-toggle-wrapper">
+            <div class="encryption-toggle" id="encryptionToggle" onclick="toggleEncryption()">
+                <div class="encryption-toggle-knob"></div>
+            </div>
+            <div class="encryption-label">
+                <span>🔐</span>
+                <span class="lang-tr">Dosyaları Şifrele</span>
+                <span class="lang-en">Encrypt Files</span>
+            </div>
+        </div>
+        <div class="encryption-input-wrapper" id="encryptionInputWrapper">
+            <div class="encryption-input-group">
+                <input type="password" class="encryption-input" id="encryptionPassword" placeholder="Şifre girin (en az 8 karakter)" />
+            </div>
+            <div class="encryption-note">
+                <span class="lang-tr"><strong>Önemli:</strong> Şifrenizi kimseyle paylaşmayın ve saklayın. Şifresiz dosya geri getirilemez! Şifreleme <strong>uçtan uca</strong> yapılır, şifreniz sunucuya gönderilmez.</span>
+                <span class="lang-en"><strong>Important:</strong> Don't share your password and keep it safe. Files cannot be recovered without the password! Encryption is done <strong>end-to-end</strong>, your password is never sent to the server.</span>
+            </div>
+        </div>
     </div>
 
     <button class="convert-btn" id="convertBtn" onclick="processFiles()" disabled>
@@ -604,9 +726,71 @@ const formatSection = document.getElementById('formatSection');
 const operationTabs = document.querySelectorAll('.operation-tab');
 const uploadHint = document.getElementById('uploadHint');
 const historyList = document.getElementById('historyList');
+const encryptionToggle = document.getElementById('encryptionToggle');
+const encryptionInputWrapper = document.getElementById('encryptionInputWrapper');
+const encryptionPassword = document.getElementById('encryptionPassword');
+
+let encryptionEnabled = false;
 
 let selectedFiles = [];
 let currentOperation = 'convert';
+
+function toggleEncryption() {
+    encryptionEnabled = !encryptionEnabled;
+    encryptionToggle.classList.toggle('active', encryptionEnabled);
+    encryptionInputWrapper.classList.toggle('show', encryptionEnabled);
+}
+
+async function deriveKey(password, salt) {
+    const encoder = new TextEncoder();
+    const keyMaterial = await crypto.subtle.importKey(
+        'raw',
+        encoder.encode(password),
+        { name: 'PBKDF2' },
+        false,
+        ['deriveBits', 'deriveKey']
+    );
+    return await crypto.subtle.deriveKey(
+        {
+            name: 'PBKDF2',
+            salt: salt,
+            iterations: 100000,
+            hash: 'SHA-256'
+        },
+        keyMaterial,
+        { name: 'AES-GCM', length: 256 },
+        true,
+        ['encrypt', 'decrypt']
+    );
+}
+
+async function encryptData(data, password) {
+    const salt = crypto.getRandomValues(new Uint8Array(16));
+    const iv = crypto.getRandomValues(new Uint8Array(12));
+    const key = await deriveKey(password, salt);
+    const encrypted = await crypto.subtle.encrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+    );
+    const buffer = new Uint8Array(salt.length + iv.length + encrypted.byteLength);
+    buffer.set(salt, 0);
+    buffer.set(iv, salt.length);
+    buffer.set(new Uint8Array(encrypted), salt.length + iv.length);
+    return buffer;
+}
+
+async function decryptData(encryptedData, password) {
+    const salt = encryptedData.slice(0, 16);
+    const iv = encryptedData.slice(16, 28);
+    const data = encryptedData.slice(28);
+    const key = await deriveKey(password, salt);
+    return await crypto.subtle.decrypt(
+        { name: 'AES-GCM', iv: iv },
+        key,
+        data
+    );
+}
 
 function getHistory() {
     const history = localStorage.getItem('fileConverterHistory');
@@ -768,7 +952,8 @@ const FORMAT_NAMES = {
 
 const OPERATION_HINTS = {
     convert: 'Desteklenen formatlar: Resimler, Metinler, PDF, DOCX, XLSX, PPTX, Videolar (MP4, AVI, MOV, MKV vb.), Sesler (MP3, WAV, OGG, FLAC vb.) (max 50 MB)',
-    merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)'
+    merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)',
+    decrypt: 'Şifrelenmiş dosyaları seçin (.encrypted uzantılı) (max 50 MB)'
 };
 
 function showToast(message, type) {
@@ -804,10 +989,28 @@ operationTabs.forEach(tab => {
 });
 
 function updateUI() {
-    if (currentOperation === 'merge_pdf') {
+    if (currentOperation === 'merge_pdf' || currentOperation === 'decrypt') {
         formatSection.style.display = 'none';
     } else {
         formatSection.style.display = 'block';
+    }
+    
+    if (currentOperation === 'decrypt') {
+        document.querySelector('.encryption-section').style.display = 'block';
+        encryptionToggle.style.display = 'none';
+        encryptionInputWrapper.classList.add('show');
+        encryptionPassword.placeholder = document.documentElement.getAttribute('data-lang') === 'en' 
+            ? 'Enter your password' 
+            : 'Şifrenizi girin';
+    } else {
+        document.querySelector('.encryption-section').style.display = 'block';
+        encryptionToggle.style.display = 'block';
+        if (!encryptionEnabled) {
+            encryptionInputWrapper.classList.remove('show');
+        }
+        encryptionPassword.placeholder = document.documentElement.getAttribute('data-lang') === 'en' 
+            ? 'Enter password (min 8 characters)' 
+            : 'Şifre girin (en az 8 karakter)';
     }
     
     uploadHint.innerHTML = `<span class="lang-tr">${OPERATION_HINTS[currentOperation]}</span><span class="lang-en">${OPERATION_HINTS[currentOperation]}</span>`;
@@ -1016,6 +1219,8 @@ function checkProcessEnabled() {
     if (currentOperation === 'merge_pdf') {
         const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
         convertBtn.disabled = !(selectedFiles.length > 0 && allPdf);
+    } else if (currentOperation === 'decrypt') {
+        convertBtn.disabled = !(selectedFiles.length > 0);
     } else {
         convertBtn.disabled = !(selectedFiles.length > 0 && targetFormat.value);
     }
@@ -1037,8 +1242,86 @@ async function processFiles() {
             showToast('Sadece PDF dosyalarını seçin!', 'error');
             return;
         }
+    } else if (currentOperation === 'decrypt') {
+        const password = encryptionPassword.value;
+        if (!password) {
+            showToast(
+                document.documentElement.getAttribute('data-lang') === 'en' 
+                    ? 'Please enter your password!' 
+                    : 'Lütfen şifrenizi girin!', 
+                'error'
+            );
+            return;
+        }
+        
+        loading.classList.add('show');
+        progressContainer.classList.add('show');
+        convertBtn.disabled = true;
+        updateProgress(0, `<span class="lang-tr">Şifre çözülüyor...</span><span class="lang-en">Decrypting...</span>`);
+        
+        try {
+            for (let i = 0; i < selectedFiles.length; i++) {
+                const file = selectedFiles[i];
+                const arrayBuffer = await file.arrayBuffer();
+                const decryptedBuffer = await decryptData(new Uint8Array(arrayBuffer), password);
+                const decryptedBlob = new Blob([decryptedBuffer], { type: 'application/octet-stream' });
+                
+                let filename = file.name.replace('.encrypted', '');
+                if (filename === file.name) {
+                    filename = `decrypted_${file.name}`;
+                }
+                
+                const url = window.URL.createObjectURL(decryptedBlob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = filename;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                window.URL.revokeObjectURL(url);
+                
+                const progress = Math.round(((i + 1) / selectedFiles.length) * 100);
+                updateProgress(progress, `<span class="lang-tr">Şifre çözülüyor... %${progress}</span><span class="lang-en">Decrypting... %${progress}</span>`);
+            }
+            
+            updateProgress(100, `<span class="lang-tr">Tamamlandı!</span><span class="lang-en">Completed!</span>`);
+            
+            showToast(
+                selectedFiles.length > 1 
+                    ? (document.documentElement.getAttribute('data-lang') === 'en' ? 'Files decrypted successfully!' : 'Dosyaların şifresi başarıyla çözüldü!')
+                    : (document.documentElement.getAttribute('data-lang') === 'en' ? 'File decrypted successfully!' : 'Dosyanın şifresi başarıyla çözüldü!'), 
+                'success'
+            );
+        } catch (error) {
+            showToast(
+                document.documentElement.getAttribute('data-lang') === 'en' 
+                    ? 'Incorrect password or corrupted file!' 
+                    : 'Hatalı şifre veya bozuk dosya!', 
+                'error'
+            );
+        } finally {
+            loading.classList.remove('show');
+            progressContainer.classList.remove('show');
+            updateProgress(0);
+            convertBtn.disabled = false;
+        }
+        
+        return;
     } else if (!targetFormat.value) {
         return;
+    }
+
+    if (encryptionEnabled) {
+        const password = encryptionPassword.value;
+        if (!password || password.length < 8) {
+            showToast(
+                document.documentElement.getAttribute('data-lang') === 'en' 
+                    ? 'Password must be at least 8 characters!' 
+                    : 'Şifre en az 8 karakter olmalı!', 
+                'error'
+            );
+            return;
+        }
     }
 
     const formData = new FormData();
@@ -1082,30 +1365,38 @@ async function processFiles() {
             throw new Error(error.error || 'Bir hata oluştu');
         }
 
-        updateProgress(100, `<span class="lang-tr">Tamamlandı!</span><span class="lang-en">Completed!</span>`);
-        
-        const blob = await response.blob();
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.href = url;
+        let finalBlob = await response.blob();
+        let finalFilename = 'islenmis_dosya';
         
         const contentDisposition = response.headers.get('Content-Disposition');
-        let filename = 'islenmis_dosya';
         if (contentDisposition) {
             const filenameMatch = contentDisposition.match(/filename[^;=\n]*=((['"]).*?\2|[^;\n]*)/);
             if (filenameMatch && filenameMatch[1]) {
-                filename = filenameMatch[1].replace(/['"]/g, '');
+                finalFilename = filenameMatch[1].replace(/['"]/g, '');
             }
         } else if (currentOperation === 'merge_pdf') {
-            filename = 'birlesmis.pdf';
+            finalFilename = 'birlesmis.pdf';
         } else if (selectedFiles.length === 1) {
             const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, '');
-            filename = `${baseName}.${targetFormat.value}`;
+            finalFilename = `${baseName}.${targetFormat.value}`;
         } else {
-            filename = 'islenmis_dosyalar.zip';
+            finalFilename = 'islenmis_dosyalar.zip';
         }
+
+        if (encryptionEnabled) {
+            updateProgress(95, `<span class="lang-tr">Şifreleniyor...</span><span class="lang-en">Encrypting...</span>`);
+            const arrayBuffer = await finalBlob.arrayBuffer();
+            const encryptedBuffer = await encryptData(arrayBuffer, encryptionPassword.value);
+            finalBlob = new Blob([encryptedBuffer], { type: 'application/octet-stream' });
+            finalFilename = `${finalFilename}.encrypted`;
+        }
+
+        updateProgress(100, `<span class="lang-tr">Tamamlandı!</span><span class="lang-en">Completed!</span>`);
         
-        a.download = filename;
+        const url = window.URL.createObjectURL(finalBlob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = finalFilename;
         document.body.appendChild(a);
         a.click();
         document.body.removeChild(a);
@@ -1121,9 +1412,11 @@ async function processFiles() {
         }
         
         showToast(
-            currentOperation === 'merge_pdf' 
-                ? "PDF'ler başarıyla birleştirildi!" 
-                : (selectedFiles.length > 1 ? "Dosyalar başarıyla dönüştürüldü!" : "Dosya başarıyla dönüştürüldü!"), 
+            encryptionEnabled 
+                ? (document.documentElement.getAttribute('data-lang') === 'en' ? 'Files encrypted and downloaded successfully!' : 'Dosyalar şifrelenip başarıyla indirildi!')
+                : (currentOperation === 'merge_pdf' 
+                    ? "PDF'ler başarıyla birleştirildi!" 
+                    : (selectedFiles.length > 1 ? "Dosyalar başarıyla dönüştürüldü!" : "Dosya başarıyla dönüştürüldü!")), 
             "success"
         );
     } catch (error) {
