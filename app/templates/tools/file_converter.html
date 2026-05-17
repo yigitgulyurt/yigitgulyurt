@@ -9,6 +9,69 @@
 
 {% block head %}
 <style>
+:root {
+    --primary: #6366f1;
+    --primary-rgb: 99, 102, 241;
+    --bg: #0f0f23;
+    --card-bg: #1a1a2e;
+    --text: #ffffff;
+    --text-dim: #a0a0b0;
+}
+
+[data-theme="light"] {
+    --bg: #f5f5f7;
+    --card-bg: #ffffff;
+    --text: #1a1a2e;
+    --text-dim: #6b7280;
+}
+
+[data-theme="light"] .tool-container {
+    border: 1px solid rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .upload-area {
+    border-color: rgba(0, 0, 0, 0.15);
+    background: rgba(0, 0, 0, 0.02);
+}
+
+[data-theme="light"] .operation-tab {
+    background: rgba(0, 0, 0, 0.05);
+}
+
+[data-theme="light"] .operation-tab:hover {
+    background: rgba(0, 0, 0, 0.08);
+}
+
+[data-theme="light"] .feature-item {
+    background: rgba(0, 0, 0, 0.02);
+    border: 1px solid rgba(0, 0, 0, 0.05);
+}
+
+.theme-toggle {
+    position: fixed;
+    top: 20px;
+    right: 20px;
+    width: 50px;
+    height: 50px;
+    border-radius: 50%;
+    background: var(--card-bg);
+    border: 2px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    font-size: 1.5rem;
+    cursor: pointer;
+    z-index: 1000;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.3s;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+}
+
+.theme-toggle:hover {
+    transform: scale(1.1);
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.3);
+}
+
 .tool-container {
     max-width: 1000px;
     margin: 40px auto;
@@ -21,6 +84,17 @@
 .header-section {
     text-align: center;
     margin-bottom: 40px;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 10px;
+}
+
+.header-top {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 20px;
 }
 
 .header-section h1 {
@@ -271,6 +345,36 @@
     font-size: 0.9rem;
 }
 
+.file-preview {
+    width: 60px;
+    height: 60px;
+    border-radius: 8px;
+    overflow: hidden;
+    background: rgba(0, 0, 0, 0.1);
+    flex-shrink: 0;
+}
+
+.file-preview img {
+    width: 100%;
+    height: 100%;
+    object-fit: cover;
+}
+
+.file-info {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+.favorite-badge {
+    background: linear-gradient(135deg, #f59e0b, #d97706);
+    color: white;
+    font-size: 0.7rem;
+    padding: 2px 8px;
+    border-radius: 4px;
+    margin-left: 8px;
+}
+
 @media (max-width: 600px) {
     .tool-container {
         padding: 20px;
@@ -288,9 +392,15 @@
 {% endblock %}
 
 {% block content %}
+<button class="theme-toggle" id="themeToggle" title="Temayı değiştir">
+    🌙
+</button>
+
 <div class="tool-container">
     <div class="header-section">
-        <h1>📄 Dosya Dönüştürücü</h1>
+        <div class="header-top">
+            <h1>📄 Dosya Dönüştürücü</h1>
+        </div>
         <p>
             <span class="lang-tr">Resimleri, metinleri, PDF, Excel ve PowerPoint dosyalarını dönüştürün ve birleştirin</span>
             <span class="lang-en">Convert and merge images, text, PDF, Excel, and PowerPoint files</span>
@@ -407,6 +517,58 @@ const uploadHint = document.getElementById('uploadHint');
 
 let selectedFiles = [];
 let currentOperation = 'convert';
+
+const themeToggle = document.getElementById('themeToggle');
+
+function initTheme() {
+    const savedTheme = localStorage.getItem('fileConverterTheme');
+    if (savedTheme) {
+        document.documentElement.setAttribute('data-theme', savedTheme);
+        updateThemeIcon(savedTheme);
+    }
+}
+
+function toggleTheme() {
+    const currentTheme = document.documentElement.getAttribute('data-theme');
+    const newTheme = currentTheme === 'light' ? 'dark' : 'light';
+    document.documentElement.setAttribute('data-theme', newTheme);
+    localStorage.setItem('fileConverterTheme', newTheme);
+    updateThemeIcon(newTheme);
+}
+
+function updateThemeIcon(theme) {
+    themeToggle.textContent = theme === 'light' ? '☀️' : '🌙';
+}
+
+initTheme();
+themeToggle.addEventListener('click', toggleTheme);
+
+function getHistory() {
+    const history = localStorage.getItem('fileConverterHistory');
+    return history ? JSON.parse(history) : [];
+}
+
+function addToHistory(fromFormat, toFormat) {
+    let history = getHistory();
+    const entry = { from: fromFormat, to: toFormat, date: new Date().toISOString() };
+    history.unshift(entry);
+    history = history.slice(0, 20);
+    localStorage.setItem('fileConverterHistory', JSON.stringify(history));
+}
+
+function getFavorites() {
+    const favorites = localStorage.getItem('fileConverterFavorites');
+    return favorites ? JSON.parse(favorites) : [];
+}
+
+function addToFavorite(format) {
+    let favorites = getFavorites();
+    if (!favorites.includes(format)) {
+        favorites.unshift(format);
+        favorites = favorites.slice(0, 10);
+        localStorage.setItem('fileConverterFavorites', JSON.stringify(favorites));
+    }
+}
 
 const FORMAT_MAPPING = {
     image: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
@@ -574,6 +736,10 @@ function updateFormatOptions() {
     }
     
     const availableFormats = getAvailableFormats(selectedFiles);
+    const favorites = getFavorites();
+    
+    const favoriteFormats = availableFormats.filter(f => favorites.includes(f));
+    const otherFormats = availableFormats.filter(f => !favorites.includes(f));
     
     targetFormat.innerHTML = '';
     
@@ -588,12 +754,29 @@ function updateFormatOptions() {
         defaultOption.textContent = 'Hedef format seçin';
         targetFormat.appendChild(defaultOption);
         
-        availableFormats.forEach(format => {
-            const option = document.createElement('option');
-            option.value = format;
-            option.textContent = FORMAT_NAMES[format] || format.toUpperCase();
-            targetFormat.appendChild(option);
-        });
+        if (favoriteFormats.length > 0) {
+            const favoriteGroup = document.createElement('optgroup');
+            favoriteGroup.label = '⭐ Favoriler';
+            favoriteFormats.forEach(format => {
+                const option = document.createElement('option');
+                option.value = format;
+                option.textContent = FORMAT_NAMES[format] || format.toUpperCase();
+                favoriteGroup.appendChild(option);
+            });
+            targetFormat.appendChild(favoriteGroup);
+        }
+        
+        if (otherFormats.length > 0) {
+            const otherGroup = document.createElement('optgroup');
+            otherGroup.label = 'Diğer Formatlar';
+            otherFormats.forEach(format => {
+                const option = document.createElement('option');
+                option.value = format;
+                option.textContent = FORMAT_NAMES[format] || format.toUpperCase();
+                otherGroup.appendChild(option);
+            });
+            targetFormat.appendChild(otherGroup);
+        }
     }
     
     checkProcessEnabled();
@@ -620,9 +803,13 @@ function renderFiles() {
     filesList.innerHTML = selectedFiles.map((file, index) => {
         const icon = getFileIcon(file.name);
         const size = formatFileSize(file.size);
+        const type = getFileType(file.name);
+        const previewId = `preview-${Date.now()}-${index}`;
+        
         return `
             <div class="file-item">
                 <div class="file-info">
+                    <div class="file-preview" id="${previewId}"></div>
                     <div class="file-icon">${icon}</div>
                     <div class="file-details">
                         <div class="file-name">${escapeHtml(file.name)}</div>
@@ -636,6 +823,20 @@ function renderFiles() {
             </div>
         `;
     }).join('');
+    
+    selectedFiles.forEach((file, index) => {
+        const type = getFileType(file.name);
+        if (type === 'image' && !file.name.toLowerCase().endsWith('.svg')) {
+            const previewElements = filesList.querySelectorAll('.file-preview');
+            if (previewElements[index]) {
+                const reader = new FileReader();
+                reader.onload = (e) => {
+                    previewElements[index].innerHTML = `<img src="${e.target.result}" alt="Preview" />`;
+                };
+                reader.readAsDataURL(file);
+            }
+        }
+    });
 }
 
 function getFileIcon(filename) {
@@ -739,6 +940,13 @@ async function processFiles() {
         document.body.removeChild(a);
         window.URL.revokeObjectURL(url);
 
+        if (currentOperation === 'convert' && selectedFiles.length > 0) {
+            const fromFormat = getFileType(selectedFiles[0].name);
+            const toFormat = targetFormat.value;
+            addToHistory(fromFormat, toFormat);
+            addToFavorite(toFormat);
+        }
+        
         showToast(
             currentOperation === 'merge_pdf' 
                 ? "PDF'ler başarıyla birleştirildi!" 
