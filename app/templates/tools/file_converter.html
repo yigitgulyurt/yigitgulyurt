@@ -1637,13 +1637,10 @@ async function processFiles() {
         }
         
         try {
-            console.log('İşlem başlatılıyor, dosya sayısı:', selectedFiles.length);
             const results = [];
             for (let i = 0; i < selectedFiles.length; i++) {
                 const file = selectedFiles[i];
-                console.log('İşlenen dosya:', file.name);
                 const arrayBuffer = await file.arrayBuffer();
-                console.log('ArrayBuffer alındı, boyut:', arrayBuffer.byteLength);
                 
                 let resultBuffer;
                 let filename;
@@ -1659,7 +1656,6 @@ async function processFiles() {
                     }
                 }
                 
-                console.log('İşlem tamamlandı, dosya:', filename, 'boyut:', resultBuffer.byteLength || resultBuffer.length);
                 results.push({ filename, data: resultBuffer });
                 
                 const progress = Math.round(((i + 1) / selectedFiles.length) * 100);
@@ -1670,10 +1666,8 @@ async function processFiles() {
                 }
             }
             
-            console.log('Tüm dosyalar işlendi, sonuç sayısı:', results.length);
             if (results.length === 1) {
                 const { filename, data } = results[0];
-                console.log('Tek dosya indiriliyor:', filename);
                 const resultBlob = new Blob([data], { type: 'application/octet-stream' });
                 const url = window.URL.createObjectURL(resultBlob);
                 const a = document.createElement('a');
@@ -1684,14 +1678,12 @@ async function processFiles() {
                 document.body.removeChild(a);
                 window.URL.revokeObjectURL(url);
             } else {
-                console.log('Çoklu dosya ZIP olarak indiriliyor');
                 const zip = new JSZip();
                 results.forEach(({ filename, data }) => {
                     zip.file(filename, data);
                 });
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
                 const zipFilename = currentOperation === 'encrypt' ? 'sifreli_dosyalar.zip' : 'cozulmus_dosyalar.zip';
-                console.log('Zip oluşturuldu, boyut:', zipBlob.size);
                 const url = window.URL.createObjectURL(zipBlob);
                 const a = document.createElement('a');
                 a.href = url;
