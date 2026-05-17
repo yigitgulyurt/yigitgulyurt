@@ -761,101 +761,146 @@ def unit_converter():
 
 
 @main_bp.route('/dosya-donusturucu', methods=['GET', 'POST'])
-@limiter.limit("20 per hour", methods=['POST'])
+@limiter.limit("30 per hour", methods=['POST'])
 def file_converter():
+    MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+
     if request.method == 'POST':
         from io import BytesIO
         from docx import Document
-        from reportlab.lib.pagesizes import letter
+        from reportlab.lib.pagesizes import letter, A4
         from reportlab.pdfgen import canvas
         from reportlab.lib.units import inch
+        from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer
+        from reportlab.lib.styles import getSampleStyleSheet
+        import zipfile
 
-        file = request.files.get('file')
+        files = request.files.getlist('files')
         target_format = request.form.get('target_format')
 
-        if not file or not file.filename:
+        if not files or len(files) == 0:
             return jsonify({'error': 'Dosya seçilmedi'}), 400
 
         if not target_format:
             return jsonify({'error': 'Hedef format seçilmedi'}), 400
 
-        original_filename = secure_filename(file.filename)
-        file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
-        file_content = file.read()
+        converted_files = []
 
-        is_image = False
-        is_text = False
+        for file in files:
+            if file.filename == '':
+                continue
 
-        try:
-            img = Image.open(BytesIO(file_content))
-            is_image = True
-        except Exception:
-            pass
+            if len(file.read()) > MAX_FILE_SIZE:
+                return jsonify({'error': f'{file.filename} çok büyük (max 50 MB)'}), 400
+            file.seek(0)
 
-        text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py']
-        is_text = file_ext in text_extensions
+            original_filename = secure_filename(file.filename)
+            file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+            file_content = file.read()
 
-        output_buffer = BytesIO()
-        output_filename = ''
+            is_image = False
+            is_text = False
+            is_docx = False
 
-        try:
-            if target_format == 'pdf':
-                if is_image:
-                    img = Image.open(BytesIO(file_content))
-                    if img.mode in ('RGBA', 'P'):
-                        img = img.convert('RGB')
-                    img.save(output_buffer, format='PDF')
-                    output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                elif is_text or file_ext == 'txt':
-                    text = file_content.decode('utf-8', errors='replace')
-                    c = canvas.Canvas(output_buffer, pagesize=letter)
-                    c.setFont("Helvetica", 12)
-                    y = letter[1] - inch
-                    for line in text.split('\n'):
-                        if y < inch:
-                            c.showPage()
-                            c.setFont("Helvetica", 12)
-                            y = letter[1] - inch
-                        c.drawString(inch, y, line)
-                        y -= 14
-                    c.save()
-                    output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                else:
-                    return jsonify({'error': 'Bu dosya türü PDF\'ye dönüştürülemez'}), 400
+            try:
+                img = Image.open(BytesIO(file_content))
+                is_image = True
+            except Exception:
+                pass
 
-            elif target_format in ['jpg', 'jpeg', 'png']:
-                if is_image:
-                    img = Image.open(BytesIO(file_content))
-                    if target_format in ['jpg', 'jpeg']:
+            text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs']
+            is_text = file_ext in text_extensions
+
+            if file_ext == 'docx':
+                is_docx = True
+
+            output_buffer = BytesIO()
+            output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+
+            try:
+                if target_format == 'pdf':
+                    if is_image:
+                        img = Image.open(BytesIO(file_content))
                         if img.mode in ('RGBA', 'P'):
                             img = img.convert('RGB')
-                        img.save(output_buffer, format='JPEG', quality=95)
+                        img.save(output_buffer, format='PDF')
+                    elif is_docx:
+                        doc = Document(BytesIO(file_content))
+                        styles = getSampleStyleSheet()
+                        doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                        story = []
+                        for para in doc.paragraphs:
+                            story.append(Paragraph(para.text, styles['Normal']))
+                            story.append(Spacer(1, 6))
+                        doc_pdf.build(story)
+                    elif is_text or file_ext == 'txt':
+                        text = file_content.decode('utf-8', errors='replace')
+                        styles = getSampleStyleSheet()
+                        doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                        story = []
+                        for line in text.split('\n'):
+                            if line.strip():
+                                story.append(Paragraph(line, styles['Normal']))
+                            else:
+                                story.append(Spacer(1, 6))
+                        doc_pdf.build(story)
                     else:
-                        img.save(output_buffer, format='PNG')
-                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                        return jsonify({'error': f'{original_filename} bu dosya türü PDF\'ye dönüştürülemez'}), 400
+
+                elif target_format in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']:
+                    if is_image:
+                        img = Image.open(BytesIO(file_content))
+                        if target_format in ['jpg', 'jpeg']:
+                            if img.mode in ('RGBA', 'P'):
+                                img = img.convert('RGB')
+                            img.save(output_buffer, format='JPEG', quality=95)
+                        else:
+                            if target_format == 'webp' and img.mode in ('RGBA', 'P'):
+                                img.save(output_buffer, format='WEBP', quality=90)
+                            else:
+                                img.save(output_buffer, format=target_format.upper())
+                    else:
+                        return jsonify({'error': f'{original_filename} sadece resim dosyaları resim formatlarına dönüştürülebilir'}), 400
+
+                elif target_format == 'txt':
+                    if is_docx:
+                        doc = Document(BytesIO(file_content))
+                        text_content = '\n'.join([para.text for para in doc.paragraphs])
+                        output_buffer.write(text_content.encode('utf-8'))
+                    elif is_text or file_ext == 'txt':
+                        output_buffer.write(file_content)
+                    else:
+                        return jsonify({'error': f'{original_filename} bu dosya türü TXT\'ye dönüştürülemez'}), 400
+
                 else:
-                    return jsonify({'error': 'Sadece resim dosyaları resim formatlarına dönüştürülebilir'}), 400
+                    return jsonify({'error': 'Desteklenmeyen hedef format'}), 400
 
-            elif target_format == 'txt':
-                if is_text or file_ext == 'txt':
-                    output_buffer.write(file_content)
-                    output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
-                else:
-                    return jsonify({'error': 'Bu dosya türü TXT\'ye dönüştürülemez'}), 400
+                output_buffer.seek(0)
+                converted_files.append((output_filename, output_buffer.getvalue()))
 
-            else:
-                return jsonify({'error': 'Desteklenmeyen hedef format'}), 400
+            except Exception as e:
+                current_app.logger.error(f"Dosya dönüştürme hatası ({original_filename}): {e}")
+                return jsonify({'error': f'{original_filename} dönüştürülürken bir hata oluştu'}), 500
 
-            output_buffer.seek(0)
+        if len(converted_files) == 1:
+            filename, content = converted_files[0]
             return send_file(
-                output_buffer,
+                BytesIO(content),
                 as_attachment=True,
-                download_name=output_filename,
+                download_name=filename,
                 mimetype='application/octet-stream'
             )
-
-        except Exception as e:
-            current_app.logger.error(f"Dosya dönüştürme hatası: {e}")
-            return jsonify({'error': 'Dosya dönüştürme sırasında bir hata oluştu'}), 500
+        else:
+            zip_buffer = BytesIO()
+            with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                for filename, content in converted_files:
+                    zipf.writestr(filename, content)
+            zip_buffer.seek(0)
+            return send_file(
+                zip_buffer,
+                as_attachment=True,
+                download_name='donusturulmus_dosyalar.zip',
+                mimetype='application/zip'
+            )
 
     return render_template('tools/file_converter.html')
