@@ -997,6 +997,7 @@ function addUrlFile() {
     
     selectedUrl = url;
     renderFiles();
+    updateFormatOptions();
     showToast(
         document.documentElement.getAttribute('data-lang') === 'en' 
             ? 'URL added successfully!' 
