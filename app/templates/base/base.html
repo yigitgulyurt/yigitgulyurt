@@ -5,44 +5,20 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
 
   <style>
-    :root {
-      --primary: #6366f1;
-      --primary-rgb: 99, 102, 241;
-      --bg: #0f0f23;
-      --card-bg: #1a1a2e;
-      --text: #ffffff;
-      --text-dim: #a0a0b0;
-    }
-
-    [data-theme="light"] {
-      --bg: #f5f5f7;
-      --card-bg: #ffffff;
-      --text: #1a1a2e;
-      --text-dim: #6b7280;
-    }
-
     .theme-toggle {
       background: transparent;
-      border: 1px solid rgba(255, 255, 255, 0.2);
-      border-radius: 8px;
-      padding: 8px 12px;
-      font-size: 1.1rem;
+      border: 0.5px solid var(--border);
+      border-radius: 4px;
+      padding: 3px 8px;
+      font-size: 12px;
       cursor: pointer;
-      transition: all 0.3s;
-      color: var(--text);
+      transition: all .15s;
+      color: var(--text2);
     }
 
     .theme-toggle:hover {
-      background: rgba(255, 255, 255, 0.1);
-      transform: scale(1.05);
-    }
-
-    [data-theme="light"] .theme-toggle {
-      border-color: rgba(0, 0, 0, 0.15);
-    }
-
-    [data-theme="light"] .theme-toggle:hover {
-      background: rgba(0, 0, 0, 0.05);
+      color: var(--text);
+      border-color: var(--text2);
     }
   </style>
 

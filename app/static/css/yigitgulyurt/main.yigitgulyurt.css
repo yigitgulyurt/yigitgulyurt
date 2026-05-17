@@ -4,12 +4,15 @@
    System dark/light auto via CSS variables
    ============================================= */
 
-:root,
-html[data-theme="dark"] {
+:root {
   --mono: 'Montserrat', sans-serif;
   --accent: #4ade80;
   --accent2: #60a5fa;
   --font-size-base: 13px;
+}
+
+/* Varsayılan tema: Karanlık */
+:root {
   --bg: #0d0d0d;
   --bg2: #141414;
   --bg3: #1a1a1a;
@@ -20,7 +23,18 @@ html[data-theme="dark"] {
   --border2: rgba(255,255,255,0.18);
 }
 
-html[data-theme="light"] {
+[data-theme="dark"] {
+  --bg: #0d0d0d;
+  --bg2: #141414;
+  --bg3: #1a1a1a;
+  --text: #e2e2e2;
+  --text2: #888;
+  --text3: #555;
+  --border: rgba(255,255,255,0.1);
+  --border2: rgba(255,255,255,0.18);
+}
+
+[data-theme="light"] {
   --bg: #ffffff;
   --bg2: #f9f9f7;
   --bg3: #f3f2ef;
