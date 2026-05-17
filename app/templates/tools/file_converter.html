@@ -854,18 +854,20 @@ async function processFiles() {
 
     let progressInterval;
     try {
+        let progressStep = 0;
         progressInterval = setInterval(() => {
             const currentWidth = parseInt(progressBar.style.width) || 0;
-            if (currentWidth < 85) {
-                const increment = Math.random() * 10 + 2;
-                const newWidth = Math.min(currentWidth + increment, 85);
+            if (currentWidth < 99) {
+                progressStep++;
+                const exponent = progressStep / 20;
+                const newWidth = Math.min(Math.round(99 * (1 - Math.pow(0.995, exponent))), 99);
                 const percentText = Math.round(newWidth);
                 updateProgress(
                     newWidth, 
                     `<span class="lang-tr">İşleniyor... %${percentText}</span><span class="lang-en">Processing... %${percentText}</span>`
                 );
             }
-        }, 200);
+        }, 100);
 
         const response = await fetch(window.location.href, {
             method: 'POST',
