@@ -307,18 +307,46 @@ function setTab(tab) {
         generateTab.classList.remove('active');
         scanSection.style.display = 'block';
         generateSection.classList.remove('active');
-        isScanning = false;
         startScanning();
     } else {
         scanTab.classList.remove('active');
         generateTab.classList.add('active');
         scanSection.style.display = 'none';
         generateSection.classList.add('active');
-        try {
-            html5QrCode.stop().catch(() => {});
-        } catch {}
-        isScanning = false;
+        stopScanning();
     }
+}
+
+async function stopScanning() {
+    if (html5QrCode) {
+        try {
+            await html5QrCode.stop().catch(() => {});
+        } catch {}
+    }
+    html5QrCode = null;
+    isScanning = false;
+}
+
+async function startScanning() {
+    await stopScanning();
+    
+    resultDiv.textContent = "🔍 QR kodunu tarama alanına getirin...";
+    scanAgainBtn.style.display = "none";
+    resultActionsDiv.style.display = "none";
+    
+    html5QrCode = new Html5Qrcode("reader");
+    
+    html5QrCode.start(cameraFacingMode, config, handleResult, err => {
+        if (!String(err).includes("No MultiFormat")) console.warn(err);
+    })
+    .then(() => isScanning = true)
+    .catch(err => {
+        isScanning = false;
+        resultDiv.textContent = String(err).includes("Permission denied")
+            ? "⚠️ Kamera izni reddedildi. Lütfen izin verin."
+            : "❌ Kamera başlatılamadı.";
+        scanAgainBtn.style.display = "inline-block";
+    });
 }
 
 async function generateQR() {
@@ -387,7 +415,6 @@ document.addEventListener("DOMContentLoaded", () => {
     qrImage = document.getElementById("qrImage");
     downloadQrBtn = document.getElementById("downloadQrBtn");
 
-    html5QrCode = new Html5Qrcode("reader");
     history = JSON.parse(localStorage.getItem("qr_history") || "[]");
     currentResultText = "";
     currentShortUrl = null;  
@@ -402,32 +429,8 @@ document.addEventListener("DOMContentLoaded", () => {
               + "</div>";
     };
 
-    const startScanning = async () => {
-    try {
-        await html5QrCode.stop().catch(() => {});
-    } catch {}
-    isScanning = false;
-    
-    resultDiv.textContent = "🔍 QR kodunu tarama alanına getirin...";
-    scanAgainBtn.style.display = "none";
-    resultActionsDiv.style.display = "none";
-    
-    html5QrCode.start(cameraFacingMode, config, handleResult, err => {
-        if (!String(err).includes("No MultiFormat")) console.warn(err);
-    })
-    .then(() => isScanning = true)
-    .catch(err => {
-        isScanning = false;
-        resultDiv.textContent = String(err).includes("Permission denied")
-            ? "⚠️ Kamera izni reddedildi. Lütfen izin verin."
-            : "❌ Kamera başlatılamadı.";
-        scanAgainBtn.style.display = "inline-block";
-    });
-};
-
     const handleResult = async text => {
-        html5QrCode.stop().then(async () => {
-        isScanning = false;
+        await stopScanning();
         scanAgainBtn.style.display = "inline-block";
         currentResultText = text;
         resultDiv.textContent = text;
@@ -461,7 +464,6 @@ document.addEventListener("DOMContentLoaded", () => {
             localStorage.setItem("qr_history", JSON.stringify(history));
             renderHistory();
         }
-    });
     };
 
     scanAgainBtn?.addEventListener("click", startScanning);
