@@ -334,6 +334,110 @@
     width: 0%;
 }
 
+.history-section {
+    margin-top: 40px;
+    padding-top: 30px;
+    border-top: 1px solid var(--border);
+}
+
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+}
+
+.history-title {
+    font-size: 1.2rem;
+    font-weight: 700;
+}
+
+.history-clear-btn {
+    font-family: var(--mono);
+    font-size: 11px;
+    background: transparent;
+    border: 0.5px solid var(--border);
+    border-radius: 4px;
+    padding: 3px 8px;
+    color: var(--text2);
+    cursor: pointer;
+    transition: all .15s;
+}
+
+.history-clear-btn:hover {
+    color: #ef4444;
+    border-color: #ef4444;
+}
+
+.history-list {
+    display: grid;
+    gap: 10px;
+}
+
+.history-item {
+    background: var(--bg2);
+    border-radius: 12px;
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    gap: 16px;
+    border: 1px solid var(--border);
+}
+
+.history-info {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    flex: 1;
+    min-width: 0;
+}
+
+.history-icon {
+    font-size: 1.3rem;
+}
+
+.history-details {
+    min-width: 0;
+}
+
+.history-text {
+    font-size: 13px;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+}
+
+.history-date {
+    font-size: 11px;
+    color: var(--text2);
+    margin-top: 2px;
+}
+
+.history-empty {
+    text-align: center;
+    color: var(--text2);
+    font-size: 13px;
+    padding: 30px;
+}
+
+.privacy-note {
+    margin-top: 16px;
+    padding: 14px 18px;
+    background: rgba(74, 222, 128, 0.08);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 8px;
+    font-size: 12px;
+    color: var(--accent);
+    display: flex;
+    align-items: center;
+    gap: 10px;
+}
+
+.privacy-icon {
+    font-size: 1.3rem;
+}
+
 @media (max-width: 600px) {
     .tool-container {
         padding: 20px;
@@ -463,6 +567,25 @@
             </div>
         </div>
     </div>
+
+    <div class="history-section">
+        <div class="history-header">
+            <div class="history-title">
+                <span class="lang-tr">⏱️ Dönüşüm Geçmişi</span>
+                <span class="lang-en">⏱️ Conversion History</span>
+            </div>
+            <button class="history-clear-btn" id="clearHistoryBtn" onclick="clearHistory()">
+                <span class="lang-tr">Geçmişi Temizle</span>
+                <span class="lang-en">Clear History</span>
+            </button>
+        </div>
+        <div class="history-list" id="historyList"></div>
+        <div class="privacy-note">
+            <span class="privacy-icon">🔐</span>
+            <span class="lang-tr">Bu bilgiler sadece sizin cihazınızda (localStorage) saklanır. Hiçbir sunucuya gönderilmez.</span>
+            <span class="lang-en">This information is stored only on your device (localStorage). It is never sent to any server.</span>
+        </div>
+    </div>
 </div>
 {% endblock %}
 
@@ -480,6 +603,7 @@ const progressLabel = document.getElementById('progressLabel');
 const formatSection = document.getElementById('formatSection');
 const operationTabs = document.querySelectorAll('.operation-tab');
 const uploadHint = document.getElementById('uploadHint');
+const historyList = document.getElementById('historyList');
 
 let selectedFiles = [];
 let currentOperation = 'convert';
@@ -489,12 +613,91 @@ function getHistory() {
     return history ? JSON.parse(history) : [];
 }
 
-function addToHistory(fromFormat, toFormat) {
+function addToHistory(fromFormat, toFormat, operation, fileCount) {
     let history = getHistory();
-    const entry = { from: fromFormat, to: toFormat, date: new Date().toISOString() };
+    const entry = { 
+        from: fromFormat, 
+        to: toFormat, 
+        operation: operation,
+        fileCount: fileCount,
+        date: new Date().toISOString() 
+    };
     history.unshift(entry);
     history = history.slice(0, 20);
     localStorage.setItem('fileConverterHistory', JSON.stringify(history));
+    renderHistory();
+}
+
+function formatDate(dateString) {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diffMs = now - date;
+    const diffMins = Math.floor(diffMs / 60000);
+    const diffHours = Math.floor(diffMs / 3600000);
+    const diffDays = Math.floor(diffMs / 86400000);
+    
+    if (diffMins < 1) return 'Şimdi';
+    if (diffMins < 60) return `${diffMins} dakika önce`;
+    if (diffHours < 24) return `${diffHours} saat önce`;
+    if (diffDays < 7) return `${diffDays} gün önce`;
+    
+    return date.toLocaleDateString('tr-TR', { day: 'numeric', month: 'short', year: 'numeric' });
+}
+
+function getHistoryIcon(operation) {
+    if (operation === 'merge_pdf') return '📎';
+    return '🔄';
+}
+
+function renderHistory() {
+    const history = getHistory();
+    
+    if (history.length === 0) {
+        historyList.innerHTML = `
+            <div class="history-empty">
+                <span class="lang-tr">Henüz bir dönüşüm yapmadınız.</span>
+                <span class="lang-en">You haven't made any conversions yet.</span>
+            </div>
+        `;
+        return;
+    }
+    
+    historyList.innerHTML = history.map((entry, index) => {
+        const fromName = FORMAT_NAMES[entry.from] || entry.from?.toUpperCase() || '';
+        const toName = FORMAT_NAMES[entry.to] || entry.to?.toUpperCase() || '';
+        const icon = getHistoryIcon(entry.operation);
+        const dateText = formatDate(entry.date);
+        
+        let historyText;
+        if (entry.operation === 'merge_pdf') {
+            historyText = `PDF Birleştirme (${entry.fileCount || 'birden fazla'} dosya)`;
+        } else {
+            historyText = `${fromName || 'Dosya'} → ${toName}${entry.fileCount > 1 ? ` (${entry.fileCount} dosya)` : ''}`;
+        }
+        
+        return `
+            <div class="history-item">
+                <div class="history-info">
+                    <div class="history-icon">${icon}</div>
+                    <div class="history-details">
+                        <div class="history-text">${escapeHtml(historyText)}</div>
+                        <div class="history-date">${dateText}</div>
+                    </div>
+                </div>
+            </div>
+        `;
+    }).join('');
+}
+
+function clearHistory() {
+    localStorage.removeItem('fileConverterHistory');
+    renderHistory();
+    showToast(
+        document.documentElement.getAttribute('data-lang') === 'en' 
+            ? 'History cleared successfully!' 
+            : 'Geçmiş başarıyla temizlendi!', 
+        'success'
+    );
 }
 
 function getFavorites() {
@@ -911,8 +1114,10 @@ async function processFiles() {
         if (currentOperation === 'convert' && selectedFiles.length > 0) {
             const fromFormat = getFileType(selectedFiles[0].name);
             const toFormat = targetFormat.value;
-            addToHistory(fromFormat, toFormat);
+            addToHistory(fromFormat, toFormat, currentOperation, selectedFiles.length);
             addToFavorite(toFormat);
+        } else if (currentOperation === 'merge_pdf') {
+            addToHistory(null, null, currentOperation, selectedFiles.length);
         }
         
         showToast(
@@ -946,5 +1151,6 @@ style.textContent = `
 document.head.appendChild(style);
 
 updateUI();
+renderHistory();
 </script>
 {% endblock %}
