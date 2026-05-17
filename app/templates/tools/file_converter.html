@@ -966,8 +966,9 @@ function setUploadMode(mode) {
         selectedUrl = '';
     } else {
         selectedFiles = [];
-        updateFilesList();
     }
+    renderFiles();
+    updateFormatOptions();
     checkProcessEnabled();
 }
 
@@ -1377,15 +1378,23 @@ function getFileType(filename) {
     return 'unknown';
 }
 
-function getAvailableFormats(files) {
-    if (files.length === 0) return [];
+function getAvailableFormats(filesOrUrl) {
+    let filenames = [];
     
-    const types = new Set(files.map(f => getFileType(f.name)));
+    if (Array.isArray(filesOrUrl) && filesOrUrl.length > 0) {
+        filenames = filesOrUrl.map(f => f.name);
+    } else if (typeof filesOrUrl === 'string' && filesOrUrl) {
+        filenames = [filesOrUrl.split('/').pop() || ''];
+    }
+    
+    if (filenames.length === 0) return [];
+    
+    const types = new Set(filenames.map(f => getFileType(f)));
     if (types.has('unknown')) return [];
     
     let commonFormats = null;
-    for (const file of files) {
-        const type = getFileType(file.name);
+    for (const filename of filenames) {
+        const type = getFileType(filename);
         const formats = FORMAT_MAPPING[type] || [];
         if (commonFormats === null) {
             commonFormats = new Set(formats);
@@ -1402,7 +1411,12 @@ function updateFormatOptions() {
         return;
     }
     
-    const availableFormats = getAvailableFormats(selectedFiles);
+    let availableFormats;
+    if (currentUploadMode === 'url' && selectedUrl) {
+        availableFormats = getAvailableFormats(selectedUrl);
+    } else {
+        availableFormats = getAvailableFormats(selectedFiles);
+    }
     const favorites = getFavorites();
     
     const favoriteFormats = availableFormats.filter(f => favorites.includes(f));
@@ -1860,6 +1874,7 @@ document.addEventListener('keydown', (e) => {
         selectedUrl = '';
         urlInput.value = '';
         renderFiles();
+        updateFormatOptions();
         checkProcessEnabled();
         showToast(
             document.documentElement.getAttribute('data-lang') === 'en' 
