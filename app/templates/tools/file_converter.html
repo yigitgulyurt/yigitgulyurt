@@ -421,6 +421,41 @@
     padding: 30px;
 }
 
+.history-header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    margin-bottom: 20px;
+    cursor: pointer;
+    user-select: none;
+    padding: 4px 0;
+}
+
+.history-toggle-icon {
+    font-size: 1.2rem;
+    transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-header.collapsed .history-toggle-icon {
+    transform: rotate(-90deg);
+}
+
+.history-content {
+    overflow: hidden;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.history-content.collapsed {
+    max-height: 0;
+    opacity: 0;
+    margin-top: 0;
+}
+
+.history-content:not(.collapsed) {
+    max-height: 2000px;
+    opacity: 1;
+}
+
 .privacy-note {
     margin-top: 16px;
     padding: 14px 18px;
@@ -742,21 +777,26 @@
     </div>
 
     <div class="history-section">
-        <div class="history-header">
+        <div class="history-header" id="historyHeader" onclick="toggleHistory()">
             <div class="history-title">
                 <span class="lang-tr">⏱️ Dönüşüm Geçmişi</span>
                 <span class="lang-en">⏱️ Conversion History</span>
             </div>
-            <button class="history-clear-btn" id="clearHistoryBtn" onclick="clearHistory()">
-                <span class="lang-tr">Geçmişi Temizle</span>
-                <span class="lang-en">Clear History</span>
-            </button>
+            <div style="display: flex; align-items: center; gap: 12px;">
+                <button class="history-clear-btn" id="clearHistoryBtn" onclick="event.stopPropagation(); clearHistory();">
+                    <span class="lang-tr">Geçmişi Temizle</span>
+                    <span class="lang-en">Clear History</span>
+                </button>
+                <span class="history-toggle-icon" id="historyToggleIcon">▼</span>
+            </div>
         </div>
-        <div class="history-list" id="historyList"></div>
-        <div class="privacy-note">
-            <span class="privacy-icon">🔐</span>
-            <span class="lang-tr">Bu bilgiler sadece sizin cihazınızda (localStorage) saklanır. Hiçbir sunucuya gönderilmez.</span>
-            <span class="lang-en">This information is stored only on your device (localStorage). It is never sent to any server.</span>
+        <div class="history-content" id="historyContent">
+            <div class="history-list" id="historyList"></div>
+            <div class="privacy-note">
+                <span class="privacy-icon">🔐</span>
+                <span class="lang-tr">Bu bilgiler sadece sizin cihazınızda (localStorage) saklanır. Hiçbir sunucuya gönderilmez.</span>
+                <span class="lang-en">This information is stored only on your device (localStorage). It is never sent to any server.</span>
+            </div>
         </div>
     </div>
     
@@ -950,6 +990,16 @@ function renderHistory() {
             </div>
         `;
     }).join('');
+}
+
+function toggleHistory() {
+    const header = document.getElementById('historyHeader');
+    const content = document.getElementById('historyContent');
+    
+    header.classList.toggle('collapsed');
+    content.classList.toggle('collapsed');
+    
+    localStorage.setItem('historyCollapsed', content.classList.contains('collapsed'));
 }
 
 function clearHistory() {
@@ -1609,5 +1659,11 @@ function setOperation(op) {
 
 updateUI();
 renderHistory();
+
+const savedHistoryCollapsed = localStorage.getItem('historyCollapsed');
+if (savedHistoryCollapsed === 'true') {
+    document.getElementById('historyHeader').classList.add('collapsed');
+    document.getElementById('historyContent').classList.add('collapsed');
+}
 </script>
 {% endblock %}
