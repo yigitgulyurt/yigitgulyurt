@@ -365,6 +365,39 @@ const loading = document.getElementById('loading');
 
 let selectedFiles = [];
 
+const FORMAT_MAPPING = {
+    image: ['pdf', 'jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff'],
+    docx: ['pdf', 'txt'],
+    text: ['pdf', 'txt']
+};
+
+const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg', 'ico'];
+const DOCX_EXTS = ['docx'];
+const TEXT_EXTS = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs'];
+
+function showToast(message, type) {
+    const toast = document.createElement('div');
+    toast.style.cssText = `
+        position: fixed;
+        top: 20px;
+        right: 20px;
+        padding: 16px 24px;
+        border-radius: 12px;
+        color: white;
+        font-weight: 600;
+        z-index: 9999;
+        animation: slideIn 0.3s ease;
+        ${type === 'success' ? 'background: linear-gradient(135deg, #10b981, #059669);' : 'background: linear-gradient(135deg, #ef4444, #dc2626);'}
+    `;
+    toast.textContent = message;
+    document.body.appendChild(toast);
+    
+    setTimeout(() => {
+        toast.style.animation = 'slideOut 0.3s ease';
+        setTimeout(() => toast.remove(), 300);
+    }, 3000);
+}
+
 uploadArea.addEventListener('click', () => fileInput.click());
 
 uploadArea.addEventListener('dragover', (e) => {
@@ -390,16 +423,83 @@ fileInput.addEventListener('change', (e) => {
     }
 });
 
+function getFileType(filename) {
+    const ext = filename.split('.').pop().toLowerCase();
+    if (IMAGE_EXTS.includes(ext)) return 'image';
+    if (DOCX_EXTS.includes(ext)) return 'docx';
+    if (TEXT_EXTS.includes(ext)) return 'text';
+    return 'unknown';
+}
+
+function getAvailableFormats(files) {
+    if (files.length === 0) return [];
+    
+    const types = new Set(files.map(f => getFileType(f.name)));
+    if (types.has('unknown')) return [];
+    
+    let commonFormats = null;
+    for (const file of files) {
+        const type = getFileType(file.name);
+        const formats = FORMAT_MAPPING[type] || [];
+        if (commonFormats === null) {
+            commonFormats = new Set(formats);
+        } else {
+            commonFormats = new Set(formats.filter(f => commonFormats.has(f)));
+        }
+    }
+    
+    return Array.from(commonFormats || []);
+}
+
+function updateFormatOptions() {
+    const availableFormats = getAvailableFormats(selectedFiles);
+    
+    targetFormat.innerHTML = '';
+    
+    if (availableFormats.length === 0) {
+        const option = document.createElement('option');
+        option.value = '';
+        option.textContent = 'Uyumlu format bulunamadı';
+        targetFormat.appendChild(option);
+    } else {
+        const defaultOption = document.createElement('option');
+        defaultOption.value = '';
+        defaultOption.textContent = 'Hedef format seçin';
+        targetFormat.appendChild(defaultOption);
+        
+        const formatNames = {
+            pdf: 'PDF',
+            jpg: 'JPG',
+            jpeg: 'JPEG',
+            png: 'PNG',
+            webp: 'WEBP',
+            gif: 'GIF',
+            bmp: 'BMP',
+            tiff: 'TIFF',
+            txt: 'TXT'
+        };
+        
+        availableFormats.forEach(format => {
+            const option = document.createElement('option');
+            option.value = format;
+            option.textContent = formatNames[format] || format.toUpperCase();
+            targetFormat.appendChild(option);
+        });
+    }
+    
+    checkConvertEnabled();
+}
+
 function addFiles(newFiles) {
     selectedFiles = [...selectedFiles, ...newFiles];
     renderFiles();
-    checkConvertEnabled();
+    updateFormatOptions();
 }
 
 function removeFile(index) {
     selectedFiles.splice(index, 1);
     renderFiles();
-    checkConvertEnabled();
+    updateFormatOptions();
 }
 
 function renderFiles() {
@@ -430,12 +530,10 @@ function renderFiles() {
 }
 
 function getFileIcon(filename) {
-    const ext = filename.split('.').pop().toLowerCase();
-    const imageExts = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg'];
-    const docExts = ['docx', 'doc', 'pdf', 'txt', 'md'];
-    
-    if (imageExts.includes(ext)) return '🖼️';
-    if (docExts.includes(ext)) return '📄';
+    const type = getFileType(filename);
+    if (type === 'image') return '🖼️';
+    if (type === 'docx') return '📄';
+    if (type === 'text') return '📝';
     return '📁';
 }
 
@@ -520,5 +618,18 @@ async function convertFiles() {
         convertBtn.disabled = false;
     }
 }
+
+const style = document.createElement('style');
+style.textContent = `
+    @keyframes slideIn {
+        from { transform: translateX(100%); opacity: 0; }
+        to { transform: translateX(0); opacity: 1; }
+    }
+    @keyframes slideOut {
+        from { transform: translateX(0); opacity: 1; }
+        to { transform: translateX(100%); opacity: 0; }
+    }
+`;
+document.head.appendChild(style);
 </script>
 {% endblock %}
