@@ -812,418 +812,478 @@ def file_converter():
                     download_name='birlesmis.pdf',
                     mimetype='application/pdf'
                 )
-
-            for file in files:
-                if file.filename == '':
-                    continue
-
-                if len(file.read()) > MAX_FILE_SIZE:
-                    return jsonify({'error': f'{file.filename} çok büyük (max 50 MB)'}), 400
-                file.seek(0)
-
-                original_filename = secure_filename(file.filename)
-                file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
-                file_content = file.read()
-
-                is_image = False
-                is_svg = False
-                is_text = False
-                is_docx = False
-                is_pdf = False
-                is_xlsx = False
-                is_pptx = False
-                is_video = False
-                is_audio = False
-
-                try:
-                    img = Image.open(BytesIO(file_content))
-                    is_image = True
-                except Exception:
-                    pass
-
-                if file_ext == 'svg':
-                    is_svg = True
-                    is_image = True
-
-                text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs']
-                is_text = file_ext in text_extensions
-
-                video_extensions = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']
-                is_video = file_ext in video_extensions
-
-                audio_extensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']
-                is_audio = file_ext in audio_extensions
-
-                if file_ext == 'docx':
-                    is_docx = True
-                if file_ext == 'pdf':
-                    is_pdf = True
-                if file_ext == 'xlsx':
-                    is_xlsx = True
-                if file_ext == 'pptx':
-                    is_pptx = True
-
-                output_buffer = BytesIO()
-                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
-
-                if operation == 'convert':
-                    if target_format == 'pdf':
-                        if is_svg:
-                            from svglib.svglib import svg2rlg
-                            from reportlab.graphics import renderPDF
-                            drawing = svg2rlg(BytesIO(file_content))
-                            renderPDF.drawToFile(drawing, output_buffer)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                        elif is_image:
-                            img = Image.open(BytesIO(file_content))
+            elif operation == 'split_pdf':
+                zip_buffer = BytesIO()
+                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                    for file in files:
+                        if file.filename == '':
+                            continue
+                        file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
+                        if file_ext != 'pdf':
+                            return jsonify({'error': f'{file.filename} PDF değil'}), 400
+                        pdf_reader = PdfReader(BytesIO(file.read()))
+                        base_name = secure_filename(file.filename).rsplit('.', 1)[0]
+                        for i, page in enumerate(pdf_reader.pages, 1):
+                            pdf_writer = PdfWriter()
+                            pdf_writer.add_page(page)
+                            page_buffer = BytesIO()
+                            pdf_writer.write(page_buffer)
+                            page_buffer.seek(0)
+                            zipf.writestr(f'{base_name}_sayfa_{i}.pdf', page_buffer.getvalue())
+                zip_buffer.seek(0)
+                return send_file(
+                    zip_buffer,
+                    as_attachment=True,
+                    download_name='bolunmus_pdfler.zip',
+                    mimetype='application/zip'
+                )
+            elif operation == 'compress_image':
+                for file in files:
+                    if file.filename == '':
+                        continue
+                    if len(file.read()) > MAX_FILE_SIZE:
+                        return jsonify({'error': f'{file.filename} çok büyük (max 50 MB)'}), 400
+                    file.seek(0)
+                    original_filename = secure_filename(file.filename)
+                    file_content = file.read()
+                    try:
+                        img = Image.open(BytesIO(file_content))
+                        output_buffer = BytesIO()
+                        if img.format in ['JPEG', 'JPG']:
                             if img.mode in ('RGBA', 'P'):
                                 img = img.convert('RGB')
-                            img.save(output_buffer, format='PDF')
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                        elif is_docx:
-                            doc = Document(BytesIO(file_content))
-                            styles = getSampleStyleSheet()
-                            doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
-                            story = []
-                            for para in doc.paragraphs:
-                                story.append(Paragraph(para.text, styles['Normal']))
-                                story.append(Spacer(1, 6))
-                            for table in doc.tables:
-                                data = []
-                                for row in table.rows:
-                                    row_data = []
-                                    for cell in row.cells:
-                                        row_data.append(cell.text)
-                                    data.append(row_data)
-                                if data:
-                                    t = Table(data)
-                                    t.setStyle(TableStyle([
-                                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                                    ]))
-                                    story.append(t)
-                                    story.append(Spacer(1, 12))
-                            doc_pdf.build(story)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                        elif is_xlsx:
-                            wb = openpyxl.load_workbook(BytesIO(file_content))
-                            styles = getSampleStyleSheet()
-                            doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
-                            story = []
-                            for sheet_name in wb.sheetnames:
-                                story.append(Paragraph(sheet_name, styles['Heading1']))
-                                story.append(Spacer(1, 12))
-                                ws = wb[sheet_name]
-                                data = []
-                                for row in ws.iter_rows(values_only=True):
-                                    row_data = [str(cell) if cell is not None else '' for cell in row]
-                                    data.append(row_data)
-                                if data:
-                                    t = Table(data)
-                                    t.setStyle(TableStyle([
-                                        ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
-                                        ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
-                                        ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
-                                        ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
-                                        ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
-                                        ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
-                                        ('GRID', (0, 0), (-1, -1), 1, colors.black)
-                                    ]))
-                                    story.append(t)
-                                    story.append(Spacer(1, 12))
-                            doc_pdf.build(story)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                        elif is_pptx:
-                            prs = Presentation(BytesIO(file_content))
-                            styles = getSampleStyleSheet()
-                            doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
-                            story = []
-                            for i, slide in enumerate(prs.slides, 1):
-                                story.append(Paragraph(f'Slayt {i}', styles['Heading1']))
-                                story.append(Spacer(1, 12))
-                                for shape in slide.shapes:
-                                    if hasattr(shape, 'text') and shape.text.strip():
-                                        story.append(Paragraph(shape.text, styles['Normal']))
-                                        story.append(Spacer(1, 6))
-                                story.append(Spacer(1, 12))
-                            doc_pdf.build(story)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                        elif is_text or file_ext == 'txt':
-                            text = file_content.decode('utf-8', errors='replace')
-                            styles = getSampleStyleSheet()
-                            doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
-                            story = []
-                            for line in text.split('\n'):
-                                if line.strip():
-                                    story.append(Paragraph(line, styles['Normal']))
-                                else:
-                                    story.append(Spacer(1, 6))
-                            doc_pdf.build(story)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            img.save(output_buffer, format='JPEG', quality=70, optimize=True)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '_sikistirilmis.jpg'
+                        elif img.format == 'PNG':
+                            if img.mode in ('RGBA', 'P'):
+                                img.save(output_buffer, format='PNG', optimize=True)
+                            else:
+                                img.save(output_buffer, format='PNG', optimize=True)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '_sikistirilmis.png'
+                        elif img.format == 'WEBP':
+                            img.save(output_buffer, format='WEBP', quality=70)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '_sikistirilmis.webp'
                         else:
-                            return jsonify({'error': f'{original_filename} bu dosya türü PDF\'ye dönüştürülemez'}), 400
+                            if img.mode in ('RGBA', 'P'):
+                                img = img.convert('RGB')
+                            img.save(output_buffer, format='JPEG', quality=70, optimize=True)
+                            output_filename = original_filename.rsplit('.', 1)[0] + '_sikistirilmis.jpg'
+                        output_buffer.seek(0)
+                        converted_files.append((output_filename, output_buffer.getvalue()))
+                    except Exception as e:
+                        return jsonify({'error': f'{original_filename} sadece resim dosyaları sıkıştırılabilir: {str(e)}'}), 400
+            else:
+                for file in files:
+                    if file.filename == '':
+                        continue
 
-                    elif target_format in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']:
-                        if is_svg:
-                            from svglib.svglib import svg2rlg
-                            from reportlab.graphics import renderPDF
-                            from pdf2image import convert_from_bytes
-                            import os
-                            temp_pdf_buffer = BytesIO()
-                            drawing = svg2rlg(BytesIO(file_content))
-                            renderPDF.drawToFile(drawing, temp_pdf_buffer)
-                            temp_pdf_buffer.seek(0)
-                            poppler_path = None
-                            if os.path.exists('/usr/bin'):
-                                poppler_path = '/usr/bin'
-                            elif os.path.exists('/usr/local/bin'):
-                                poppler_path = '/usr/local/bin'
-                            convert_kwargs = {}
-                            if poppler_path:
-                                convert_kwargs['poppler_path'] = poppler_path
-                            images = convert_from_bytes(temp_pdf_buffer.getvalue(), **convert_kwargs)
-                            img = images[0]
-                            if target_format in ['jpg', 'jpeg']:
+                    if len(file.read()) > MAX_FILE_SIZE:
+                        return jsonify({'error': f'{file.filename} çok büyük (max 50 MB)'}), 400
+                    file.seek(0)
+
+                    original_filename = secure_filename(file.filename)
+                    file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+                    file_content = file.read()
+
+                    is_image = False
+                    is_svg = False
+                    is_text = False
+                    is_docx = False
+                    is_pdf = False
+                    is_xlsx = False
+                    is_pptx = False
+                    is_video = False
+                    is_audio = False
+
+                    try:
+                        img = Image.open(BytesIO(file_content))
+                        is_image = True
+                    except Exception:
+                        pass
+
+                    if file_ext == 'svg':
+                        is_svg = True
+                        is_image = True
+
+                    text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs']
+                    is_text = file_ext in text_extensions
+
+                    video_extensions = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']
+                    is_video = file_ext in video_extensions
+
+                    audio_extensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']
+                    is_audio = file_ext in audio_extensions
+
+                    if file_ext == 'docx':
+                        is_docx = True
+                    if file_ext == 'pdf':
+                        is_pdf = True
+                    if file_ext == 'xlsx':
+                        is_xlsx = True
+                    if file_ext == 'pptx':
+                        is_pptx = True
+
+                    output_buffer = BytesIO()
+                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+
+                    if operation == 'convert':
+                        if target_format == 'pdf':
+                            if is_svg:
+                                from svglib.svglib import svg2rlg
+                                from reportlab.graphics import renderPDF
+                                drawing = svg2rlg(BytesIO(file_content))
+                                renderPDF.drawToFile(drawing, output_buffer)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            elif is_image:
+                                img = Image.open(BytesIO(file_content))
                                 if img.mode in ('RGBA', 'P'):
                                     img = img.convert('RGB')
-                                img.save(output_buffer, format='JPEG', quality=95)
+                                img.save(output_buffer, format='PDF')
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            elif is_docx:
+                                doc = Document(BytesIO(file_content))
+                                styles = getSampleStyleSheet()
+                                doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                                story = []
+                                for para in doc.paragraphs:
+                                    story.append(Paragraph(para.text, styles['Normal']))
+                                    story.append(Spacer(1, 6))
+                                for table in doc.tables:
+                                    data = []
+                                    for row in table.rows:
+                                        row_data = []
+                                        for cell in row.cells:
+                                            row_data.append(cell.text)
+                                        data.append(row_data)
+                                    if data:
+                                        t = Table(data)
+                                        t.setStyle(TableStyle([
+                                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                                            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                                        ]))
+                                        story.append(t)
+                                        story.append(Spacer(1, 12))
+                                doc_pdf.build(story)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            elif is_xlsx:
+                                wb = openpyxl.load_workbook(BytesIO(file_content))
+                                styles = getSampleStyleSheet()
+                                doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                                story = []
+                                for sheet_name in wb.sheetnames:
+                                    story.append(Paragraph(sheet_name, styles['Heading1']))
+                                    story.append(Spacer(1, 12))
+                                    ws = wb[sheet_name]
+                                    data = []
+                                    for row in ws.iter_rows(values_only=True):
+                                        row_data = [str(cell) if cell is not None else '' for cell in row]
+                                        data.append(row_data)
+                                    if data:
+                                        t = Table(data)
+                                        t.setStyle(TableStyle([
+                                            ('BACKGROUND', (0, 0), (-1, 0), colors.grey),
+                                            ('TEXTCOLOR', (0, 0), (-1, 0), colors.whitesmoke),
+                                            ('ALIGN', (0, 0), (-1, -1), 'CENTER'),
+                                            ('FONTNAME', (0, 0), (-1, 0), 'Helvetica-Bold'),
+                                            ('BOTTOMPADDING', (0, 0), (-1, 0), 12),
+                                            ('BACKGROUND', (0, 1), (-1, -1), colors.beige),
+                                            ('GRID', (0, 0), (-1, -1), 1, colors.black)
+                                        ]))
+                                        story.append(t)
+                                        story.append(Spacer(1, 12))
+                                doc_pdf.build(story)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            elif is_pptx:
+                                prs = Presentation(BytesIO(file_content))
+                                styles = getSampleStyleSheet()
+                                doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                                story = []
+                                for i, slide in enumerate(prs.slides, 1):
+                                    story.append(Paragraph(f'Slayt {i}', styles['Heading1']))
+                                    story.append(Spacer(1, 12))
+                                    for shape in slide.shapes:
+                                        if hasattr(shape, 'text') and shape.text.strip():
+                                            story.append(Paragraph(shape.text, styles['Normal']))
+                                            story.append(Spacer(1, 6))
+                                    story.append(Spacer(1, 12))
+                                doc_pdf.build(story)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                            elif is_text or file_ext == 'txt':
+                                text = file_content.decode('utf-8', errors='replace')
+                                styles = getSampleStyleSheet()
+                                doc_pdf = SimpleDocTemplate(output_buffer, pagesize=A4)
+                                story = []
+                                for line in text.split('\n'):
+                                    if line.strip():
+                                        story.append(Paragraph(line, styles['Normal']))
+                                    else:
+                                        story.append(Spacer(1, 6))
+                                doc_pdf.build(story)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
                             else:
-                                if target_format == 'webp' and img.mode in ('RGBA', 'P'):
-                                    img.save(output_buffer, format='WEBP', quality=90)
-                                else:
-                                    img.save(output_buffer, format=target_format.upper())
-                            output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
-                        elif is_image:
-                            img = Image.open(BytesIO(file_content))
-                            if target_format in ['jpg', 'jpeg']:
-                                if img.mode in ('RGBA', 'P'):
-                                    img = img.convert('RGB')
-                                img.save(output_buffer, format='JPEG', quality=95)
-                            else:
-                                if target_format == 'webp' and img.mode in ('RGBA', 'P'):
-                                    img.save(output_buffer, format='WEBP', quality=90)
-                                else:
-                                    img.save(output_buffer, format=target_format.upper())
-                            output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
-                        elif is_pdf:
-                            try:
+                                return jsonify({'error': f'{original_filename} bu dosya türü PDF\'ye dönüştürülemez'}), 400
+
+                        elif target_format in ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff']:
+                            if is_svg:
+                                from svglib.svglib import svg2rlg
+                                from reportlab.graphics import renderPDF
                                 from pdf2image import convert_from_bytes
                                 import os
+                                temp_pdf_buffer = BytesIO()
+                                drawing = svg2rlg(BytesIO(file_content))
+                                renderPDF.drawToFile(drawing, temp_pdf_buffer)
+                                temp_pdf_buffer.seek(0)
                                 poppler_path = None
                                 if os.path.exists('/usr/bin'):
                                     poppler_path = '/usr/bin'
                                 elif os.path.exists('/usr/local/bin'):
                                     poppler_path = '/usr/local/bin'
-                                
                                 convert_kwargs = {}
                                 if poppler_path:
                                     convert_kwargs['poppler_path'] = poppler_path
-                                
-                                images = convert_from_bytes(file_content, **convert_kwargs)
-                                if len(images) == 1:
-                                    img = images[0]
-                                    if target_format in ['jpg', 'jpeg']:
-                                        img.save(output_buffer, format='JPEG', quality=95)
+                                images = convert_from_bytes(temp_pdf_buffer.getvalue(), **convert_kwargs)
+                                img = images[0]
+                                if target_format in ['jpg', 'jpeg']:
+                                    if img.mode in ('RGBA', 'P'):
+                                        img = img.convert('RGB')
+                                    img.save(output_buffer, format='JPEG', quality=95)
+                                else:
+                                    if target_format == 'webp' and img.mode in ('RGBA', 'P'):
+                                        img.save(output_buffer, format='WEBP', quality=90)
                                     else:
                                         img.save(output_buffer, format=target_format.upper())
-                                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                            elif is_image:
+                                img = Image.open(BytesIO(file_content))
+                                if target_format in ['jpg', 'jpeg']:
+                                    if img.mode in ('RGBA', 'P'):
+                                        img = img.convert('RGB')
+                                    img.save(output_buffer, format='JPEG', quality=95)
+                                else:
+                                    if target_format == 'webp' and img.mode in ('RGBA', 'P'):
+                                        img.save(output_buffer, format='WEBP', quality=90)
+                                    else:
+                                        img.save(output_buffer, format=target_format.upper())
+                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                            elif is_pdf:
+                                try:
+                                    from pdf2image import convert_from_bytes
+                                    import os
+                                    poppler_path = None
+                                    if os.path.exists('/usr/bin'):
+                                        poppler_path = '/usr/bin'
+                                    elif os.path.exists('/usr/local/bin'):
+                                        poppler_path = '/usr/local/bin'
+                                    
+                                    convert_kwargs = {}
+                                    if poppler_path:
+                                        convert_kwargs['poppler_path'] = poppler_path
+                                    
+                                    images = convert_from_bytes(file_content, **convert_kwargs)
+                                    if len(images) == 1:
+                                        img = images[0]
+                                        if target_format in ['jpg', 'jpeg']:
+                                            img.save(output_buffer, format='JPEG', quality=95)
+                                        else:
+                                            img.save(output_buffer, format=target_format.upper())
+                                        output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                    else:
+                                        zip_buffer = BytesIO()
+                                        with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
+                                            for i, img in enumerate(images, 1):
+                                                img_buffer = BytesIO()
+                                                if target_format in ['jpg', 'jpeg']:
+                                                    img.save(img_buffer, format='JPEG', quality=95)
+                                                else:
+                                                    img.save(img_buffer, format=target_format.upper())
+                                                img_buffer.seek(0)
+                                                zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_sayfa_{i}.{target_format}', img_buffer.getvalue())
+                                        zip_buffer.seek(0)
+                                        output_buffer = zip_buffer
+                                        output_filename = original_filename.rsplit('.', 1)[0] + '_sayfalar.zip'
+                                except Exception as e:
+                                    import os
+                                    poppler_paths = ['/usr/bin', '/usr/local/bin']
+                                    available_paths = [p for p in poppler_paths if os.path.exists(p)]
+                                    path_info = f" (Poppler yolları kontrol edildi: {', '.join(available_paths) if available_paths else 'yol bulunamadı'})"
+                                    return jsonify({'error': f'PDF\'den resim dönüşümü için poppler yüklü ve PATH\'de olmalı. Hata: {str(e)}{path_info}'}), 400
+                            else:
+                                return jsonify({'error': f'{original_filename} sadece resim ve PDF dosyaları resim formatlarına dönüştürülebilir'}), 400
+
+                        elif target_format == 'txt':
+                            if is_docx:
+                                doc = Document(BytesIO(file_content))
+                                text_content = '\n'.join([para.text for para in doc.paragraphs])
+                                output_buffer.write(text_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
+                            elif is_pdf:
+                                pdf_reader = PdfReader(BytesIO(file_content))
+                                text_content = ''
+                                for page in pdf_reader.pages:
+                                    text_content += page.extract_text() + '\n'
+                                output_buffer.write(text_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
+                            elif is_xlsx:
+                                wb = openpyxl.load_workbook(BytesIO(file_content))
+                                text_content = ''
+                                for sheet_name in wb.sheetnames:
+                                    text_content += f'--- {sheet_name} ---\n'
+                                    ws = wb[sheet_name]
+                                    for row in ws.iter_rows(values_only=True):
+                                        row_data = [str(cell) if cell is not None else '' for cell in row]
+                                        text_content += '\t'.join(row_data) + '\n'
+                                    text_content += '\n'
+                                output_buffer.write(text_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
+                            elif is_text or file_ext == 'txt':
+                                output_buffer.write(file_content)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
+                            else:
+                                return jsonify({'error': f'{original_filename} bu dosya türü TXT\'ye dönüştürülemez'}), 400
+
+                        elif target_format == 'csv':
+                            if is_xlsx:
+                                wb = openpyxl.load_workbook(BytesIO(file_content))
+                                if len(wb.sheetnames) == 1:
+                                    ws = wb.active
+                                    text_content = ''
+                                    for row in ws.iter_rows(values_only=True):
+                                        row_data = [str(cell) if cell is not None else '' for cell in row]
+                                        text_content += ','.join(row_data) + '\n'
+                                    output_buffer.write(text_content.encode('utf-8'))
+                                    output_filename = original_filename.rsplit('.', 1)[0] + '.csv'
                                 else:
                                     zip_buffer = BytesIO()
                                     with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                                        for i, img in enumerate(images, 1):
-                                            img_buffer = BytesIO()
-                                            if target_format in ['jpg', 'jpeg']:
-                                                img.save(img_buffer, format='JPEG', quality=95)
-                                            else:
-                                                img.save(img_buffer, format=target_format.upper())
-                                            img_buffer.seek(0)
-                                            zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_sayfa_{i}.{target_format}', img_buffer.getvalue())
+                                        for sheet_name in wb.sheetnames:
+                                            ws = wb[sheet_name]
+                                            text_content = ''
+                                            for row in ws.iter_rows(values_only=True):
+                                                row_data = [str(cell) if cell is not None else '' for cell in row]
+                                                text_content += ','.join(row_data) + '\n'
+                                            zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_{sheet_name}.csv', text_content.encode('utf-8'))
                                     zip_buffer.seek(0)
                                     output_buffer = zip_buffer
                                     output_filename = original_filename.rsplit('.', 1)[0] + '_sayfalar.zip'
-                            except Exception as e:
-                                import os
-                                poppler_paths = ['/usr/bin', '/usr/local/bin']
-                                available_paths = [p for p in poppler_paths if os.path.exists(p)]
-                                path_info = f" (Poppler yolları kontrol edildi: {', '.join(available_paths) if available_paths else 'yol bulunamadı'})"
-                                return jsonify({'error': f'PDF\'den resim dönüşümü için poppler yüklü ve PATH\'de olmalı. Hata: {str(e)}{path_info}'}), 400
-                        else:
-                            return jsonify({'error': f'{original_filename} sadece resim ve PDF dosyaları resim formatlarına dönüştürülebilir'}), 400
-
-                    elif target_format == 'txt':
-                        if is_docx:
-                            doc = Document(BytesIO(file_content))
-                            text_content = '\n'.join([para.text for para in doc.paragraphs])
-                            output_buffer.write(text_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
-                        elif is_pdf:
-                            pdf_reader = PdfReader(BytesIO(file_content))
-                            text_content = ''
-                            for page in pdf_reader.pages:
-                                text_content += page.extract_text() + '\n'
-                            output_buffer.write(text_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
-                        elif is_xlsx:
-                            wb = openpyxl.load_workbook(BytesIO(file_content))
-                            text_content = ''
-                            for sheet_name in wb.sheetnames:
-                                text_content += f'--- {sheet_name} ---\n'
-                                ws = wb[sheet_name]
-                                for row in ws.iter_rows(values_only=True):
-                                    row_data = [str(cell) if cell is not None else '' for cell in row]
-                                    text_content += '\t'.join(row_data) + '\n'
-                                text_content += '\n'
-                            output_buffer.write(text_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
-                        elif is_text or file_ext == 'txt':
-                            output_buffer.write(file_content)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
-                        else:
-                            return jsonify({'error': f'{original_filename} bu dosya türü TXT\'ye dönüştürülemez'}), 400
-
-                    elif target_format == 'csv':
-                        if is_xlsx:
-                            wb = openpyxl.load_workbook(BytesIO(file_content))
-                            if len(wb.sheetnames) == 1:
-                                ws = wb.active
-                                text_content = ''
-                                for row in ws.iter_rows(values_only=True):
-                                    row_data = [str(cell) if cell is not None else '' for cell in row]
-                                    text_content += ','.join(row_data) + '\n'
-                                output_buffer.write(text_content.encode('utf-8'))
-                                output_filename = original_filename.rsplit('.', 1)[0] + '.csv'
                             else:
-                                zip_buffer = BytesIO()
-                                with zipfile.ZipFile(zip_buffer, 'w', zipfile.ZIP_DEFLATED) as zipf:
-                                    for sheet_name in wb.sheetnames:
-                                        ws = wb[sheet_name]
-                                        text_content = ''
-                                        for row in ws.iter_rows(values_only=True):
-                                            row_data = [str(cell) if cell is not None else '' for cell in row]
-                                            text_content += ','.join(row_data) + '\n'
-                                        zipf.writestr(f'{original_filename.rsplit(".", 1)[0]}_{sheet_name}.csv', text_content.encode('utf-8'))
-                                zip_buffer.seek(0)
-                                output_buffer = zip_buffer
-                                output_filename = original_filename.rsplit('.', 1)[0] + '_sayfalar.zip'
+                                return jsonify({'error': f'{original_filename} sadece Excel dosyaları CSV\'ye dönüştürülebilir'}), 400
+
+                        elif target_format == 'html':
+                            if is_docx:
+                                doc = Document(BytesIO(file_content))
+                                html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title></head><body>'
+                                for para in doc.paragraphs:
+                                    html_content += f'<p>{para.text}</p>'
+                                html_content += '</body></html>'
+                                output_buffer.write(html_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.html'
+                            elif is_text or file_ext == 'txt':
+                                text = file_content.decode('utf-8', errors='replace')
+                                html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title></head><body>'
+                                for line in text.split('\n'):
+                                    if line.strip():
+                                        html_content += f'<p>{line}</p>'
+                                    else:
+                                        html_content += '<br>'
+                                html_content += '</body></html>'
+                                output_buffer.write(html_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.html'
+                            else:
+                                return jsonify({'error': f'{original_filename} bu dosya türü HTML\'ye dönüştürülemez'}), 400
+
+                        elif target_format == 'md':
+                            if is_docx:
+                                doc = Document(BytesIO(file_content))
+                                md_content = ''
+                                for para in doc.paragraphs:
+                                    md_content += para.text + '\n\n'
+                                output_buffer.write(md_content.encode('utf-8'))
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.md'
+                            elif is_text or file_ext == 'txt':
+                                output_buffer.write(file_content)
+                                output_filename = original_filename.rsplit('.', 1)[0] + '.md'
+                            else:
+                                return jsonify({'error': f'{original_filename} bu dosya türü Markdown\'a dönüştürülemez'}), 400
+
+                        elif target_format in ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']:
+                            if is_video:
+                                import tempfile
+                                import os
+                                import subprocess
+                                try:
+                                    with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as temp_in:
+                                        temp_in.write(file_content)
+                                        temp_in_path = temp_in.name
+                                    
+                                    temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
+                                    
+                                    ffmpeg_path = '/usr/bin/ffmpeg'
+                                    if not os.path.exists(ffmpeg_path):
+                                        ffmpeg_path = 'ffmpeg'
+                                    
+                                    cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
+                                    result = subprocess.run(cmd, capture_output=True, text=True)
+                                    
+                                    if result.returncode != 0:
+                                        raise Exception(f'FFmpeg hatası: {result.stderr}')
+                                    
+                                    with open(temp_out_path, 'rb') as f:
+                                        output_buffer.write(f.read())
+                                    
+                                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                    
+                                    os.unlink(temp_in_path)
+                                    os.unlink(temp_out_path)
+                                except Exception as e:
+                                    return jsonify({'error': f'Video dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
+                            else:
+                                return jsonify({'error': f'{original_filename} sadece video dosyaları video formatlarına dönüştürülebilir'}), 400
+
+                        elif target_format in ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']:
+                            if is_audio or is_video:
+                                import tempfile
+                                import os
+                                import subprocess
+                                try:
+                                    input_ext = file_ext
+                                    with tempfile.NamedTemporaryFile(suffix=f'.{input_ext}', delete=False) as temp_in:
+                                        temp_in.write(file_content)
+                                        temp_in_path = temp_in.name
+                                    
+                                    temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
+                                    
+                                    ffmpeg_path = '/usr/bin/ffmpeg'
+                                    if not os.path.exists(ffmpeg_path):
+                                        ffmpeg_path = 'ffmpeg'
+                                    
+                                    cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
+                                    result = subprocess.run(cmd, capture_output=True, text=True)
+                                    
+                                    if result.returncode != 0:
+                                        raise Exception(f'FFmpeg hatası: {result.stderr}')
+                                    
+                                    with open(temp_out_path, 'rb') as f:
+                                        output_buffer.write(f.read())
+                                    
+                                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                    
+                                    os.unlink(temp_in_path)
+                                    os.unlink(temp_out_path)
+                                except Exception as e:
+                                    return jsonify({'error': f'Ses dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
+                            else:
+                                return jsonify({'error': f'{original_filename} sadece ses ve video dosyaları ses formatlarına dönüştürülebilir'}), 400
+
                         else:
-                            return jsonify({'error': f'{original_filename} sadece Excel dosyaları CSV\'ye dönüştürülebilir'}), 400
+                            return jsonify({'error': 'Desteklenmeyen hedef format'}), 400
 
-                    elif target_format == 'html':
-                        if is_docx:
-                            doc = Document(BytesIO(file_content))
-                            html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title></head><body>'
-                            for para in doc.paragraphs:
-                                html_content += f'<p>{para.text}</p>'
-                            html_content += '</body></html>'
-                            output_buffer.write(html_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.html'
-                        elif is_text or file_ext == 'txt':
-                            text = file_content.decode('utf-8', errors='replace')
-                            html_content = '<!DOCTYPE html><html><head><meta charset="UTF-8"><title></title></head><body>'
-                            for line in text.split('\n'):
-                                if line.strip():
-                                    html_content += f'<p>{line}</p>'
-                                else:
-                                    html_content += '<br>'
-                            html_content += '</body></html>'
-                            output_buffer.write(html_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.html'
-                        else:
-                            return jsonify({'error': f'{original_filename} bu dosya türü HTML\'ye dönüştürülemez'}), 400
-
-                    elif target_format == 'md':
-                        if is_docx:
-                            doc = Document(BytesIO(file_content))
-                            md_content = ''
-                            for para in doc.paragraphs:
-                                md_content += para.text + '\n\n'
-                            output_buffer.write(md_content.encode('utf-8'))
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.md'
-                        elif is_text or file_ext == 'txt':
-                            output_buffer.write(file_content)
-                            output_filename = original_filename.rsplit('.', 1)[0] + '.md'
-                        else:
-                            return jsonify({'error': f'{original_filename} bu dosya türü Markdown\'a dönüştürülemez'}), 400
-
-                    elif target_format in ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']:
-                        if is_video:
-                            import tempfile
-                            import os
-                            import subprocess
-                            try:
-                                with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as temp_in:
-                                    temp_in.write(file_content)
-                                    temp_in_path = temp_in.name
-                                
-                                temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
-                                
-                                ffmpeg_path = '/usr/bin/ffmpeg'
-                                if not os.path.exists(ffmpeg_path):
-                                    ffmpeg_path = 'ffmpeg'
-                                
-                                cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
-                                result = subprocess.run(cmd, capture_output=True, text=True)
-                                
-                                if result.returncode != 0:
-                                    raise Exception(f'FFmpeg hatası: {result.stderr}')
-                                
-                                with open(temp_out_path, 'rb') as f:
-                                    output_buffer.write(f.read())
-                                
-                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
-                                
-                                os.unlink(temp_in_path)
-                                os.unlink(temp_out_path)
-                            except Exception as e:
-                                return jsonify({'error': f'Video dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
-                        else:
-                            return jsonify({'error': f'{original_filename} sadece video dosyaları video formatlarına dönüştürülebilir'}), 400
-
-                    elif target_format in ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']:
-                        if is_audio or is_video:
-                            import tempfile
-                            import os
-                            import subprocess
-                            try:
-                                input_ext = file_ext
-                                with tempfile.NamedTemporaryFile(suffix=f'.{input_ext}', delete=False) as temp_in:
-                                    temp_in.write(file_content)
-                                    temp_in_path = temp_in.name
-                                
-                                temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
-                                
-                                ffmpeg_path = '/usr/bin/ffmpeg'
-                                if not os.path.exists(ffmpeg_path):
-                                    ffmpeg_path = 'ffmpeg'
-                                
-                                cmd = [ffmpeg_path, '-i', temp_in_path, '-y', temp_out_path]
-                                result = subprocess.run(cmd, capture_output=True, text=True)
-                                
-                                if result.returncode != 0:
-                                    raise Exception(f'FFmpeg hatası: {result.stderr}')
-                                
-                                with open(temp_out_path, 'rb') as f:
-                                    output_buffer.write(f.read())
-                                
-                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
-                                
-                                os.unlink(temp_in_path)
-                                os.unlink(temp_out_path)
-                            except Exception as e:
-                                return jsonify({'error': f'Ses dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
-                        else:
-                            return jsonify({'error': f'{original_filename} sadece ses ve video dosyaları ses formatlarına dönüştürülebilir'}), 400
-
-                    else:
-                        return jsonify({'error': 'Desteklenmeyen hedef format'}), 400
-
-                output_buffer.seek(0)
-                converted_files.append((output_filename, output_buffer.getvalue()))
+                    output_buffer.seek(0)
+                    converted_files.append((output_filename, output_buffer.getvalue()))
 
         except Exception as e:
             current_app.logger.error(f"Dosya dönüştürme hatası: {e}")

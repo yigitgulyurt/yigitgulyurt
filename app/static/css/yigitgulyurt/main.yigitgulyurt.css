@@ -4,36 +4,31 @@
    System dark/light auto via CSS variables
    ============================================= */
 
-:root {
+:root,
+html[data-theme="dark"] {
   --mono: 'Montserrat', sans-serif;
   --accent: #4ade80;
   --accent2: #60a5fa;
   --font-size-base: 13px;
+  --bg: #0d0d0d;
+  --bg2: #141414;
+  --bg3: #1a1a1a;
+  --text: #e2e2e2;
+  --text2: #888;
+  --text3: #555;
+  --border: rgba(255,255,255,0.1);
+  --border2: rgba(255,255,255,0.18);
 }
 
-@media (prefers-color-scheme: dark) {
-  :root {
-    --bg: #0d0d0d;
-    --bg2: #141414;
-    --bg3: #1a1a1a;
-    --text: #e2e2e2;
-    --text2: #888;
-    --text3: #555;
-    --border: rgba(255,255,255,0.1);
-    --border2: rgba(255,255,255,0.18);
-  }
-}
-@media (prefers-color-scheme: light) {
-  :root {
-    --bg: #ffffff;
-    --bg2: #f9f9f7;
-    --bg3: #f3f2ef;
-    --text: #1a1a1a;
-    --text2: #6b6b6b;
-    --text3: #aaa;
-    --border: rgba(0,0,0,0.1);
-    --border2: rgba(0,0,0,0.2);
-  }
+html[data-theme="light"] {
+  --bg: #ffffff;
+  --bg2: #f9f9f7;
+  --bg3: #f3f2ef;
+  --text: #1a1a1a;
+  --text2: #6b6b6b;
+  --text3: #aaa;
+  --border: rgba(0,0,0,0.1);
+  --border2: rgba(0,0,0,0.2);
 }
 
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }

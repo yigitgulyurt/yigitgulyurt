@@ -358,6 +358,14 @@
             <span class="lang-tr">📎 PDF Birleştir</span>
             <span class="lang-en">📎 Merge PDF</span>
         </button>
+        <button class="operation-tab" data-operation="split_pdf">
+            <span class="lang-tr">✂️ PDF Böl</span>
+            <span class="lang-en">✂️ Split PDF</span>
+        </button>
+        <button class="operation-tab" data-operation="compress_image">
+            <span class="lang-tr">🗜️ Resim Sıkıştır</span>
+            <span class="lang-en">🗜️ Compress Image</span>
+        </button>
     </div>
 
     <div class="upload-area" id="uploadArea">
@@ -541,7 +549,9 @@ const FORMAT_NAMES = {
 
 const OPERATION_HINTS = {
     convert: 'Desteklenen formatlar: Resimler, Metinler, PDF, DOCX, XLSX, PPTX, Videolar (MP4, AVI, MOV, MKV vb.), Sesler (MP3, WAV, OGG, FLAC vb.) (max 50 MB)',
-    merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)'
+    merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)',
+    split_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)',
+    compress_image: 'Sadece resim dosyalarını seçin (JPG, PNG, WEBP vb.) (max 50 MB)'
 };
 
 function showToast(message, type) {
@@ -577,7 +587,7 @@ operationTabs.forEach(tab => {
 });
 
 function updateUI() {
-    if (currentOperation === 'merge_pdf') {
+    if (currentOperation === 'merge_pdf' || currentOperation === 'split_pdf' || currentOperation === 'compress_image') {
         formatSection.style.display = 'none';
     } else {
         formatSection.style.display = 'block';
@@ -786,9 +796,12 @@ function escapeHtml(text) {
 targetFormat.addEventListener('change', checkProcessEnabled);
 
 function checkProcessEnabled() {
-    if (currentOperation === 'merge_pdf') {
+    if (currentOperation === 'merge_pdf' || currentOperation === 'split_pdf') {
         const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
         convertBtn.disabled = !(selectedFiles.length > 0 && allPdf);
+    } else if (currentOperation === 'compress_image') {
+        const allImage = selectedFiles.every(f => getFileType(f.name) === 'image');
+        convertBtn.disabled = !(selectedFiles.length > 0 && allImage);
     } else {
         convertBtn.disabled = !(selectedFiles.length > 0 && targetFormat.value);
     }
@@ -867,6 +880,10 @@ async function processFiles() {
         showToast(
             currentOperation === 'merge_pdf' 
                 ? "PDF'ler başarıyla birleştirildi!" 
+                : currentOperation === 'split_pdf'
+                ? "PDF'ler başarıyla bölündü!" 
+                : currentOperation === 'compress_image'
+                ? "Resimler başarıyla sıkıştırıldı!"
                 : (selectedFiles.length > 1 ? "Dosyalar başarıyla dönüştürüldü!" : "Dosya başarıyla dönüştürüldü!"), 
             "success"
         );
