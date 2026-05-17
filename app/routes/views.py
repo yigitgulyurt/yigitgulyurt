@@ -832,6 +832,8 @@ def file_converter():
                 is_pdf = False
                 is_xlsx = False
                 is_pptx = False
+                is_video = False
+                is_audio = False
 
                 try:
                     img = Image.open(BytesIO(file_content))
@@ -845,6 +847,12 @@ def file_converter():
 
                 text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py', 'c', 'cpp', 'java', 'php', 'rb', 'go', 'rs']
                 is_text = file_ext in text_extensions
+
+                video_extensions = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']
+                is_video = file_ext in video_extensions
+
+                audio_extensions = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']
+                is_audio = file_ext in audio_extensions
 
                 if file_ext == 'docx':
                     is_docx = True
@@ -1141,6 +1149,63 @@ def file_converter():
                             output_filename = original_filename.rsplit('.', 1)[0] + '.md'
                         else:
                             return jsonify({'error': f'{original_filename} bu dosya türü Markdown\'a dönüştürülemez'}), 400
+
+                    elif target_format in ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp']:
+                        if is_video:
+                            import tempfile
+                            import os
+                            import ffmpeg
+                            try:
+                                with tempfile.NamedTemporaryFile(suffix=f'.{file_ext}', delete=False) as temp_in:
+                                    temp_in.write(file_content)
+                                    temp_in_path = temp_in.name
+                                
+                                temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
+                                
+                                stream = ffmpeg.input(temp_in_path)
+                                stream = ffmpeg.output(stream, temp_out_path)
+                                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+                                
+                                with open(temp_out_path, 'rb') as f:
+                                    output_buffer.write(f.read())
+                                
+                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                
+                                os.unlink(temp_in_path)
+                                os.unlink(temp_out_path)
+                            except Exception as e:
+                                return jsonify({'error': f'Video dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
+                        else:
+                            return jsonify({'error': f'{original_filename} sadece video dosyaları video formatlarına dönüştürülebilir'}), 400
+
+                    elif target_format in ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']:
+                        if is_audio or is_video:
+                            import tempfile
+                            import os
+                            import ffmpeg
+                            try:
+                                input_ext = file_ext
+                                with tempfile.NamedTemporaryFile(suffix=f'.{input_ext}', delete=False) as temp_in:
+                                    temp_in.write(file_content)
+                                    temp_in_path = temp_in.name
+                                
+                                temp_out_path = tempfile.mktemp(suffix=f'.{target_format}')
+                                
+                                stream = ffmpeg.input(temp_in_path)
+                                stream = ffmpeg.output(stream, temp_out_path)
+                                ffmpeg.run(stream, overwrite_output=True, capture_stdout=True, capture_stderr=True)
+                                
+                                with open(temp_out_path, 'rb') as f:
+                                    output_buffer.write(f.read())
+                                
+                                output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                                
+                                os.unlink(temp_in_path)
+                                os.unlink(temp_out_path)
+                            except Exception as e:
+                                return jsonify({'error': f'Ses dönüştürme hatası: {str(e)}. FFmpeg yüklü mü?'}), 400
+                        else:
+                            return jsonify({'error': f'{original_filename} sadece ses ve video dosyaları ses formatlarına dönüştürülebilir'}), 400
 
                     else:
                         return jsonify({'error': 'Desteklenmeyen hedef format'}), 400

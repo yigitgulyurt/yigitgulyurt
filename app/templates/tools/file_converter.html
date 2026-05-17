@@ -414,7 +414,9 @@ const FORMAT_MAPPING = {
     text: ['pdf', 'txt', 'html', 'md'],
     pdf: ['jpg', 'jpeg', 'png', 'webp', 'gif', 'bmp', 'tiff', 'txt'],
     xlsx: ['pdf', 'csv', 'txt'],
-    pptx: ['pdf', 'txt']
+    pptx: ['pdf', 'txt'],
+    video: ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp', 'mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'opus'],
+    audio: ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus']
 };
 
 const IMAGE_EXTS = ['jpg', 'jpeg', 'png', 'gif', 'bmp', 'webp', 'tiff', 'svg', 'ico'];
@@ -423,6 +425,8 @@ const TEXT_EXTS = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py',
 const PDF_EXTS = ['pdf'];
 const XLSX_EXTS = ['xlsx'];
 const PPTX_EXTS = ['pptx'];
+const VIDEO_EXTS = ['mp4', 'avi', 'mov', 'mkv', 'webm', 'flv', 'wmv', 'm4v', '3gp'];
+const AUDIO_EXTS = ['mp3', 'wav', 'ogg', 'flac', 'aac', 'm4a', 'wma', 'opus'];
 
 const FORMAT_NAMES = {
     pdf: 'PDF',
@@ -436,11 +440,28 @@ const FORMAT_NAMES = {
     txt: 'TXT',
     csv: 'CSV',
     html: 'HTML',
-    md: 'Markdown'
+    md: 'Markdown',
+    mp4: 'MP4',
+    avi: 'AVI',
+    mov: 'MOV',
+    mkv: 'MKV',
+    webm: 'WebM',
+    flv: 'FLV',
+    wmv: 'WMV',
+    m4v: 'M4V',
+    '3gp': '3GP',
+    mp3: 'MP3',
+    wav: 'WAV',
+    ogg: 'OGG',
+    flac: 'FLAC',
+    aac: 'AAC',
+    m4a: 'M4A',
+    wma: 'WMA',
+    opus: 'Opus'
 };
 
 const OPERATION_HINTS = {
-    convert: 'Desteklenen formatlar: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX, PDF, XLSX, PPTX (max 50 MB)',
+    convert: 'Desteklenen formatlar: Resimler, Metinler, PDF, DOCX, XLSX, PPTX, Videolar (MP4, AVI, MOV, MKV vb.), Sesler (MP3, WAV, OGG, FLAC vb.) (max 50 MB)',
     merge_pdf: 'Sadece PDF dosyalarını seçin (max 50 MB)'
 };
 
@@ -522,6 +543,8 @@ function getFileType(filename) {
     if (PDF_EXTS.includes(ext)) return 'pdf';
     if (XLSX_EXTS.includes(ext)) return 'xlsx';
     if (PPTX_EXTS.includes(ext)) return 'pptx';
+    if (VIDEO_EXTS.includes(ext)) return 'video';
+    if (AUDIO_EXTS.includes(ext)) return 'audio';
     return 'unknown';
 }
 
@@ -623,6 +646,8 @@ function getFileIcon(filename) {
     if (type === 'pdf') return '📑';
     if (type === 'xlsx') return '📊';
     if (type === 'pptx') return '📽️';
+    if (type === 'video') return '🎬';
+    if (type === 'audio') return '🎵';
     return '📁';
 }
 
