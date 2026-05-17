@@ -440,56 +440,62 @@
 
 .encryption-section {
     margin-top: 20px;
-    padding: 18px;
-    background: rgba(74, 222, 128, 0.06);
-    border: 1px solid rgba(74, 222, 128, 0.15);
-    border-radius: 12px;
+    padding: 24px 20px;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.08) 0%, rgba(16, 185, 129, 0.04) 100%);
+    border: 1px solid rgba(74, 222, 128, 0.2);
+    border-radius: 16px;
+    box-shadow: 0 4px 20px rgba(16, 185, 129, 0.05);
 }
 
 .encryption-toggle-wrapper {
     display: flex;
     align-items: center;
-    gap: 12px;
-    margin-bottom: 12px;
+    gap: 14px;
+    margin-bottom: 16px;
 }
 
 .encryption-toggle {
-    width: 44px;
-    height: 24px;
+    width: 52px;
+    height: 28px;
     background: var(--bg3);
-    border-radius: 12px;
+    border-radius: 14px;
     position: relative;
     cursor: pointer;
-    transition: background 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
     border: 1px solid var(--border);
+    box-shadow: inset 0 2px 8px rgba(0,0,0,0.1);
 }
 
 .encryption-toggle.active {
-    background: rgba(74, 222, 128, 0.4);
+    background: linear-gradient(135deg, #4ade80 0%, #22c55e 100%);
+    border-color: rgba(34, 197, 94, 0.5);
+    box-shadow: 0 4px 12px rgba(34, 197, 94, 0.3);
 }
 
 .encryption-toggle-knob {
-    width: 18px;
-    height: 18px;
-    background: var(--text2);
+    width: 22px;
+    height: 22px;
+    background: white;
     border-radius: 50%;
     position: absolute;
     top: 2px;
     left: 2px;
-    transition: all 0.3s;
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+    box-shadow: 0 2px 8px rgba(0,0,0,0.15);
 }
 
 .encryption-toggle.active .encryption-toggle-knob {
-    left: 22px;
-    background: var(--accent);
+    left: 26px;
+    background: white;
 }
 
 .encryption-label {
-    font-size: 13px;
+    font-size: 14px;
     font-weight: 600;
     display: flex;
     align-items: center;
-    gap: 6px;
+    gap: 8px;
+    letter-spacing: 0.2px;
 }
 
 .encryption-input-wrapper {
@@ -498,6 +504,18 @@
 
 .encryption-input-wrapper.show {
     display: block;
+    animation: fadeInUp 0.3s ease;
+}
+
+@keyframes fadeInUp {
+    from {
+        opacity: 0;
+        transform: translateY(10px);
+    }
+    to {
+        opacity: 1;
+        transform: translateY(0);
+    }
 }
 
 .encryption-input-group {
@@ -508,30 +526,36 @@
 
 .encryption-input {
     flex: 1;
-    padding: 12px 14px;
-    border-radius: 8px;
+    padding: 14px 16px;
+    border-radius: 12px;
     background: var(--bg2);
-    border: 1px solid var(--border);
+    border: 1.5px solid var(--border);
     color: var(--text);
     font-family: var(--mono);
     font-size: 13px;
     outline: none;
-    transition: border-color 0.15s;
+    transition: all 0.2s ease;
 }
 
 .encryption-input:focus {
     border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
 }
 
 .encryption-note {
-    margin-top: 10px;
-    font-size: 11px;
+    margin-top: 14px;
+    padding: 12px 14px;
+    background: rgba(15, 23, 42, 0.3);
+    border-radius: 10px;
+    font-size: 11.5px;
     color: var(--text2);
-    line-height: 1.6;
+    line-height: 1.7;
+    border-left: 3px solid var(--accent);
 }
 
 .encryption-note strong {
     color: var(--accent);
+    font-weight: 700;
 }
 
 @media (max-width: 600px) {
@@ -605,17 +629,17 @@
             <div class="encryption-toggle" id="encryptionToggle" onclick="toggleEncryption()">
                 <div class="encryption-toggle-knob"></div>
             </div>
-            <div class="encryption-label">
-                <span>🔐</span>
-                <span class="lang-tr">Dosyaları Şifrele</span>
-                <span class="lang-en">Encrypt Files</span>
+            <div class="encryption-label" id="encryptionLabel">
+                <span id="encryptionIcon">🔐</span>
+                <span class="lang-tr" id="encryptionLabelTr">Dosyaları Şifrele</span>
+                <span class="lang-en" id="encryptionLabelEn">Encrypt Files</span>
             </div>
         </div>
         <div class="encryption-input-wrapper" id="encryptionInputWrapper">
             <div class="encryption-input-group">
                 <input type="password" class="encryption-input" id="encryptionPassword" placeholder="Şifre girin (en az 8 karakter)" />
             </div>
-            <div class="encryption-note">
+            <div class="encryption-note" id="encryptionNote">
                 <span class="lang-tr"><strong>Önemli:</strong> Şifrenizi kimseyle paylaşmayın ve saklayın. Şifresiz dosya geri getirilemez! Şifreleme <strong>uçtan uca</strong> yapılır, şifreniz sunucuya gönderilmez.</span>
                 <span class="lang-en"><strong>Important:</strong> Don't share your password and keep it safe. Files cannot be recovered without the password! Encryption is done <strong>end-to-end</strong>, your password is never sent to the server.</span>
             </div>
@@ -995,22 +1019,41 @@ function updateUI() {
         formatSection.style.display = 'block';
     }
     
+    const encryptionIcon = document.getElementById('encryptionIcon');
+    const encryptionLabelTr = document.getElementById('encryptionLabelTr');
+    const encryptionLabelEn = document.getElementById('encryptionLabelEn');
+    const encryptionNote = document.getElementById('encryptionNote');
+    
     if (currentOperation === 'decrypt') {
         document.querySelector('.encryption-section').style.display = 'block';
         encryptionToggle.style.display = 'none';
         encryptionInputWrapper.classList.add('show');
+        encryptionIcon.textContent = '🔓';
+        encryptionLabelTr.textContent = 'Şifreyi Gir';
+        encryptionLabelEn.textContent = 'Enter Password';
         encryptionPassword.placeholder = document.documentElement.getAttribute('data-lang') === 'en' 
             ? 'Enter your password' 
             : 'Şifrenizi girin';
+        encryptionNote.innerHTML = `
+            <span class="lang-tr"><strong>Önemli:</strong> Şifrelenmiş dosyanın şifresini girin. Şifre doğru değilse dosya açılamaz!</span>
+            <span class="lang-en"><strong>Important:</strong> Enter the password of the encrypted file. If the password is incorrect, the file cannot be opened!</span>
+        `;
     } else {
         document.querySelector('.encryption-section').style.display = 'block';
         encryptionToggle.style.display = 'block';
+        encryptionIcon.textContent = '🔐';
+        encryptionLabelTr.textContent = 'Dosyaları Şifrele';
+        encryptionLabelEn.textContent = 'Encrypt Files';
         if (!encryptionEnabled) {
             encryptionInputWrapper.classList.remove('show');
         }
         encryptionPassword.placeholder = document.documentElement.getAttribute('data-lang') === 'en' 
             ? 'Enter password (min 8 characters)' 
             : 'Şifre girin (en az 8 karakter)';
+        encryptionNote.innerHTML = `
+            <span class="lang-tr"><strong>Önemli:</strong> Şifrenizi kimseyle paylaşmayın ve saklayın. Şifresiz dosya geri getirilemez! Şifreleme <strong>uçtan uca</strong> yapılır, şifreniz sunucuya gönderilmez.</span>
+            <span class="lang-en"><strong>Important:</strong> Don't share your password and keep it safe. Files cannot be recovered without the password! Encryption is done <strong>end-to-end</strong>, your password is never sent to the server.</span>
+        `;
     }
     
     uploadHint.innerHTML = `<span class="lang-tr">${OPERATION_HINTS[currentOperation]}</span><span class="lang-en">${OPERATION_HINTS[currentOperation]}</span>`;
