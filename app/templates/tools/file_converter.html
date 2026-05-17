@@ -611,95 +611,6 @@
     font-weight: 700;
 }
 
-.qr-section {
-    margin-top: 30px;
-    padding: 25px;
-    background: var(--bg2);
-    border-radius: 16px;
-    border: 1px solid var(--border);
-}
-
-.qr-section h3 {
-    margin-bottom: 15px;
-    color: var(--text);
-    font-size: 1.25rem;
-}
-
-.qr-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-}
-
-.qr-input {
-    flex: 1;
-    padding: 14px 18px;
-    background: var(--bg2);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 15px;
-    transition: all 0.3s;
-}
-
-.qr-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
-}
-
-.qr-generate-btn {
-    padding: 14px 24px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: 700;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.qr-generate-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(74, 222, 128, 0.3);
-}
-
-.qr-result {
-    display: none;
-    flex-direction: column;
-    align-items: center;
-    gap: 15px;
-    padding-top: 15px;
-    border-top: 1px dashed var(--border);
-}
-
-.qr-result.show {
-    display: flex;
-}
-
-.qr-image {
-    max-width: 280px;
-    border-radius: 12px;
-    box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-}
-
-.qr-download-btn {
-    padding: 12px 24px;
-    background: var(--bg3);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-weight: 600;
-    font-size: 14px;
-    cursor: pointer;
-    transition: all 0.3s;
-}
-
-.qr-download-btn:hover {
-    background: var(--border);
-}
-
 .keyboard-hints {
     margin-top: 30px;
     padding-top: 25px;
@@ -990,27 +901,6 @@
             </div>
         </div>
     </div>
-
-    <div class="qr-section">
-        <h3>
-            <span class="lang-tr">📱 QR Kod Üretici</span>
-            <span class="lang-en">📱 QR Code Generator</span>
-        </h3>
-        <div class="qr-input-group">
-            <input type="text" class="qr-input" id="qrInput" placeholder="https://yigitgulyurt.net.tr veya metin girin" />
-            <button class="qr-generate-btn" id="qrGenerateBtn" onclick="generateQRCode()">
-                <span class="lang-tr">Üret</span>
-                <span class="lang-en">Generate</span>
-            </button>
-        </div>
-        <div class="qr-result" id="qrResult">
-            <img class="qr-image" id="qrImage" alt="QR Code" />
-            <button class="qr-download-btn" id="qrDownloadBtn" onclick="downloadQRCode()">
-                <span class="lang-tr">QR Kodu İndir</span>
-                <span class="lang-en">Download QR Code</span>
-            </button>
-        </div>
-    </div>
     
     <div class="keyboard-hints">
         <div class="keyboard-hint-item">
@@ -1061,10 +951,6 @@ const uploadModeFile = document.getElementById('uploadModeFile');
 const uploadModeUrl = document.getElementById('uploadModeUrl');
 const urlInputSection = document.getElementById('urlInputSection');
 const urlInput = document.getElementById('urlInput');
-const qrInput = document.getElementById('qrInput');
-const qrResult = document.getElementById('qrResult');
-const qrImage = document.getElementById('qrImage');
-let currentQRBlob = null;
 
 let audioContext = null;
 let soundEnabled = true;
@@ -1310,71 +1196,6 @@ function clearHistory() {
         document.documentElement.getAttribute('data-lang') === 'en' 
             ? 'History cleared successfully!' 
             : 'Geçmiş başarıyla temizlendi!', 
-        'success'
-    );
-}
-
-async function generateQRCode() {
-    const text = qrInput.value.trim();
-    if (!text) {
-        showToast(
-            document.documentElement.getAttribute('data-lang') === 'en' 
-                ? 'Please enter a URL or text!' 
-                : 'Lütfen bir URL veya metin girin!', 
-            'error'
-        );
-        return;
-    }
-    
-    try {
-        const response = await fetch('/api/qr', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ text: text, size: 300, border: 2 })
-        });
-        
-        if (!response.ok) {
-            throw new Error('QR kodu üretilemedi');
-        }
-        
-        currentQRBlob = await response.blob();
-        const imgUrl = URL.createObjectURL(currentQRBlob);
-        qrImage.src = imgUrl;
-        qrResult.classList.add('show');
-        
-        showToast(
-            document.documentElement.getAttribute('data-lang') === 'en' 
-                ? 'QR code generated successfully!' 
-                : 'QR kodu başarıyla üretildi!', 
-            'success'
-        );
-    } catch (error) {
-        console.error('QR kod hatası:', error);
-        showToast(
-            document.documentElement.getAttribute('data-lang') === 'en' 
-                ? 'Error generating QR code!' 
-                : 'QR kodu üretilirken hata!', 
-            'error'
-        );
-    }
-}
-
-function downloadQRCode() {
-    if (!currentQRBlob) return;
-    
-    const url = URL.createObjectURL(currentQRBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'qrcode.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-    
-    showToast(
-        document.documentElement.getAttribute('data-lang') === 'en' 
-            ? 'QR code downloaded!' 
-            : 'QR kodu indirildi!', 
         'success'
     );
 }
@@ -1970,7 +1791,7 @@ async function processFiles() {
             }
         }, 80);
 
-        const response = await fetch(window.location.href, {
+        const response = await fetch('/api/file-converter', {
             method: 'POST',
             body: formData
         });
