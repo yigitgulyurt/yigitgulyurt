@@ -764,6 +764,7 @@ def unit_converter():
 @limiter.limit("30 per hour", methods=['POST'])
 def file_converter():
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
+    MAX_URL_RESPONSE_SIZE = 50 * 1024 * 1024  # 50 MB
 
     if request.method == 'POST':
         from io import BytesIO
@@ -778,13 +779,71 @@ def file_converter():
         from PyPDF2 import PdfReader, PdfWriter
         import openpyxl
         from pptx import Presentation
+        from urllib.parse import urlparse
 
-        files = request.files.getlist('files')
+        files = []
         target_format = request.form.get('target_format')
         operation = request.form.get('operation', 'convert')
 
+        url_input = request.form.get('url')
+        if url_input:
+            try:
+                parsed = urlparse(url_input)
+                if not parsed.scheme or not parsed.netloc:
+                    return jsonify({'error': 'Geçersiz URL'}), 400
+                
+                headers = {
+                    'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36'
+                }
+                
+                with requests.get(url_input, headers=headers, stream=True, timeout=30) as r:
+                    r.raise_for_status()
+                    
+                    content_length = r.headers.get('Content-Length')
+                    if content_length and int(content_length) > MAX_URL_RESPONSE_SIZE:
+                        return jsonify({'error': 'Dosya çok büyük (max 50 MB)'}), 400
+                    
+                    content = b''
+                    total_read = 0
+                    for chunk in r.iter_content(chunk_size=8192):
+                        total_read += len(chunk)
+                        if total_read > MAX_URL_RESPONSE_SIZE:
+                            return jsonify({'error': 'Dosya çok büyük (max 50 MB)'}), 400
+                        content += chunk
+                    
+                    filename = url_input.split('/')[-1]
+                    if not filename or '.' not in filename:
+                        filename = 'indirilen_dosya'
+                        content_type = r.headers.get('Content-Type', '')
+                        if 'pdf' in content_type:
+                            filename += '.pdf'
+                        elif 'image/jpeg' in content_type or 'image/jpg' in content_type:
+                            filename += '.jpg'
+                        elif 'image/png' in content_type:
+                            filename += '.png'
+                        elif 'text/plain' in content_type:
+                            filename += '.txt'
+                        else:
+                            filename += '.bin'
+                    
+                    class FileObj:
+                        def __init__(self, filename, content):
+                            self.filename = filename
+                            self._content = content
+                        def read(self):
+                            return self._content
+                        def seek(self, pos):
+                            pass
+                    
+                    files.append(FileObj(filename, content))
+                    
+            except Exception as e:
+                return jsonify({'error': f'URL\'den dosya indirilemedi: {str(e)}'}), 400
+        else:
+            files = request.files.getlist('files')
+
         if not files or len(files) == 0:
-            return jsonify({'error': 'Dosya seçilmedi'}), 400
+            return jsonify({'error': 'Dosya seçilmedi veya URL girilmedi'}), 400
 
         if operation == 'convert' and not target_format:
             return jsonify({'error': 'Hedef format seçilmedi'}), 400

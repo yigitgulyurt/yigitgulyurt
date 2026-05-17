@@ -68,6 +68,78 @@
     color: var(--accent);
 }
 
+.upload-mode-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+}
+
+.upload-mode-tab {
+    flex: 1;
+    padding: 12px 20px;
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    cursor: pointer;
+    font-weight: 600;
+    font-size: 14px;
+    color: var(--text2);
+    transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+.upload-mode-tab.active {
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%);
+    border-color: var(--accent);
+    color: var(--accent);
+}
+
+.url-input-section {
+    display: none;
+}
+
+.url-input-section.active {
+    display: block;
+}
+
+.url-input-group {
+    display: flex;
+    gap: 10px;
+}
+
+.url-input {
+    flex: 1;
+    padding: 14px 18px;
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 15px;
+    transition: all 0.3s;
+}
+
+.url-input:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+.url-add-btn {
+    padding: 14px 22px;
+    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
+    border: none;
+    border-radius: 12px;
+    color: white;
+    font-weight: 700;
+    font-size: 14px;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.url-add-btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 20px rgba(74, 222, 128, 0.3);
+}
+
 .upload-area {
     border: 3px dashed var(--border);
     border-radius: 20px;
@@ -677,6 +749,17 @@
         </button>
     </div>
 
+    <div class="upload-mode-tabs">
+        <button class="upload-mode-tab active" id="uploadModeFile" onclick="setUploadMode('file')">
+            <span class="lang-tr">📁 Dosya Seç</span>
+            <span class="lang-en">📁 Select File</span>
+        </button>
+        <button class="upload-mode-tab" id="uploadModeUrl" onclick="setUploadMode('url')">
+            <span class="lang-tr">🔗 URL İle</span>
+            <span class="lang-en">🔗 Via URL</span>
+        </button>
+    </div>
+
     <div class="upload-area" id="uploadArea">
         <div class="upload-icon">📁</div>
         <p class="upload-text">
@@ -688,6 +771,16 @@
             <span class="lang-en">Supported formats: JPG, PNG, WEBP, GIF, BMP, TIFF, TXT, MD, CSV, JSON, XML, HTML, CSS, JS, PY, DOCX, PDF, XLSX, PPTX (max 50 MB)</span>
         </p>
         <input type="file" id="fileInput" multiple style="display: none;">
+    </div>
+
+    <div class="url-input-section" id="urlInputSection">
+        <div class="url-input-group">
+            <input type="url" class="url-input" id="urlInput" placeholder="https://example.com/dosya.pdf" />
+            <button class="url-add-btn" id="urlAddBtn" onclick="addUrlFile()">
+                <span class="lang-tr">Ekle</span>
+                <span class="lang-en">Add</span>
+            </button>
+        </div>
     </div>
 
     <div class="files-list" id="filesList"></div>
@@ -849,12 +942,69 @@ const historyList = document.getElementById('historyList');
 const encryptionPassword = document.getElementById('encryptionPassword');
 const soundToggle = document.getElementById('soundToggle');
 const soundIcon = document.getElementById('soundIcon');
+const uploadModeFile = document.getElementById('uploadModeFile');
+const uploadModeUrl = document.getElementById('uploadModeUrl');
+const urlInputSection = document.getElementById('urlInputSection');
+const urlInput = document.getElementById('urlInput');
 
 let audioContext = null;
 let soundEnabled = true;
 
 let selectedFiles = [];
 let currentOperation = 'convert';
+let currentUploadMode = 'file';
+let selectedUrl = '';
+
+function setUploadMode(mode) {
+    currentUploadMode = mode;
+    uploadModeFile.classList.toggle('active', mode === 'file');
+    uploadModeUrl.classList.toggle('active', mode === 'url');
+    uploadArea.style.display = mode === 'file' ? 'block' : 'none';
+    urlInputSection.classList.toggle('active', mode === 'url');
+    
+    if (mode === 'file') {
+        selectedUrl = '';
+    } else {
+        selectedFiles = [];
+        updateFilesList();
+    }
+    checkProcessEnabled();
+}
+
+function addUrlFile() {
+    const url = urlInput.value.trim();
+    if (!url) {
+        showToast(
+            document.documentElement.getAttribute('data-lang') === 'en' 
+                ? 'Please enter a URL!' 
+                : 'Lütfen bir URL girin!', 
+            'error'
+        );
+        return;
+    }
+    
+    try {
+        new URL(url);
+    } catch {
+        showToast(
+            document.documentElement.getAttribute('data-lang') === 'en' 
+                ? 'Invalid URL!' 
+                : 'Geçersiz URL!', 
+            'error'
+        );
+        return;
+    }
+    
+    selectedUrl = url;
+    renderFiles();
+    showToast(
+        document.documentElement.getAttribute('data-lang') === 'en' 
+            ? 'URL added successfully!' 
+            : 'URL başarıyla eklendi!', 
+        'success'
+    );
+    checkProcessEnabled();
+}
 
 function toggleSound() {
     soundEnabled = !soundEnabled;
@@ -1310,7 +1460,34 @@ function removeFile(index) {
     updateFormatOptions();
 }
 
+function removeUrl() {
+    selectedUrl = '';
+    urlInput.value = '';
+    renderFiles();
+    checkProcessEnabled();
+}
+
 function renderFiles() {
+    if (currentUploadMode === 'url' && selectedUrl) {
+        const filename = selectedUrl.split('/').pop() || 'Dosya';
+        filesList.innerHTML = `
+            <div class="file-item">
+                <div class="file-info">
+                    <div class="file-icon">🔗</div>
+                    <div class="file-details">
+                        <div class="file-name">${filename}</div>
+                        <div class="file-info-meta">${selectedUrl}</div>
+                    </div>
+                </div>
+                <button class="remove-file-btn" onclick="removeUrl()">
+                    <span class="lang-tr">Kaldır</span>
+                    <span class="lang-en">Remove</span>
+                </button>
+            </div>
+        `;
+        return;
+    }
+    
     if (selectedFiles.length === 0) {
         filesList.innerHTML = '';
         return;
@@ -1385,6 +1562,15 @@ function escapeHtml(text) {
 targetFormat.addEventListener('change', checkProcessEnabled);
 
 function checkProcessEnabled() {
+    if (currentUploadMode === 'url') {
+        if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
+            convertBtn.disabled = !selectedUrl;
+        } else {
+            convertBtn.disabled = !(selectedUrl && targetFormat.value);
+        }
+        return;
+    }
+    
     if (currentOperation === 'merge_pdf') {
         const allPdf = selectedFiles.every(f => getFileType(f.name) === 'pdf');
         convertBtn.disabled = !(selectedFiles.length > 0 && allPdf);
@@ -1508,12 +1694,22 @@ async function processFiles() {
     }
 
     const formData = new FormData();
-    selectedFiles.forEach(file => {
-        formData.append('files', file);
-    });
+    
+    if (currentUploadMode === 'url') {
+        formData.append('url', selectedUrl);
+    } else {
+        selectedFiles.forEach(file => {
+            formData.append('files', file);
+        });
+    }
+    
     formData.append('operation', currentOperation);
     if (currentOperation === 'convert') {
         formData.append('target_format', targetFormat.value);
+    }
+    
+    if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
+        formData.append('password', encryptionPassword.value);
     }
 
     loading.classList.add('show');
@@ -1660,7 +1856,9 @@ document.addEventListener('keydown', (e) => {
     if (e.key === 'Escape') {
         e.preventDefault();
         selectedFiles = [];
-        updateFilesList();
+        selectedUrl = '';
+        urlInput.value = '';
+        renderFiles();
         checkProcessEnabled();
         showToast(
             document.documentElement.getAttribute('data-lang') === 'en' 
@@ -1683,6 +1881,7 @@ function setOperation(op) {
 
 updateUI();
 renderHistory();
+renderFiles();
 
 const savedHistoryCollapsed = localStorage.getItem('historyCollapsed');
 if (savedHistoryCollapsed === 'true') {
