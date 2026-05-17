@@ -307,16 +307,17 @@ function setTab(tab) {
         generateTab.classList.remove('active');
         scanSection.style.display = 'block';
         generateSection.classList.remove('active');
-        if (!isScanning) startScanning();
+        isScanning = false;
+        startScanning();
     } else {
         scanTab.classList.remove('active');
         generateTab.classList.add('active');
         scanSection.style.display = 'none';
         generateSection.classList.add('active');
-        if (isScanning) {
+        try {
             html5QrCode.stop().catch(() => {});
-            isScanning = false;
-        }
+        } catch {}
+        isScanning = false;
     }
 }
 
@@ -401,23 +402,28 @@ document.addEventListener("DOMContentLoaded", () => {
               + "</div>";
     };
 
-    const startScanning = () => {
-        if (isScanning) return;
-        resultDiv.textContent = "🔍 QR kodunu tarama alanına getirin...";
-        scanAgainBtn.style.display = "none";
-        resultActionsDiv.style.display = "none";
-        html5QrCode.start(cameraFacingMode, config, handleResult, err => {
+    const startScanning = async () => {
+    try {
+        await html5QrCode.stop().catch(() => {});
+    } catch {}
+    isScanning = false;
+    
+    resultDiv.textContent = "🔍 QR kodunu tarama alanına getirin...";
+    scanAgainBtn.style.display = "none";
+    resultActionsDiv.style.display = "none";
+    
+    html5QrCode.start(cameraFacingMode, config, handleResult, err => {
         if (!String(err).includes("No MultiFormat")) console.warn(err);
-        })
-        .then(() => isScanning = true)
-        .catch(err => {
-            isScanning=false;
-            resultDiv.textContent=String(err).includes("Permission denied")
-                ? "⚠️ Kamera izni reddedildi. Lütfen izin verin."
-                : "❌ Kamera başlatılamadı.";
-            scanAgainBtn.style.display = "inline-block";
-        });
-    };
+    })
+    .then(() => isScanning = true)
+    .catch(err => {
+        isScanning = false;
+        resultDiv.textContent = String(err).includes("Permission denied")
+            ? "⚠️ Kamera izni reddedildi. Lütfen izin verin."
+            : "❌ Kamera başlatılamadı.";
+        scanAgainBtn.style.display = "inline-block";
+    });
+};
 
     const handleResult = async text => {
         html5QrCode.stop().then(async () => {
