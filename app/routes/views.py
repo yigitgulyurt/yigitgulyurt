@@ -764,7 +764,6 @@ def unit_converter():
 @limiter.limit("20 per hour", methods=['POST'])
 def file_converter():
     if request.method == 'POST':
-        import magic
         from io import BytesIO
         from docx import Document
         from reportlab.lib.pagesizes import letter
@@ -784,24 +783,30 @@ def file_converter():
         file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
         file_content = file.read()
 
+        is_image = False
+        is_text = False
+
         try:
-            mime = magic.Magic(mime=True)
-            detected_mime = mime.from_buffer(file_content)
+            img = Image.open(BytesIO(file_content))
+            is_image = True
         except Exception:
-            detected_mime = None
+            pass
+
+        text_extensions = ['txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js', 'py']
+        is_text = file_ext in text_extensions
 
         output_buffer = BytesIO()
         output_filename = ''
 
         try:
             if target_format == 'pdf':
-                if detected_mime and detected_mime.startswith('image/'):
+                if is_image:
                     img = Image.open(BytesIO(file_content))
                     if img.mode in ('RGBA', 'P'):
                         img = img.convert('RGB')
                     img.save(output_buffer, format='PDF')
                     output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
-                elif file_ext == 'txt':
+                elif is_text or file_ext == 'txt':
                     text = file_content.decode('utf-8', errors='replace')
                     c = canvas.Canvas(output_buffer, pagesize=letter)
                     c.setFont("Helvetica", 12)
@@ -819,7 +824,7 @@ def file_converter():
                     return jsonify({'error': 'Bu dosya türü PDF\'ye dönüştürülemez'}), 400
 
             elif target_format in ['jpg', 'jpeg', 'png']:
-                if detected_mime and detected_mime.startswith('image/'):
+                if is_image:
                     img = Image.open(BytesIO(file_content))
                     if target_format in ['jpg', 'jpeg']:
                         if img.mode in ('RGBA', 'P'):
@@ -832,7 +837,7 @@ def file_converter():
                     return jsonify({'error': 'Sadece resim dosyaları resim formatlarına dönüştürülebilir'}), 400
 
             elif target_format == 'txt':
-                if detected_mime and detected_mime.startswith('text/'):
+                if is_text or file_ext == 'txt':
                     output_buffer.write(file_content)
                     output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
                 else:
