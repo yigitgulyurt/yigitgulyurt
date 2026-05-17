@@ -855,14 +855,12 @@ async function processFiles() {
     let progressInterval;
     try {
         let progressStep = 0;
-        const totalFiles = selectedFiles.length;
-        const stepMultiplier = Math.max(1, Math.min(5, totalFiles));
         progressInterval = setInterval(() => {
             const currentWidth = parseInt(progressBar.style.width) || 0;
             if (currentWidth < 99) {
                 progressStep++;
-                const exponent = progressStep / (8 / stepMultiplier);
-                const newWidth = Math.min(Math.round(99 * (1 - Math.pow(0.97, exponent))), 99);
+                const logValue = Math.log(progressStep + 1) / Math.log(15);
+                const newWidth = Math.min(Math.round(99 * logValue), 99);
                 const percentText = Math.round(newWidth);
                 updateProgress(
                     newWidth, 
