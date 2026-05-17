@@ -611,6 +611,35 @@
     font-weight: 700;
 }
 
+.custom-filename-section {
+    margin-top: 24px;
+}
+
+.custom-filename-label {
+    font-size: 14px;
+    font-weight: 600;
+    color: var(--text);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.custom-filename-input {
+    width: 100%;
+    padding: 12px 16px;
+    background: var(--bg2);
+    border: 2px solid var(--border);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 14px;
+    outline: none;
+    transition: all 0.2s ease;
+}
+
+.custom-filename-input:focus {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 4px rgba(34, 197, 94, 0.1);
+}
+
 .keyboard-hints {
     margin-top: 30px;
     padding-top: 25px;
@@ -807,6 +836,14 @@
         </div>
     </div>
 
+    <div class="custom-filename-section">
+        <label class="custom-filename-label">
+            <span class="lang-tr">Özel Dosya Adı (İsteğe Bağlı):</span>
+            <span class="lang-en">Custom Filename (Optional):</span>
+        </label>
+        <input type="text" class="custom-filename-input" id="customFilename" placeholder="Dosya adını girin (uzantı olmadan)" />
+    </div>
+
     <button class="convert-btn" id="convertBtn" onclick="processFiles()" disabled>
         <span class="lang-tr">İşlemi Başlat</span>
         <span class="lang-en">Start Process</span>
@@ -947,6 +984,7 @@ const uploadModeFile = document.getElementById('uploadModeFile');
 const uploadModeUrl = document.getElementById('uploadModeUrl');
 const urlInputSection = document.getElementById('urlInputSection');
 const urlInput = document.getElementById('urlInput');
+const customFilename = document.getElementById('customFilename');
 
 let audioContext = null;
 let soundEnabled = true;
@@ -968,6 +1006,7 @@ function setUploadMode(mode) {
     } else {
         selectedFiles = [];
     }
+    customFilename.value = '';
     renderFiles();
     updateFormatOptions();
     checkProcessEnabled();
@@ -1668,11 +1707,18 @@ async function processFiles() {
             
             if (results.length === 1) {
                 const { filename, data } = results[0];
+                let finalFilename = filename;
+                const customName = customFilename.value.trim();
+                if (customName) {
+                    const ext = filename.includes('.') ? '.' + filename.split('.').pop() : '';
+                    finalFilename = customName + ext;
+                }
+                
                 const resultBlob = new Blob([data], { type: 'application/octet-stream' });
                 const url = window.URL.createObjectURL(resultBlob);
                 const a = document.createElement('a');
                 a.href = url;
-                a.download = filename;
+                a.download = finalFilename;
                 document.body.appendChild(a);
                 a.click();
                 document.body.removeChild(a);
@@ -1683,7 +1729,12 @@ async function processFiles() {
                     zip.file(filename, data);
                 });
                 const zipBlob = await zip.generateAsync({ type: 'blob' });
-                const zipFilename = currentOperation === 'encrypt' ? 'sifreli_dosyalar.zip' : 'cozulmus_dosyalar.zip';
+                let zipFilename = currentOperation === 'encrypt' ? 'sifreli_dosyalar.zip' : 'cozulmus_dosyalar.zip';
+                const customName = customFilename.value.trim();
+                if (customName) {
+                    zipFilename = customName + '.zip';
+                }
+                
                 const url = window.URL.createObjectURL(zipBlob);
                 const a = document.createElement('a');
                 a.href = url;
@@ -1785,6 +1836,7 @@ async function processFiles() {
 
         let finalBlob = await response.blob();
         let finalFilename = 'islenmis_dosya';
+        const customName = customFilename.value.trim();
         
         const contentDisposition = response.headers.get('Content-Disposition');
         if (contentDisposition) {
@@ -1793,24 +1845,40 @@ async function processFiles() {
                 finalFilename = filenameMatch[1].replace(/['"]/g, '');
             }
         } else if (currentOperation === 'merge_pdf') {
-            finalFilename = 'birlesmis.pdf';
+            finalFilename = customName ? `${customName}.pdf` : 'birlesmis.pdf';
         } else if (currentUploadMode === 'file' && selectedFiles.length === 1) {
             const baseName = selectedFiles[0].name.replace(/\.[^/.]+$/, '');
-            finalFilename = `${baseName}.${targetFormat.value}`;
+            if (customName) {
+                finalFilename = `${customName}.${targetFormat.value}`;
+            } else {
+                finalFilename = `${baseName}.${targetFormat.value}`;
+            }
         } else if (currentUploadMode === 'url') {
             const urlFilename = selectedUrl.split('/').pop() || 'indirilen_dosya';
             const baseName = urlFilename.replace(/\.[^/.]+$/, '');
-            if (currentOperation === 'encrypt') {
-                finalFilename = `${baseName}.encrypted`;
-            } else if (currentOperation === 'decrypt') {
-                finalFilename = baseName.replace('.encrypted', '') || `decrypted_${baseName}`;
-            } else if (targetFormat.value) {
-                finalFilename = `${baseName}.${targetFormat.value}`;
+            if (customName) {
+                if (currentOperation === 'encrypt') {
+                    finalFilename = `${customName}.encrypted`;
+                } else if (currentOperation === 'decrypt') {
+                    finalFilename = customName;
+                } else if (targetFormat.value) {
+                    finalFilename = `${customName}.${targetFormat.value}`;
+                } else {
+                    finalFilename = customName;
+                }
             } else {
-                finalFilename = baseName;
+                if (currentOperation === 'encrypt') {
+                    finalFilename = `${baseName}.encrypted`;
+                } else if (currentOperation === 'decrypt') {
+                    finalFilename = baseName.replace('.encrypted', '') || `decrypted_${baseName}`;
+                } else if (targetFormat.value) {
+                    finalFilename = `${baseName}.${targetFormat.value}`;
+                } else {
+                    finalFilename = baseName;
+                }
             }
         } else {
-            finalFilename = 'islenmis_dosyalar.zip';
+            finalFilename = customName ? `${customName}.zip` : 'islenmis_dosyalar.zip';
         }
 
         updateProgress(100, `<span class="lang-tr">Tamamlandı!</span><span class="lang-en">Completed!</span>`);
@@ -1918,6 +1986,7 @@ document.addEventListener('keydown', (e) => {
         selectedFiles = [];
         selectedUrl = '';
         urlInput.value = '';
+        customFilename.value = '';
         renderFiles();
         updateFormatOptions();
         checkProcessEnabled();
@@ -1937,6 +2006,7 @@ function setOperation(op) {
     if (activeTab) {
         activeTab.classList.add('active');
     }
+    customFilename.value = '';
     updateUI();
 }
 
