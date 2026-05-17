@@ -18,7 +18,7 @@
 @media (max-width: 768px) {
     .container { padding: 10px; }
 }
-/* QR Sayfası Konteyneri */
+
 .qr-page {
     display: flex;
     flex-direction: column;
@@ -28,16 +28,15 @@
     font-family: inherit;
 }
 
-/* QR Okuyucu Kartı */
 .reader-container {
     width: 80vmin;
     max-width: 400px;
     aspect-ratio: 1 / 1;
     border-radius: 20px;
     overflow: hidden;
-    background: var(--card-bg);
+    background: var(--bg2);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 1px solid rgba(255,255,255,0.05);
+    border: 1px solid var(--border);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -45,7 +44,6 @@
 
 .reader { width: 100%; height: 100%; background: #000; }
 
-/* Sonuç ve Geçmiş */
 .result, .history {
     width: 90%;
     max-width: 400px;
@@ -56,11 +54,10 @@
     word-break: break-word;
     font-size: 16px;
     min-height: 2em;
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--bg2);
+    border: 1px solid var(--border);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
-    scrollbar-width: none;
 }
 
 .history {
@@ -71,22 +68,21 @@
 
 .history-content {
     padding:10px 0;
-    border-bottom: 1px solid rgba(255,255,255,0.1);
+    border-bottom: 1px solid var(--border);
     user-select: all;
 }
 .history-content:first-child {
-    border-top: 1px solid rgba(255,255,255,0.1);
+    border-top: 1px solid var(--border);
     margin-top: 15px;
 }
 
 .history-read {
     top: 0px;
-    background-color: var(--card-bg);
+    background-color: var(--bg2);
     position: sticky;
     user-select: none;
 }
 
-/* Butonlar */
 .btn-qr {
     width: 95%;
     max-width: 400px;
@@ -97,21 +93,21 @@
     flex-wrap: wrap;
 }
 
-.btn-result-actions{
+.btn-result-actions {
     width: 95%;
 }
 
 .btn-primary {
-    flex: 1 ;
+    flex: 1;
     max-width: 400px;
-    background: var(--primary);
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
     color: white;
 }
 
 .btn-secondary {
     width: 95%;
-    background: #444;
-    color: white;
+    background: var(--bg3);
+    color: var(--text);
 }
 
 button {
@@ -129,12 +125,6 @@ button:hover {
     box-shadow: 0 8px 25px rgba(0,0,0,0.35);
 }
 
-/* Responsive Küçük Ekran */
-@media (max-width: 480px) {
-    .reader-container { width: 90vmin; }
-    .result, .history, .result-actions { width: 95%; }
-}
-
 /* QR Üretme Bölümü */
 .tabs-container {
     display: flex;
@@ -147,26 +137,27 @@ button:hover {
 .tab-btn {
     flex: 1;
     padding: 14px 20px;
-    background: var(--card-bg);
+    background: var(--bg3);
     border: 2px solid transparent;
     border-radius: 12px;
     cursor: pointer;
     font-weight: 600;
     font-size: 1rem;
+    color: var(--text2);
     transition: all 0.3s;
 }
 
 .tab-btn.active {
     border-color: var(--accent);
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(16, 185, 129, 0.08) 100%;
+    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%);
     color: var(--accent);
 }
 
 .generate-section {
     width: 90%;
     max-width: 400px;
-    background: var(--card-bg);
-    border: 1px solid rgba(255,255,255,0.05);
+    background: var(--bg2);
+    border: 1px solid var(--border);
     border-radius: 16px;
     padding: 20px;
     margin-bottom: 16px;
@@ -187,7 +178,7 @@ button:hover {
 .generate-input {
     flex: 1;
     padding: 14px 18px;
-    background: var(--bg2);
+    background: var(--bg3);
     border: 2px solid var(--border);
     border-radius: 12px;
     color: var(--text);
@@ -241,6 +232,11 @@ button:hover {
 
 .qr-actions button {
     flex: 1;
+}
+
+@media (max-width: 480px) {
+    .reader-container { width: 90vmin; }
+    .result, .history, .result-actions { width: 95%; }
 }
 </style>
 {% endblock %}
