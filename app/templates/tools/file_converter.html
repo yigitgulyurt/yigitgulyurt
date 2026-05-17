@@ -1,0 +1,249 @@
+{% extends "base/base.html" %}
+
+{% block title %}Dosya Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.upload-area {
+    border: 2px dashed rgba(255, 255, 255, 0.2);
+    border-radius: 12px;
+    padding: 40px 20px;
+    text-align: center;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 25px;
+}
+
+.upload-area:hover, .upload-area.dragover {
+    border-color: var(--primary);
+    background: rgba(var(--primary-rgb), 0.05);
+}
+
+.upload-icon {
+    font-size: 3rem;
+    margin-bottom: 15px;
+}
+
+.file-info {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 8px;
+    margin-bottom: 25px;
+    display: none;
+}
+
+.file-info.show {
+    display: block;
+}
+
+.format-select {
+    width: 100%;
+    padding: 12px;
+    border-radius: 8px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    color: var(--text);
+    font-size: 1rem;
+    margin-bottom: 25px;
+}
+
+.format-select:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.convert-btn {
+    width: 100%;
+    background: var(--primary);
+    color: white;
+    border: none;
+    padding: 15px;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.convert-btn:hover {
+    box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.convert-btn:disabled {
+    opacity: 0.5;
+    cursor: not-allowed;
+}
+
+.loading {
+    display: none;
+    margin-top: 20px;
+    text-align: center;
+}
+
+.loading.show {
+    display: block;
+}
+
+.spinner {
+    border: 3px solid rgba(255, 255, 255, 0.1);
+    border-top: 3px solid var(--primary);
+    border-radius: 50%;
+    width: 40px;
+    height: 40px;
+    animation: spin 1s linear infinite;
+    margin: 0 auto 10px;
+}
+
+@keyframes spin {
+    0% { transform: rotate(0deg); }
+    100% { transform: rotate(360deg); }
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📄 Dosya Dönüştürücü</span>
+        <span class="lang-en">📄 File Converter</span>
+    </h1>
+    
+    <div class="upload-area" id="uploadArea">
+        <div class="upload-icon">📁</div>
+        <p class="upload-text">
+            <span class="lang-tr">Dosyanızı buraya sürükleyin veya tıklayın</span>
+            <span class="lang-en">Drag and drop your file here or click</span>
+        </p>
+        <input type="file" id="fileInput" style="display: none;">
+    </div>
+
+    <div class="file-info" id="fileInfo">
+        <strong id="fileName"></strong>
+    </div>
+
+    <select class="format-select" id="targetFormat">
+        <option value="">
+            <span class="lang-tr">Hedef formatı seçin</span>
+            <span class="lang-en">Select target format</span>
+        </option>
+        <option value="pdf">PDF</option>
+        <option value="jpg">JPG</option>
+        <option value="png">PNG</option>
+        <option value="txt">TXT</option>
+    </select>
+
+    <button class="convert-btn" id="convertBtn" onclick="convertFile()" disabled>
+        <span class="lang-tr">Dönüştür</span>
+        <span class="lang-en">Convert</span>
+    </button>
+
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+        <span class="lang-tr">Dönüştürülüyor...</span>
+        <span class="lang-en">Converting...</span>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const uploadArea = document.getElementById('uploadArea');
+const fileInput = document.getElementById('fileInput');
+const fileInfo = document.getElementById('fileInfo');
+const fileName = document.getElementById('fileName');
+const targetFormat = document.getElementById('targetFormat');
+const convertBtn = document.getElementById('convertBtn');
+const loading = document.getElementById('loading');
+
+let selectedFile = null;
+
+uploadArea.addEventListener('click', () => fileInput.click());
+
+uploadArea.addEventListener('dragover', (e) => {
+    e.preventDefault();
+    uploadArea.classList.add('dragover');
+});
+
+uploadArea.addEventListener('dragleave', () => {
+    uploadArea.classList.remove('dragover');
+});
+
+uploadArea.addEventListener('drop', (e) => {
+    e.preventDefault();
+    uploadArea.classList.remove('dragover');
+    if (e.dataTransfer.files.length) {
+        handleFile(e.dataTransfer.files[0]);
+    }
+});
+
+fileInput.addEventListener('change', (e) => {
+    if (e.target.files.length) {
+        handleFile(e.target.files[0]);
+    }
+});
+
+function handleFile(file) {
+    selectedFile = file;
+    fileName.textContent = file.name;
+    fileInfo.classList.add('show');
+    checkConvertEnabled();
+}
+
+targetFormat.addEventListener('change', checkConvertEnabled);
+
+function checkConvertEnabled() {
+    convertBtn.disabled = !(selectedFile && targetFormat.value);
+}
+
+async function convertFile() {
+    if (!selectedFile || !targetFormat.value) return;
+
+    const formData = new FormData();
+    formData.append('file', selectedFile);
+    formData.append('target_format', targetFormat.value);
+
+    loading.classList.add('show');
+    convertBtn.disabled = true;
+
+    try {
+        const response = await fetch(window.location.href, {
+            method: 'POST',
+            body: formData
+        });
+
+        if (!response.ok) {
+            const error = await response.json();
+            throw new Error(error.error || 'Bir hata oluştu');
+        }
+
+        const blob = await response.blob();
+        const url = window.URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        const ext = targetFormat.value;
+        const baseName = selectedFile.name.replace(/\.[^/.]+$/, '');
+        a.download = `${baseName}.${ext}`;
+        document.body.appendChild(a);
+        a.click();
+        document.body.removeChild(a);
+        window.URL.revokeObjectURL(url);
+
+        showToast("Dosya başarıyla dönüştürüldü!", "success");
+    } catch (error) {
+        showToast(error.message, "error");
+    } finally {
+        loading.classList.remove('show');
+        convertBtn.disabled = false;
+    }
+}
+</script>
+{% endblock %}

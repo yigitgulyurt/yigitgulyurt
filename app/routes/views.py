@@ -224,6 +224,7 @@ def sitemap():
         ('blog.index',    '0.9',  'weekly'),
         ('contact.index', '0.5',  'monthly'),
         ('main.qr_okuyucu', '0.8',  'monthly'),
+        ('main.file_converter', '0.8', 'monthly'),
     ]
     for endpoint, priority, changefreq in static_pages:
         pages.append({
@@ -757,3 +758,99 @@ def log_ip():
 @tools_bp.route('/birim-donusturucu')
 def unit_converter():
     return render_template('tools/unit_converter.html')
+
+
+@main_bp.route('/dosya-donusturucu', methods=['GET', 'POST'])
+@limiter.limit("20 per hour", methods=['POST'])
+def file_converter():
+    if request.method == 'POST':
+        import magic
+        from io import BytesIO
+        from docx import Document
+        from reportlab.lib.pagesizes import letter
+        from reportlab.pdfgen import canvas
+        from reportlab.lib.units import inch
+
+        file = request.files.get('file')
+        target_format = request.form.get('target_format')
+
+        if not file or not file.filename:
+            return jsonify({'error': 'Dosya seçilmedi'}), 400
+
+        if not target_format:
+            return jsonify({'error': 'Hedef format seçilmedi'}), 400
+
+        original_filename = secure_filename(file.filename)
+        file_ext = original_filename.rsplit('.', 1)[1].lower() if '.' in original_filename else ''
+        file_content = file.read()
+
+        try:
+            mime = magic.Magic(mime=True)
+            detected_mime = mime.from_buffer(file_content)
+        except Exception:
+            detected_mime = None
+
+        output_buffer = BytesIO()
+        output_filename = ''
+
+        try:
+            if target_format == 'pdf':
+                if detected_mime and detected_mime.startswith('image/'):
+                    img = Image.open(BytesIO(file_content))
+                    if img.mode in ('RGBA', 'P'):
+                        img = img.convert('RGB')
+                    img.save(output_buffer, format='PDF')
+                    output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                elif file_ext == 'txt':
+                    text = file_content.decode('utf-8', errors='replace')
+                    c = canvas.Canvas(output_buffer, pagesize=letter)
+                    c.setFont("Helvetica", 12)
+                    y = letter[1] - inch
+                    for line in text.split('\n'):
+                        if y < inch:
+                            c.showPage()
+                            c.setFont("Helvetica", 12)
+                            y = letter[1] - inch
+                        c.drawString(inch, y, line)
+                        y -= 14
+                    c.save()
+                    output_filename = original_filename.rsplit('.', 1)[0] + '.pdf'
+                else:
+                    return jsonify({'error': 'Bu dosya türü PDF\'ye dönüştürülemez'}), 400
+
+            elif target_format in ['jpg', 'jpeg', 'png']:
+                if detected_mime and detected_mime.startswith('image/'):
+                    img = Image.open(BytesIO(file_content))
+                    if target_format in ['jpg', 'jpeg']:
+                        if img.mode in ('RGBA', 'P'):
+                            img = img.convert('RGB')
+                        img.save(output_buffer, format='JPEG', quality=95)
+                    else:
+                        img.save(output_buffer, format='PNG')
+                    output_filename = original_filename.rsplit('.', 1)[0] + f'.{target_format}'
+                else:
+                    return jsonify({'error': 'Sadece resim dosyaları resim formatlarına dönüştürülebilir'}), 400
+
+            elif target_format == 'txt':
+                if detected_mime and detected_mime.startswith('text/'):
+                    output_buffer.write(file_content)
+                    output_filename = original_filename.rsplit('.', 1)[0] + '.txt'
+                else:
+                    return jsonify({'error': 'Bu dosya türü TXT\'ye dönüştürülemez'}), 400
+
+            else:
+                return jsonify({'error': 'Desteklenmeyen hedef format'}), 400
+
+            output_buffer.seek(0)
+            return send_file(
+                output_buffer,
+                as_attachment=True,
+                download_name=output_filename,
+                mimetype='application/octet-stream'
+            )
+
+        except Exception as e:
+            current_app.logger.error(f"Dosya dönüştürme hatası: {e}")
+            return jsonify({'error': 'Dosya dönüştürme sırasında bir hata oluştu'}), 500
+
+    return render_template('tools/file_converter.html')
