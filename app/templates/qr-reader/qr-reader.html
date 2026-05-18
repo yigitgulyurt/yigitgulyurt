@@ -18,7 +18,7 @@
 @media (max-width: 768px) {
     .container { padding: 10px; }
 }
-
+/* QR Sayfası Konteyneri */
 .qr-page {
     display: flex;
     flex-direction: column;
@@ -28,15 +28,16 @@
     font-family: inherit;
 }
 
+/* QR Okuyucu Kartı */
 .reader-container {
     width: 80vmin;
     max-width: 400px;
     aspect-ratio: 1 / 1;
     border-radius: 20px;
     overflow: hidden;
-    background: var(--bg2);
+    background: var(--card-bg);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    border: 1px solid var(--border);
+    border: 1px solid rgba(255,255,255,0.05);
     display: flex;
     align-items: center;
     justify-content: center;
@@ -44,6 +45,7 @@
 
 .reader { width: 100%; height: 100%; background: #000; }
 
+/* Sonuç ve Geçmiş */
 .result, .history {
     width: 90%;
     max-width: 400px;
@@ -54,10 +56,11 @@
     word-break: break-word;
     font-size: 16px;
     min-height: 2em;
-    background: var(--bg2);
-    border: 1px solid var(--border);
+    background: var(--card-bg);
+    border: 1px solid rgba(255,255,255,0.05);
     box-shadow: 0 4px 15px rgba(0,0,0,0.1);
     transition: all 0.3s ease;
+    scrollbar-width: none;
 }
 
 .history {
@@ -68,21 +71,22 @@
 
 .history-content {
     padding:10px 0;
-    border-bottom: 1px solid var(--border);
+    border-bottom: 1px solid rgba(255,255,255,0.1);
     user-select: all;
 }
 .history-content:first-child {
-    border-top: 1px solid var(--border);
+    border-top: 1px solid rgba(255,255,255,0.1);
     margin-top: 15px;
 }
 
 .history-read {
     top: 0px;
-    background-color: var(--bg2);
+    background-color: var(--card-bg);
     position: sticky;
     user-select: none;
 }
 
+/* Butonlar */
 .btn-qr {
     width: 95%;
     max-width: 400px;
@@ -93,21 +97,21 @@
     flex-wrap: wrap;
 }
 
-.btn-result-actions {
+.btn-result-actions{
     width: 95%;
 }
 
 .btn-primary {
-    flex: 1;
+    flex: 1 ;
     max-width: 400px;
-    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    background: var(--primary);
     color: white;
 }
 
 .btn-secondary {
     width: 95%;
-    background: var(--bg3);
-    color: var(--text);
+    background: #444;
+    color: white;
 }
 
 button {
@@ -125,121 +129,7 @@ button:hover {
     box-shadow: 0 8px 25px rgba(0,0,0,0.35);
 }
 
-/* QR Üretme Bölümü */
-.tabs-container {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 20px;
-    width: 100%;
-    max-width: 400px;
-}
-
-.tab-btn {
-    flex: 1;
-    padding: 14px 20px;
-    background: var(--bg3);
-    border: 2px solid transparent;
-    border-radius: 12px;
-    cursor: pointer;
-    font-weight: 600;
-    font-size: 1rem;
-    color: var(--text2);
-    transition: all 0.3s;
-}
-
-.tab-btn.active {
-    border-color: var(--accent);
-    background: linear-gradient(135deg, rgba(74, 222, 128, 0.15) 0%, rgba(96, 165, 250, 0.08) 100%);
-    color: var(--accent);
-}
-
-.generate-section {
-    width: 90%;
-    max-width: 400px;
-    background: var(--bg2);
-    border: 1px solid var(--border);
-    border-radius: 16px;
-    padding: 20px;
-    margin-bottom: 16px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.1);
-    display: none;
-}
-
-.generate-section.active {
-    display: block;
-}
-
-.generate-input-group {
-    display: flex;
-    gap: 10px;
-    margin-bottom: 12px;
-}
-
-.generate-input {
-    flex: 1;
-    padding: 14px 18px;
-    background: var(--bg3);
-    border: 2px solid var(--border);
-    border-radius: 12px;
-    color: var(--text);
-    font-size: 15px;
-    transition: all 0.3s;
-}
-
-.generate-input:focus {
-    outline: none;
-    border-color: var(--accent);
-    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
-}
-
-.generate-btn {
-    padding: 14px 22px;
-    background: linear-gradient(135deg, var(--accent) 0%, var(--accent2) 100%);
-    border: none;
-    border-radius: 12px;
-    color: white;
-    font-weight: 700;
-    cursor: pointer;
-    transition: all 0.3s;
-    z-index: 100;
-    position: relative;
-}
-
-.generate-btn:hover {
-    transform: translateY(-2px);
-    box-shadow: 0 8px 20px rgba(74, 222, 128, 0.3);
-}
-
-.generate-btn:active {
-    transform: translateY(0);
-}
-
-.qr-display {
-    margin-top: 20px;
-    text-align: center;
-    display: none;
-}
-
-.qr-display.active {
-    display: block;
-}
-
-.qr-image {
-    max-width: 100%;
-    border-radius: 12px;
-    box-shadow: 0 4px 15px rgba(0,0,0,0.2);
-}
-
-.qr-actions {
-    display: flex;
-    gap: 10px;
-    margin-top: 15px;
-}
-
-.qr-actions button {
-    flex: 1;
-}
-
+/* Responsive Küçük Ekran */
 @media (max-width: 480px) {
     .reader-container { width: 90vmin; }
     .result, .history, .result-actions { width: 95%; }
@@ -250,38 +140,17 @@ button:hover {
 {% block content %}
 <div class="container">
 <div id="qr-page" class="qr-page">
-    <div class="tabs-container">
-        <button id="scanTab" class="tab-btn active" onclick="setTab('scan')">📸 QR Oku</button>
-        <button id="generateTab" class="tab-btn" onclick="setTab('generate')">✏️ QR Üret</button>
+    <div id="reader-container" class="reader-container">
+        <div id="reader" class="reader"></div>
     </div>
 
-    <div id="scanSection">
-        <div id="reader-container" class="reader-container">
-            <div id="reader" class="reader"></div>
-        </div>
+    <div id="result" class="result" style="user-select: all;">📸 Kamera başlatılıyor...</div>
 
-        <div id="result" class="result" style="user-select: all;">📸 Kamera başlatılıyor...</div>
-
-        <div id="result-actions" class="btn-result-actions btn-qr" style="display:none;">
-            <button id="openUrlBtn" class="btn-primary btn-qr">🔗 URL'yi Aç</button>
-            <button id="shareUrlBtn" class="btn-primary btn-qr">📤 Paylaş</button>
-        </div>
-        <button id="scanAgainBtn" class="btn-primary btn-qr" style="display:none;">🔄 Yeni Tarama</button>
+    <div id="result-actions" class="btn-result-actions btn-qr" style="display:none;">
+        <button id="openUrlBtn" class="btn-primary btn-qr">🔗 URL'yi Aç</button>
+        <button id="shareUrlBtn" class="btn-primary btn-qr">📤 Paylaş</button>
     </div>
-
-    <div id="generateSection" class="generate-section">
-        <div class="generate-input-group">
-            <input type="text" id="qrTextInput" class="generate-input" placeholder="Metin veya URL girin" />
-            <button id="generateBtn" class="generate-btn" onclick="generateQR()">Üret</button>
-        </div>
-        
-        <div id="qrDisplay" class="qr-display">
-            <img id="qrImage" class="qr-image" src="" alt="QR Kod" />
-            <div class="qr-actions">
-                <button id="downloadQrBtn" class="btn-primary btn-qr" onclick="downloadQR()">📥 İndir</button>
-            </div>
-        </div>
-    </div>
+    <button id="scanAgainBtn" class="btn-primary btn-qr" style="display:none;">🔄 Yeni Tarama</button>
 </div>
 <div id="history-container">
     <button id="clearHistoryBtn" class="btn-secondary btn-qr">🗑️ Geçmişi Temizle</button>
@@ -294,117 +163,25 @@ button:hover {
 <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/html5-qrcode.yigitgulyurt.js"></script>
 
 <script>
-let resultDiv, historyDiv, resultActionsDiv, openUrlBtn, shareUrlBtn, clearHistoryBtn, scanAgainBtn;
-let scanTab, generateTab, scanSection, generateSection, qrTextInput, generateBtn, qrDisplay, qrImage, downloadQrBtn;
-let html5QrCode, history, currentResultText, currentShortUrl, isScanning, currentQrBlob;
-const config = { fps: 10, qrbox: { width: 340, height: 450 } };
-const cameraFacingMode = { facingMode: "environment" };
-const isValidUrl = s => { try { new URL(s); return true; } catch { return false; }; };
-
-function setTab(tab) {
-    console.log('setTab called with:', tab);
-    
-    if (tab === 'scan') {
-        scanTab.classList.add('active');
-        generateTab.classList.remove('active');
-        scanSection.style.display = 'block';
-        generateSection.classList.remove('active');
-        
-        console.log('Before scan check - isScanning:', isScanning);
-        
-        if (!isScanning) {
-            console.log('Starting scan...');
-            startScanning();
-        } else {
-            console.log('Stopping and restarting scan...');
-            html5QrCode.stop().catch(() => {});
-            isScanning = false;
-            startScanning();
-        }
-    } else {
-        scanTab.classList.remove('active');
-        generateTab.classList.add('active');
-        scanSection.style.display = 'none';
-        generateSection.classList.add('active');
-        if (isScanning) {
-            html5QrCode.stop().catch(() => {});
-            isScanning = false;
-        }
-    }
-}
-
-async function generateQR() {
-    const text = qrTextInput.value.trim();
-    if (!text) {
-        alert('Lütfen bir metin veya URL girin!');
-        return;
-    }
-
-    generateBtn.disabled = true;
-    generateBtn.textContent = 'Üretiliyor...';
-
-    try {
-        const response = await fetch('/api/qr', {
-            method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                text: text,
-                size: 300,
-                border: 2
-            })
-        });
-
-        if (!response.ok) throw new Error('QR kodu üretilemedi');
-        
-        currentQrBlob = await response.blob();
-        const url = URL.createObjectURL(currentQrBlob);
-        qrImage.src = url;
-        qrDisplay.classList.add('active');
-    } catch (error) {
-        alert('QR kodu üretilemedi: ' + error.message);
-    } finally {
-        generateBtn.disabled = false;
-        generateBtn.textContent = 'Üret';
-    }
-}
-
-function downloadQR() {
-    if (!currentQrBlob) return;
-    
-    const url = URL.createObjectURL(currentQrBlob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'qrcode.png';
-    document.body.appendChild(a);
-    a.click();
-    document.body.removeChild(a);
-    URL.revokeObjectURL(url);
-}
-
 document.addEventListener("DOMContentLoaded", () => {
-    resultDiv = document.getElementById("result");
-    historyDiv = document.getElementById("history");
-    resultActionsDiv = document.getElementById("result-actions");
-    openUrlBtn = document.getElementById("openUrlBtn");
-    shareUrlBtn = document.getElementById("shareUrlBtn");
-    clearHistoryBtn = document.getElementById("clearHistoryBtn");
-    scanAgainBtn = document.getElementById("scanAgainBtn");
-    scanTab = document.getElementById("scanTab");
-    generateTab = document.getElementById("generateTab");
-    scanSection = document.getElementById("scanSection");
-    generateSection = document.getElementById("generateSection");
-    qrTextInput = document.getElementById("qrTextInput");
-    generateBtn = document.getElementById("generateBtn");
-    qrDisplay = document.getElementById("qrDisplay");
-    qrImage = document.getElementById("qrImage");
-    downloadQrBtn = document.getElementById("downloadQrBtn");
+    const resultDiv = document.getElementById("result");
+    const historyDiv = document.getElementById("history");
+    const resultActionsDiv = document.getElementById("result-actions");
+    const openUrlBtn = document.getElementById("openUrlBtn");
+    const shareUrlBtn = document.getElementById("shareUrlBtn");
+    const clearHistoryBtn = document.getElementById("clearHistoryBtn");
+    const scanAgainBtn = document.getElementById("scanAgainBtn");
 
-    html5QrCode = new Html5Qrcode("reader");
-    history = JSON.parse(localStorage.getItem("qr_history") || "[]");
-    currentResultText = "";
-    currentShortUrl = null;  
-    isScanning = false;
-    currentQrBlob = null;
+    const html5QrCode = new Html5Qrcode("reader");
+    let history = JSON.parse(localStorage.getItem("qr_history") || "[]");
+    let currentResultText = "";
+    let currentShortUrl = null;  
+    let isScanning = false;
+
+    const config = { fps: 10, qrbox: { width: 340, height: 450 } };
+    const cameraFacingMode = { facingMode: "environment" };
+    const isValidUrl = s => { try { new URL(s); return true; } catch { return false; };
+    };
 
     const renderHistory = () => {
         historyDiv.innerHTML = history.length === 0
@@ -495,9 +272,6 @@ document.addEventListener("DOMContentLoaded", () => {
     }).catch(() => {});
         });
     clearHistoryBtn?.addEventListener("click",()=>{if(confirm("Geçmişi silmek istediğinizden emin misiniz?")){history=[];localStorage.removeItem("qr_history");renderHistory();}});
-    generateBtn?.addEventListener("click", generateQR);
-    qrTextInput?.addEventListener("keypress", (e) => { if (e.key === 'Enter') generateQR(); });
-    downloadQrBtn?.addEventListener("click", downloadQR);
 
     startScanning();
     renderHistory();
