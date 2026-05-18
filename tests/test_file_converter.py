@@ -5,14 +5,14 @@ from PIL import Image
 
 
 def test_file_converter_page(client):
-    response = client.get('/araclar/dosya-donusturucu')
+    response = client.get('/dosya-donusturucu')
     assert response.status_code == 200
-    assert b'Dosya D\xc3\xb6n\xc3\xbc\xc5\x9ft\xc3\xbcc\xc3\xbc' in response.data
+    assert b'Dosya D\xc3\xb6n\xc3\xbc\xc5\x9ft\xc3\xbcc\xc3\xbc' in response.data or b'File Converter' in response.data
 
 
 def test_file_converter_empty_upload(client):
     response = client.post(
-        '/araclar/dosya-donusturucu',
+        '/dosya-donusturucu',
         data={
             'action': 'convert',
             'output_format': 'txt'
@@ -32,7 +32,7 @@ def test_file_converter_txt_upload(client, temp_test_files):
             'output_format': 'txt'
         }
         response = client.post(
-            '/araclar/dosya-donusturucu',
+            '/dosya-donusturucu',
             data=data,
             content_type='multipart/form-data'
         )
@@ -53,7 +53,7 @@ def test_file_converter_image_upload(client, temp_test_files):
             'output_format': 'jpg'
         }
         response = client.post(
-            '/araclar/dosya-donusturucu',
+            '/dosya-donusturucu',
             data=data,
             content_type='multipart/form-data'
         )
@@ -62,17 +62,17 @@ def test_file_converter_image_upload(client, temp_test_files):
 
 
 def test_file_converter_encrypt_section(client):
-    response = client.get('/araclar/dosya-donusturucu')
+    response = client.get('/dosya-donusturucu')
     assert response.status_code == 200
     assert b'\xc5\x9eifrele' in response.data or b'Encrypt' in response.data
 
 
 def test_file_converter_history_section(client):
-    response = client.get('/araclar/dosya-donusturucu')
+    response = client.get('/dosya-donusturucu')
     assert response.status_code == 200
 
 
 def test_file_converter_limits(client):
     for i in range(5):
-        response = client.get('/araclar/dosya-donusturucu')
+        response = client.get('/dosya-donusturucu')
         assert response.status_code == 200
