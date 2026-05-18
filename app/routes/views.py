@@ -351,7 +351,8 @@ def index():
     if request.method == 'GET':
         subject_from_query = bleach.clean(request.args.get('subject', '').strip())
         referrer_from_query = bleach.clean(request.args.get('referrer', '').strip())
-        return render_template('contact/index.html', subject=subject_from_query, referrer=referrer_from_query)
+        session['contact_referrer'] = referrer_from_query
+        return render_template('contact/index.html', subject=subject_from_query)
     
     # POST isteği
     # Honeypot check
@@ -362,19 +363,19 @@ def index():
     email = bleach.clean(request.form.get('email', '').strip())
     subject = bleach.clean(request.form.get('subject', '').strip())
     message = bleach.clean(request.form.get('message', '').strip())
-    referrer_form = bleach.clean(request.form.get('referrer', '').strip())
+    referrer_form = session.pop('contact_referrer', '')
 
     if not name or not email or not message:
         flash('Lütfen zorunlu alanları doldurun.', 'error')
-        return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+        return render_template('contact/index.html', subject=subject)
 
     if len(message) < 10:
         flash('Mesajınız çok kısa, lütfen biraz daha detay verin.', 'error')
-        return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+        return render_template('contact/index.html', subject=subject)
 
     if len(message) > 3000:
         flash('Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.', 'error')
-        return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+        return render_template('contact/index.html', subject=subject)
 
     msg = ContactMessage(name=name, email=email, subject=subject, message=message)
     db.session.add(msg)
