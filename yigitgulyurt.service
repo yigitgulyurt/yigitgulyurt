@@ -7,7 +7,7 @@ User=yigitgulyurt
 Group=www-data
 WorkingDirectory=/var/www/yigitgulyurt
 Environment="PATH=/var/www/yigitgulyurt/venv/bin"
-ExecStart=/var/www/yigitgulyurt/venv/bin/gunicorn --workers 5 --bind unix:yigitgulyurt.sock -m 007 wsgi:app
+ExecStart=/var/www/yigitgulyurt/venv/bin/gunicorn --worker-class eventlet --workers 1 --bind unix:yigitgulyurt.sock -m 007 wsgi:app
 
 [Install]
 WantedBy=multi-user.target
