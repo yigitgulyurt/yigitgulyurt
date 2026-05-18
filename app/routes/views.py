@@ -380,7 +380,9 @@ def index():
 
         flash('Mesajınız alındı, teşekkürler!', 'success')
         return redirect(url_for('contact.index'))
-    return render_template('contact/index.html')
+    
+    subject_from_query = bleach.clean(request.args.get('subject', '').strip())
+    return render_template('contact/index.html', subject=subject_from_query)
 
 # --- Admin Routes ---
 @admin_bp.route('/giris', methods=['GET', 'POST'])
