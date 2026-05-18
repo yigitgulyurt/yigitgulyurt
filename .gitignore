@@ -3,7 +3,6 @@ migrate_add_content.sh
 nginx_canli_redirect.conf
 nginx_yigitgulyurt.conf
 nginx_canli.conf
-yigitgulyurt.service
 deploy.sh
 .env.example
 migrate_stream_config.sh
