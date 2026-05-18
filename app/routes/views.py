@@ -911,10 +911,21 @@ def file_converter():
                         'current': current,
                         'total': total,
                         'operation_type': operation_type
-                    }, room=socket_id)
+                    }, to=socket_id)
                     current_app.logger.info(f"Progress event sent successfully to {socket_id}")
                 except Exception as e:
                     current_app.logger.error(f"Failed to send progress: {e}")
+                    try:
+                        socketio.emit('conversion_status', {
+                            'status': 'processing',
+                            'progress': progress,
+                            'current': current,
+                            'total': total,
+                            'operation_type': operation_type
+                        })
+                        current_app.logger.info(f"Progress event sent (broadcast fallback)")
+                    except Exception as e2:
+                        current_app.logger.error(f"Failed even broadcast: {e2}")
             else:
                 current_app.logger.warning("No socket_id, progress not sent")
 
