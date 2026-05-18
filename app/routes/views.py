@@ -1,4 +1,4 @@
-from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file, session
+from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
 from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog
@@ -348,50 +348,47 @@ def detail(slug):
 @contact_bp.route('/', methods=['GET', 'POST'])
 @limiter.limit("5 per hour", methods=['POST'])
 def index():
-    if request.method == 'GET':
-        subject_from_query = bleach.clean(request.args.get('subject', '').strip())
-        referrer_from_query = bleach.clean(request.args.get('referrer', '').strip())
-        session['contact_referrer'] = referrer_from_query
-        return render_template('contact/index.html', subject=subject_from_query)
+    if request.method == 'POST':
+        # Honeypot check
+        if request.form.get('website'):
+            return redirect(url_for('contact.index'))
+
+        name    = bleach.clean(request.form.get('name', '').strip())
+        email   = bleach.clean(request.form.get('email', '').strip())
+        subject = bleach.clean(request.form.get('subject', '').strip())
+        message = bleach.clean(request.form.get('message', '').strip())
+        source  = bleach.clean(request.form.get('source', '').strip())
+
+        if not name or not email or not message:
+            flash('Lütfen zorunlu alanları doldurun.', 'error')
+            return render_template('contact/index.html')
+
+        if len(message) < 10:
+            flash('Mesajınız çok kısa, lütfen biraz daha detay verin.', 'error')
+            return render_template('contact/index.html')
+
+        if len(message) > 3000:
+            flash('Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.', 'error')
+            return render_template('contact/index.html')
+
+        msg = ContactMessage(name=name, email=email, subject=subject, message=message)
+        db.session.add(msg)
+        db.session.commit()
+        
+        # Telegram Bildirimi Gönder
+        app = current_app._get_current_object()
+        Thread(target=send_async_notification, args=(app, name, email, subject, message)).start()
+
+        flash('Mesajınız alındı, teşekkürler!', 'success')
+        
+        if source == 'file_converter':
+            return redirect(url_for('main.file_converter'))
+        else:
+            return redirect(url_for('contact.index'))
     
-    # POST isteği
-    # Honeypot check
-    if request.form.get('website'):
-        return redirect(url_for('contact.index'))
-
-    name = bleach.clean(request.form.get('name', '').strip())
-    email = bleach.clean(request.form.get('email', '').strip())
-    subject = bleach.clean(request.form.get('subject', '').strip())
-    message = bleach.clean(request.form.get('message', '').strip())
-    referrer_form = session.pop('contact_referrer', '')
-
-    if not name or not email or not message:
-        flash('Lütfen zorunlu alanları doldurun.', 'error')
-        return render_template('contact/index.html', subject=subject)
-
-    if len(message) < 10:
-        flash('Mesajınız çok kısa, lütfen biraz daha detay verin.', 'error')
-        return render_template('contact/index.html', subject=subject)
-
-    if len(message) > 3000:
-        flash('Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.', 'error')
-        return render_template('contact/index.html', subject=subject)
-
-    msg = ContactMessage(name=name, email=email, subject=subject, message=message)
-    db.session.add(msg)
-    db.session.commit()
-    
-    # Telegram Bildirimi Gönder
-    app = current_app._get_current_object()
-    Thread(target=send_async_notification, args=(app, name, email, subject, message)).start()
-
-    flash('Mesajınız alındı, teşekkürler!', 'success')
-    
-    # Eğer referrer dosya_donusturucu ise oraya geri dön
-    if referrer_form == 'dosya_donusturucu':
-        return redirect('/dosya-donusturucu')
-    
-    return redirect(url_for('contact.index'))
+    subject_from_query = bleach.clean(request.args.get('subject', '').strip())
+    source_from_query = bleach.clean(request.args.get('source', '').strip())
+    return render_template('contact/index.html', subject=subject_from_query, source=source_from_query)
 
 # --- Admin Routes ---
 @admin_bp.route('/giris', methods=['GET', 'POST'])
