@@ -1568,3 +1568,66 @@ def file_converter():
             )
 
     return render_template('tools/file_converter.html')
+
+
+# --- SocketIO Event Handlers ---
+from flask_socketio import emit, disconnect
+from app import socketio
+import uuid
+import json
+
+# Arka planda işlem takibi için basit bir sözlük
+background_tasks = {}
+
+@socketio.on('connect')
+def handle_connect():
+    current_app.logger.info(f"WebSocket connected: {request.sid}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    current_app.logger.info(f"WebSocket disconnected: {request.sid}")
+    if request.sid in background_tasks:
+        del background_tasks[request.sid]
+
+@socketio.on('start_conversion')
+def handle_start_conversion(data):
+    task_id = str(uuid.uuid4())
+    background_tasks[request.sid] = {'task_id': task_id, 'status': 'started'}
+    
+    emit('conversion_status', {
+        'task_id': task_id,
+        'status': 'started',
+        'progress': 0,
+        'message': 'İşlem başlatıldı...'
+    })
+    
+    def run_in_background():
+        try:
+            total_steps = 10
+            for i in range(total_steps):
+                progress = int((i + 1) / total_steps * 100)
+                emit('conversion_status', {
+                    'task_id': task_id,
+                    'status': 'processing',
+                    'progress': progress,
+                    'message': f'İşleniyor... %{progress}'
+                }, room=request.sid)
+                time.sleep(0.5)
+            
+            emit('conversion_status', {
+                'task_id': task_id,
+                'status': 'completed',
+                'progress': 100,
+                'message': 'İşlem tamamlandı!'
+            }, room=request.sid)
+        except Exception as e:
+            emit('conversion_status', {
+                'task_id': task_id,
+                'status': 'error',
+                'progress': 0,
+                'message': f'Hata: {str(e)}'
+            }, room=request.sid)
+    
+    thread = Thread(target=run_in_background)
+    thread.daemon = True
+    thread.start()

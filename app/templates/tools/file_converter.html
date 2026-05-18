@@ -795,34 +795,7 @@
         </select>
     </div>
 
-    <div class="format-section" id="compressionSection" style="display: none;">
-        <label class="format-label">
-            <span class="lang-tr">ZIP Sıkıştırma Seviyesi:</span>
-            <span class="lang-en">ZIP Compression Level:</span>
-        </label>
-        <select class="format-select" id="compressionLevel">
-            <option value="0">
-                <span class="lang-tr">Sıkıştırmasız (En Hızlı)</span>
-                <span class="lang-en">No Compression (Fastest)</span>
-            </option>
-            <option value="1">
-                <span class="lang-tr">Hızlı</span>
-                <span class="lang-en">Fast</span>
-            </option>
-            <option value="4">
-                <span class="lang-tr">Normal (Varsayılan)</span>
-                <span class="lang-en">Normal (Default)</span>
-            </option>
-            <option value="6">
-                <span class="lang-tr">İyi</span>
-                <span class="lang-en">Good</span>
-            </option>
-            <option value="9">
-                <span class="lang-tr">Maksimum (En Yavaş)</span>
-                <span class="lang-en">Maximum (Slowest)</span>
-            </option>
-        </select>
-    </div>
+
 
     <div class="encryption-section" id="encryptionSection">
         <div class="encryption-input-wrapper show">
@@ -957,8 +930,41 @@
 {% endblock %}
 
 {% block scripts %}
+<script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/socket.io.yigitgulyurt.js"></script>
 <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/jszip.yigitgulyurt.js"></script>
 <script>
+let socket = io();
+
+socket.on('connect', function() {
+    console.log('WebSocket connected');
+});
+
+socket.on('disconnect', function() {
+    console.log('WebSocket disconnected');
+});
+
+socket.on('conversion_status', function(data) {
+    console.log('Conversion status:', data);
+    const progressBar = document.getElementById('progressBar');
+    const progressLabel = document.getElementById('progressLabel');
+    const progressContainer = document.getElementById('progressContainer');
+    
+    progressContainer.classList.add('show');
+    
+    if (data.status === 'started') {
+        progressBar.style.width = '0%';
+        progressLabel.textContent = data.message;
+    } else if (data.status === 'processing') {
+        progressBar.style.width = data.progress + '%';
+        progressLabel.textContent = data.message;
+    } else if (data.status === 'completed') {
+        progressBar.style.width = '100%';
+        progressLabel.textContent = data.message;
+    } else if (data.status === 'error') {
+        progressLabel.textContent = data.message;
+        showToast(data.message, 'error');
+    }
+});
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const filesList = document.getElementById('filesList');
