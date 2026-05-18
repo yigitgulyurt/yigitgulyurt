@@ -971,8 +971,7 @@ def file_converter():
         try:
             if operation == 'merge_pdf':
                 pdf_writer = PdfWriter()
-                total_files = len(files)
-                for i, file in enumerate(files):
+                for file in files:
                     if file.filename == '':
                         continue
                     file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
@@ -1015,10 +1014,9 @@ def file_converter():
                     return (file.filename + '.encrypted', final_data)
                 
                 processed_files = []
-                total_files = len(files)
                 with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                     futures = [executor.submit(process_encrypt_file, file) for file in files]
-                    for i, future in enumerate(as_completed(futures)):
+                    for future in as_completed(futures):
                         result = future.result()
                         if result:
                             processed_files.append(result)
@@ -1075,10 +1073,9 @@ def file_converter():
                     return (original_filename, decrypted_data)
                 
                 processed_files = []
-                total_files = len(files)
                 with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                     futures = [executor.submit(process_decrypt_file, file) for file in files]
-                    for i, future in enumerate(as_completed(futures)):
+                    for future in as_completed(futures):
                         try:
                             result = future.result()
                             if result:
@@ -1534,10 +1531,9 @@ def file_converter():
                 return (output_filename, output_buffer.getvalue())
 
             converted_files = []
-            total_files = len(files)
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 futures = [executor.submit(convert_single_file, file) for file in files]
-                for i, future in enumerate(as_completed(futures)):
+                for future in as_completed(futures):
                     try:
                         result = future.result()
                         if result:
@@ -1572,66 +1568,3 @@ def file_converter():
             )
 
     return render_template('tools/file_converter.html')
-
-
-# --- SocketIO Event Handlers ---
-from flask_socketio import emit, disconnect
-from app import socketio
-import uuid
-import json
-
-# Arka planda işlem takibi için basit bir sözlük
-background_tasks = {}
-
-@socketio.on('connect')
-def handle_connect():
-    current_app.logger.info(f"WebSocket connected: {request.sid}")
-
-@socketio.on('disconnect')
-def handle_disconnect():
-    current_app.logger.info(f"WebSocket disconnected: {request.sid}")
-    if request.sid in background_tasks:
-        del background_tasks[request.sid]
-
-@socketio.on('start_conversion')
-def handle_start_conversion(data):
-    task_id = str(uuid.uuid4())
-    background_tasks[request.sid] = {'task_id': task_id, 'status': 'started'}
-    
-    emit('conversion_status', {
-        'task_id': task_id,
-        'status': 'started',
-        'progress': 0,
-        'message': 'İşlem başlatıldı...'
-    })
-    
-    def run_in_background():
-        try:
-            total_steps = 10
-            for i in range(total_steps):
-                progress = int((i + 1) / total_steps * 100)
-                emit('conversion_status', {
-                    'task_id': task_id,
-                    'status': 'processing',
-                    'progress': progress,
-                    'message': f'İşleniyor... %{progress}'
-                }, room=request.sid)
-                time.sleep(0.5)
-            
-            emit('conversion_status', {
-                'task_id': task_id,
-                'status': 'completed',
-                'progress': 100,
-                'message': 'İşlem tamamlandı!'
-            }, room=request.sid)
-        except Exception as e:
-            emit('conversion_status', {
-                'task_id': task_id,
-                'status': 'error',
-                'progress': 0,
-                'message': f'Hata: {str(e)}'
-            }, room=request.sid)
-    
-    thread = Thread(target=run_in_background)
-    thread.daemon = True
-    thread.start()

@@ -930,10 +930,8 @@
 {% endblock %}
 
 {% block scripts %}
-<script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/jszip.yigitgulyurt.js"></script>
 <script>
-
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const filesList = document.getElementById('filesList');
@@ -1776,42 +1774,24 @@ async function processFiles() {
     loading.classList.add('show');
     progressContainer.classList.add('show');
     convertBtn.disabled = true;
-    
-    const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
-    let totalFiles = currentUploadMode === 'file' ? selectedFiles.length : 1;
-    let processedFiles = 0;
-    
-    const getProgressLabel = (percent) => {
-        let label = '';
-        if (currentOperation === 'convert') {
-            label = isEnglish 
-                ? `<span class="lang-en">Processing... %${percent}</span><span class="lang-tr">İşleniyor... %${percent}</span>` 
-                : `<span class="lang-tr">İşleniyor... %${percent}</span><span class="lang-en">Processing... %${percent}</span>`;
-        } else if (currentOperation === 'merge_pdf') {
-            label = isEnglish 
-                ? `<span class="lang-en">Merging PDFs... %${percent}</span><span class="lang-tr">PDFler birleştiriliyor... %${percent}</span>` 
-                : `<span class="lang-tr">PDFler birleştiriliyor... %${percent}</span><span class="lang-en">Merging PDFs... %${percent}</span>`;
-        }
-        return label;
-    };
-    
-    updateProgress(0, getProgressLabel(0));
-    
+    updateProgress(0, `<span class="lang-tr">Hazırlanıyor...</span><span class="lang-en">Preparing...</span>`);
+
     let progressInterval;
     try {
         let progressStep = 0;
-        let targetProgress = 0;
-        
         progressInterval = setInterval(() => {
             const currentWidth = parseInt(progressBar.style.width) || 0;
-            if (currentWidth < 90) {
+            if (currentWidth < 99) {
                 progressStep++;
                 const logValue = Math.log(progressStep + 1) / Math.log(15);
-                targetProgress = Math.min(Math.round(90 * logValue), 90);
-                const newWidth = Math.min(currentWidth + 2, targetProgress);
-                updateProgress(newWidth, getProgressLabel(newWidth));
+                const newWidth = Math.min(Math.round(99 * logValue), 99);
+                const percentText = Math.round(newWidth);
+                updateProgress(
+                    newWidth, 
+                    `<span class="lang-tr">İşleniyor... %${percentText}</span><span class="lang-en">Processing... %${percentText}</span>`
+                );
             }
-        }, 100);
+        }, 80);
 
         const response = await fetch(window.location.href, {
             method: 'POST',
@@ -1892,9 +1872,7 @@ async function processFiles() {
     } catch (error) {
         showToast(error.message, "error");
     } finally {
-        if (progressInterval) {
-            clearInterval(progressInterval);
-        }
+        clearInterval(progressInterval);
         loading.classList.remove('show');
         progressContainer.classList.remove('show');
         updateProgress(0);
