@@ -767,12 +767,6 @@ def file_converter():
     import time
     import tracemalloc
     import os
-    
-    current_app.logger.info(f"=== FILE CONVERTER REQUEST RECEIVED ===")
-    current_app.logger.info(f"Method: {request.method}")
-    if request.method == 'POST':
-        current_app.logger.info(f"Form keys: {list(request.form.keys())}")
-        current_app.logger.info(f"Files: {len(request.files.getlist('files')) if 'files' in request.files else 0}")
 
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
     MAX_URL_RESPONSE_SIZE = 50 * 1024 * 1024  # 50 MB
@@ -892,42 +886,9 @@ def file_converter():
         except Exception as e:
             current_app.logger.warning(f"Memory tracking failed: {e}")
 
-        from app import socketio
-        
         files = []
         target_format = request.form.get('target_format')
         operation = request.form.get('operation', 'convert')
-        socket_id = request.form.get('socket_id')
-        
-        current_app.logger.info(f"File converter started, socket_id: {socket_id}, operation: {operation}")
-        
-        def send_progress(progress, current, total, operation_type):
-            current_app.logger.info(f"send_progress called: progress={progress}, current={current}, total={total}, operation_type={operation_type}, socket_id={socket_id}")
-            if socket_id:
-                try:
-                    socketio.emit('conversion_status', {
-                        'status': 'processing',
-                        'progress': progress,
-                        'current': current,
-                        'total': total,
-                        'operation_type': operation_type
-                    }, to=socket_id)
-                    current_app.logger.info(f"Progress event sent successfully to {socket_id}")
-                except Exception as e:
-                    current_app.logger.error(f"Failed to send progress: {e}")
-                    try:
-                        socketio.emit('conversion_status', {
-                            'status': 'processing',
-                            'progress': progress,
-                            'current': current,
-                            'total': total,
-                            'operation_type': operation_type
-                        })
-                        current_app.logger.info(f"Progress event sent (broadcast fallback)")
-                    except Exception as e2:
-                        current_app.logger.error(f"Failed even broadcast: {e2}")
-            else:
-                current_app.logger.warning("No socket_id, progress not sent")
 
         url_input = request.form.get('url')
         if url_input:
@@ -1020,8 +981,6 @@ def file_converter():
                     pdf_reader = PdfReader(BytesIO(file.read()))
                     for page in pdf_reader.pages:
                         pdf_writer.add_page(page)
-                    progress = int(((i + 1) / total_files) * 100)
-                    send_progress(progress, i + 1, total_files, 'merge_pdf')
                 output_buffer = BytesIO()
                 pdf_writer.write(output_buffer)
                 output_buffer.seek(0)
@@ -1063,8 +1022,6 @@ def file_converter():
                         result = future.result()
                         if result:
                             processed_files.append(result)
-                        progress = int((len(processed_files) / total_files) * 100)
-                        send_progress(progress, len(processed_files), total_files, 'encrypt')
                 
                 if len(processed_files) == 1:
                     filename, content = processed_files[0]
@@ -1126,8 +1083,6 @@ def file_converter():
                             result = future.result()
                             if result:
                                 processed_files.append(result)
-                            progress = int((len(processed_files) / total_files) * 100)
-                            send_progress(progress, len(processed_files), total_files, 'decrypt')
                         except Exception:
                             return jsonify({'error': 'Hatalı şifre veya bozuk dosya'}), 400
                 
@@ -1587,8 +1542,6 @@ def file_converter():
                         result = future.result()
                         if result:
                             converted_files.append(result)
-                        progress = int((len(converted_files) / total_files) * 100)
-                        send_progress(progress, len(converted_files), total_files, 'convert')
                     except Exception as e:
                         current_app.logger.error(f"Dosya dönüştürme hatası: {e}")
                         return jsonify({'error': f'Dönüştürme sırasında bir hata oluştu: {str(e)}'}), 500

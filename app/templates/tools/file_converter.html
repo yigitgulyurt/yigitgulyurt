@@ -933,69 +933,7 @@
 <script src="https://cdn.socket.io/4.7.2/socket.io.min.js"></script>
 <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/jszip.yigitgulyurt.js"></script>
 <script>
-let socket = io();
 
-socket.on('connect', function() {
-    console.log('=== WebSocket CONNECTED ===');
-    console.log('Socket ID:', socket.id);
-    console.log('Socket connected:', socket.connected);
-    console.log('Socket object:', socket);
-});
-
-socket.on('disconnect', function() {
-    console.log('WebSocket disconnected');
-});
-
-socket.on('conversion_status', function(data) {
-    console.log('=== CONVERSION STATUS RECEIVED ===');
-    console.log('Full data:', data);
-    console.log('Status:', data.status);
-    console.log('Progress:', data.progress);
-    console.log('Current:', data.current);
-    console.log('Total:', data.total);
-    console.log('Operation type:', data.operation_type);
-    
-    progressContainer.classList.add('show');
-    
-    let message = '';
-    const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
-    
-    if (data.status === 'processing') {
-        const current = data.current || 0;
-        const total = data.total || 0;
-        
-        if (data.operation_type === 'convert') {
-            message = isEnglish 
-                ? `Processing... %${data.progress} (${current}/${total})` 
-                : `İşleniyor... %${data.progress} (${current}/${total})`;
-        } else if (data.operation_type === 'merge_pdf') {
-            message = isEnglish 
-                ? `Merging PDFs... %${data.progress} (${current}/${total})` 
-                : `PDFler birleştiriliyor... %${data.progress} (${current}/${total})`;
-        } else if (data.operation_type === 'encrypt') {
-            message = isEnglish 
-                ? `Encrypting... %${data.progress} (${current}/${total})` 
-                : `Şifreleniyor... %${data.progress} (${current}/${total})`;
-        } else if (data.operation_type === 'decrypt') {
-            message = isEnglish 
-                ? `Decrypting... %${data.progress} (${current}/${total})` 
-                : `Şifre çözülüyor... %${data.progress} (${current}/${total})`;
-        }
-    }
-    
-    if (data.status === 'started') {
-        const startMessage = isEnglish ? 'Preparing...' : 'Hazırlanıyor...';
-        updateProgress(0, `<span class="lang-tr">Hazırlanıyor...</span><span class="lang-en">Preparing...</span>`);
-    } else if (data.status === 'processing') {
-        updateProgress(data.progress, message);
-    } else if (data.status === 'completed') {
-        const completeMessage = isEnglish ? 'Completed!' : 'Tamamlandı!';
-        updateProgress(100, completeMessage);
-    } else if (data.status === 'error') {
-        updateProgress(0, data.message);
-        showToast(data.message, 'error');
-    }
-});
 const uploadArea = document.getElementById('uploadArea');
 const fileInput = document.getElementById('fileInput');
 const filesList = document.getElementById('filesList');
@@ -1831,21 +1769,6 @@ async function processFiles() {
         formData.append('target_format', targetFormat.value);
     }
     
-    console.log('=== PREPARING FORM DATA ===');
-    console.log('Socket object:', socket);
-    console.log('Socket ID:', socket ? socket.id : 'NO SOCKET');
-    if (socket && socket.id) {
-        formData.append('socket_id', socket.id);
-        console.log('Socket ID added to formData:', socket.id);
-    } else {
-        console.warn('NO SOCKET ID AVAILABLE!');
-    }
-    
-    console.log('=== FORM DATA CONTENTS ===');
-    for (let pair of formData.entries()) {
-        console.log(pair[0], ':', pair[1] ? (typeof pair[1] === 'object' ? '[FILE]' : pair[1]) : '[EMPTY]');
-    }
-    
     if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
         formData.append('password', encryptionPassword.value);
     }
@@ -1969,6 +1892,9 @@ async function processFiles() {
     } catch (error) {
         showToast(error.message, "error");
     } finally {
+        if (progressInterval) {
+            clearInterval(progressInterval);
+        }
         loading.classList.remove('show');
         progressContainer.classList.remove('show');
         updateProgress(0);
