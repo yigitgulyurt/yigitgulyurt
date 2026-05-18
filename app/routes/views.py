@@ -767,6 +767,12 @@ def file_converter():
     import time
     import tracemalloc
     import os
+    
+    current_app.logger.info(f"=== FILE CONVERTER REQUEST RECEIVED ===")
+    current_app.logger.info(f"Method: {request.method}")
+    if request.method == 'POST':
+        current_app.logger.info(f"Form keys: {list(request.form.keys())}")
+        current_app.logger.info(f"Files: {len(request.files.getlist('files')) if 'files' in request.files else 0}")
 
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
     MAX_URL_RESPONSE_SIZE = 50 * 1024 * 1024  # 50 MB
@@ -893,7 +899,10 @@ def file_converter():
         operation = request.form.get('operation', 'convert')
         socket_id = request.form.get('socket_id')
         
+        current_app.logger.info(f"File converter started, socket_id: {socket_id}, operation: {operation}")
+        
         def send_progress(progress, current, total, operation_type):
+            current_app.logger.info(f"send_progress called: progress={progress}, current={current}, total={total}, operation_type={operation_type}, socket_id={socket_id}")
             if socket_id:
                 try:
                     socketio.emit('conversion_status', {
@@ -903,8 +912,11 @@ def file_converter():
                         'total': total,
                         'operation_type': operation_type
                     }, room=socket_id)
+                    current_app.logger.info(f"Progress event sent successfully to {socket_id}")
                 except Exception as e:
-                    current_app.logger.warning(f"Failed to send progress: {e}")
+                    current_app.logger.error(f"Failed to send progress: {e}")
+            else:
+                current_app.logger.warning("No socket_id, progress not sent")
 
         url_input = request.form.get('url')
         if url_input:

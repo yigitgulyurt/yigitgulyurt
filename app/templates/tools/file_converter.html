@@ -936,7 +936,10 @@
 let socket = io();
 
 socket.on('connect', function() {
-    console.log('WebSocket connected');
+    console.log('=== WebSocket CONNECTED ===');
+    console.log('Socket ID:', socket.id);
+    console.log('Socket connected:', socket.connected);
+    console.log('Socket object:', socket);
 });
 
 socket.on('disconnect', function() {
@@ -944,7 +947,14 @@ socket.on('disconnect', function() {
 });
 
 socket.on('conversion_status', function(data) {
-    console.log('Conversion status:', data);
+    console.log('=== CONVERSION STATUS RECEIVED ===');
+    console.log('Full data:', data);
+    console.log('Status:', data.status);
+    console.log('Progress:', data.progress);
+    console.log('Current:', data.current);
+    console.log('Total:', data.total);
+    console.log('Operation type:', data.operation_type);
+    
     progressContainer.classList.add('show');
     
     let message = '';
@@ -1821,8 +1831,19 @@ async function processFiles() {
         formData.append('target_format', targetFormat.value);
     }
     
+    console.log('=== PREPARING FORM DATA ===');
+    console.log('Socket object:', socket);
+    console.log('Socket ID:', socket ? socket.id : 'NO SOCKET');
     if (socket && socket.id) {
         formData.append('socket_id', socket.id);
+        console.log('Socket ID added to formData:', socket.id);
+    } else {
+        console.warn('NO SOCKET ID AVAILABLE!');
+    }
+    
+    console.log('=== FORM DATA CONTENTS ===');
+    for (let pair of formData.entries()) {
+        console.log(pair[0], ':', pair[1] ? (typeof pair[1] === 'object' ? '[FILE]' : pair[1]) : '[EMPTY]');
     }
     
     if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
