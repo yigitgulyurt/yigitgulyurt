@@ -945,23 +945,44 @@ socket.on('disconnect', function() {
 
 socket.on('conversion_status', function(data) {
     console.log('Conversion status:', data);
-    const progressBar = document.getElementById('progressBar');
-    const progressLabel = document.getElementById('progressLabel');
-    const progressContainer = document.getElementById('progressContainer');
-    
     progressContainer.classList.add('show');
     
+    let message = '';
+    const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
+    
+    if (data.status === 'processing') {
+        const current = data.current || 0;
+        const total = data.total || 0;
+        
+        if (data.operation_type === 'convert') {
+            message = isEnglish 
+                ? `Processing... %${data.progress} (${current}/${total})` 
+                : `İşleniyor... %${data.progress} (${current}/${total})`;
+        } else if (data.operation_type === 'merge_pdf') {
+            message = isEnglish 
+                ? `Merging PDFs... %${data.progress} (${current}/${total})` 
+                : `PDFler birleştiriliyor... %${data.progress} (${current}/${total})`;
+        } else if (data.operation_type === 'encrypt') {
+            message = isEnglish 
+                ? `Encrypting... %${data.progress} (${current}/${total})` 
+                : `Şifreleniyor... %${data.progress} (${current}/${total})`;
+        } else if (data.operation_type === 'decrypt') {
+            message = isEnglish 
+                ? `Decrypting... %${data.progress} (${current}/${total})` 
+                : `Şifre çözülüyor... %${data.progress} (${current}/${total})`;
+        }
+    }
+    
     if (data.status === 'started') {
-        progressBar.style.width = '0%';
-        progressLabel.textContent = data.message;
+        const startMessage = isEnglish ? 'Preparing...' : 'Hazırlanıyor...';
+        updateProgress(0, `<span class="lang-tr">Hazırlanıyor...</span><span class="lang-en">Preparing...</span>`);
     } else if (data.status === 'processing') {
-        progressBar.style.width = data.progress + '%';
-        progressLabel.textContent = data.message;
+        updateProgress(data.progress, message);
     } else if (data.status === 'completed') {
-        progressBar.style.width = '100%';
-        progressLabel.textContent = data.message;
+        const completeMessage = isEnglish ? 'Completed!' : 'Tamamlandı!';
+        updateProgress(100, completeMessage);
     } else if (data.status === 'error') {
-        progressLabel.textContent = data.message;
+        updateProgress(0, data.message);
         showToast(data.message, 'error');
     }
 });

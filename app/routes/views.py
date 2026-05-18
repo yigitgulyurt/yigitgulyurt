@@ -893,13 +893,15 @@ def file_converter():
         operation = request.form.get('operation', 'convert')
         socket_id = request.form.get('socket_id')
         
-        def send_progress(progress, message):
+        def send_progress(progress, current, total, operation_type):
             if socket_id:
                 try:
                     socketio.emit('conversion_status', {
                         'status': 'processing',
                         'progress': progress,
-                        'message': message
+                        'current': current,
+                        'total': total,
+                        'operation_type': operation_type
                     }, room=socket_id)
                 except Exception as e:
                     current_app.logger.warning(f"Failed to send progress: {e}")
@@ -996,12 +998,10 @@ def file_converter():
                     for page in pdf_reader.pages:
                         pdf_writer.add_page(page)
                     progress = int(((i + 1) / total_files) * 100)
-                    message = f'PDFler birleştiriliyor... %{progress} ({i+1}/{total_files})'
-                    send_progress(progress, message)
+                    send_progress(progress, i + 1, total_files, 'merge_pdf')
                 output_buffer = BytesIO()
                 pdf_writer.write(output_buffer)
                 output_buffer.seek(0)
-                send_progress(100, 'Tamamlandı!')
                 return send_file(
                     output_buffer,
                     as_attachment=True,
@@ -1041,8 +1041,7 @@ def file_converter():
                         if result:
                             processed_files.append(result)
                         progress = int((len(processed_files) / total_files) * 100)
-                        message = f'Şifreleniyor... %{progress} ({len(processed_files)}/{total_files})'
-                        send_progress(progress, message)
+                        send_progress(progress, len(processed_files), total_files, 'encrypt')
                 
                 if len(processed_files) == 1:
                     filename, content = processed_files[0]
@@ -1105,8 +1104,7 @@ def file_converter():
                             if result:
                                 processed_files.append(result)
                             progress = int((len(processed_files) / total_files) * 100)
-                            message = f'Şifre çözülüyor... %{progress} ({len(processed_files)}/{total_files})'
-                            send_progress(progress, message)
+                            send_progress(progress, len(processed_files), total_files, 'decrypt')
                         except Exception:
                             return jsonify({'error': 'Hatalı şifre veya bozuk dosya'}), 400
                 
@@ -1567,8 +1565,7 @@ def file_converter():
                         if result:
                             converted_files.append(result)
                         progress = int((len(converted_files) / total_files) * 100)
-                        message = f'İşleniyor... %{progress} ({len(converted_files)}/{total_files})'
-                        send_progress(progress, message)
+                        send_progress(progress, len(converted_files), total_files, 'convert')
                     except Exception as e:
                         current_app.logger.error(f"Dosya dönüştürme hatası: {e}")
                         return jsonify({'error': f'Dönüştürme sırasında bir hata oluştu: {str(e)}'}), 500
