@@ -391,7 +391,7 @@ def index():
         
         # Eğer referrer dosya_donusturucu ise oraya geri dön
         if referrer_form == 'dosya_donusturucu':
-            return redirect(url_for('main.file_converter'))
+            return redirect('/dosya-donusturucu')
         return redirect(url_for('contact.index'))
     
     subject_from_query = bleach.clean(request.args.get('subject', '').strip())
