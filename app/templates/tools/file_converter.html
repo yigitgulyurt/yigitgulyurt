@@ -1800,6 +1800,10 @@ async function processFiles() {
         formData.append('target_format', targetFormat.value);
     }
     
+    if (socket && socket.id) {
+        formData.append('socket_id', socket.id);
+    }
+    
     if (currentOperation === 'encrypt' || currentOperation === 'decrypt') {
         formData.append('password', encryptionPassword.value);
     }
@@ -1809,22 +1813,7 @@ async function processFiles() {
     convertBtn.disabled = true;
     updateProgress(0, `<span class="lang-tr">Hazırlanıyor...</span><span class="lang-en">Preparing...</span>`);
 
-    let progressInterval;
     try {
-        let progressStep = 0;
-        progressInterval = setInterval(() => {
-            const currentWidth = parseInt(progressBar.style.width) || 0;
-            if (currentWidth < 99) {
-                progressStep++;
-                const logValue = Math.log(progressStep + 1) / Math.log(15);
-                const newWidth = Math.min(Math.round(99 * logValue), 99);
-                const percentText = Math.round(newWidth);
-                updateProgress(
-                    newWidth, 
-                    `<span class="lang-tr">İşleniyor... %${percentText}</span><span class="lang-en">Processing... %${percentText}</span>`
-                );
-            }
-        }, 80);
 
         const response = await fetch(window.location.href, {
             method: 'POST',
@@ -1905,7 +1894,6 @@ async function processFiles() {
     } catch (error) {
         showToast(error.message, "error");
     } finally {
-        clearInterval(progressInterval);
         loading.classList.remove('show');
         progressContainer.classList.remove('show');
         updateProgress(0);

@@ -886,9 +886,23 @@ def file_converter():
         except Exception as e:
             current_app.logger.warning(f"Memory tracking failed: {e}")
 
+        from app import socketio
+        
         files = []
         target_format = request.form.get('target_format')
         operation = request.form.get('operation', 'convert')
+        socket_id = request.form.get('socket_id')
+        
+        def send_progress(progress, message):
+            if socket_id:
+                try:
+                    socketio.emit('conversion_status', {
+                        'status': 'processing',
+                        'progress': progress,
+                        'message': message
+                    }, room=socket_id)
+                except Exception as e:
+                    current_app.logger.warning(f"Failed to send progress: {e}")
 
         url_input = request.form.get('url')
         if url_input:
@@ -971,7 +985,8 @@ def file_converter():
         try:
             if operation == 'merge_pdf':
                 pdf_writer = PdfWriter()
-                for file in files:
+                total_files = len(files)
+                for i, file in enumerate(files):
                     if file.filename == '':
                         continue
                     file_ext = file.filename.rsplit('.', 1)[1].lower() if '.' in file.filename else ''
@@ -980,9 +995,13 @@ def file_converter():
                     pdf_reader = PdfReader(BytesIO(file.read()))
                     for page in pdf_reader.pages:
                         pdf_writer.add_page(page)
+                    progress = int(((i + 1) / total_files) * 100)
+                    message = f'PDFler birleştiriliyor... %{progress} ({i+1}/{total_files})'
+                    send_progress(progress, message)
                 output_buffer = BytesIO()
                 pdf_writer.write(output_buffer)
                 output_buffer.seek(0)
+                send_progress(100, 'Tamamlandı!')
                 return send_file(
                     output_buffer,
                     as_attachment=True,
@@ -1014,12 +1033,16 @@ def file_converter():
                     return (file.filename + '.encrypted', final_data)
                 
                 processed_files = []
+                total_files = len(files)
                 with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                     futures = [executor.submit(process_encrypt_file, file) for file in files]
-                    for future in as_completed(futures):
+                    for i, future in enumerate(as_completed(futures)):
                         result = future.result()
                         if result:
                             processed_files.append(result)
+                        progress = int((len(processed_files) / total_files) * 100)
+                        message = f'Şifreleniyor... %{progress} ({len(processed_files)}/{total_files})'
+                        send_progress(progress, message)
                 
                 if len(processed_files) == 1:
                     filename, content = processed_files[0]
@@ -1073,13 +1096,17 @@ def file_converter():
                     return (original_filename, decrypted_data)
                 
                 processed_files = []
+                total_files = len(files)
                 with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                     futures = [executor.submit(process_decrypt_file, file) for file in files]
-                    for future in as_completed(futures):
+                    for i, future in enumerate(as_completed(futures)):
                         try:
                             result = future.result()
                             if result:
                                 processed_files.append(result)
+                            progress = int((len(processed_files) / total_files) * 100)
+                            message = f'Şifre çözülüyor... %{progress} ({len(processed_files)}/{total_files})'
+                            send_progress(progress, message)
                         except Exception:
                             return jsonify({'error': 'Hatalı şifre veya bozuk dosya'}), 400
                 
@@ -1531,13 +1558,17 @@ def file_converter():
                 return (output_filename, output_buffer.getvalue())
 
             converted_files = []
+            total_files = len(files)
             with ThreadPoolExecutor(max_workers=MAX_WORKERS) as executor:
                 futures = [executor.submit(convert_single_file, file) for file in files]
-                for future in as_completed(futures):
+                for i, future in enumerate(as_completed(futures)):
                     try:
                         result = future.result()
                         if result:
                             converted_files.append(result)
+                        progress = int((len(converted_files) / total_files) * 100)
+                        message = f'İşleniyor... %{progress} ({len(converted_files)}/{total_files})'
+                        send_progress(progress, message)
                     except Exception as e:
                         current_app.logger.error(f"Dosya dönüştürme hatası: {e}")
                         return jsonify({'error': f'Dönüştürme sırasında bir hata oluştu: {str(e)}'}), 500
