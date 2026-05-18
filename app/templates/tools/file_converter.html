@@ -698,6 +698,127 @@
     font-size: 10px;
 }
 
+.help-section, .faq-section, .contact-section {
+    margin-top: 20px;
+}
+
+.help-content, .faq-content, .contact-content {
+    background: var(--bg2);
+    border-radius: 16px;
+    padding: 24px;
+    border: 1px solid var(--border);
+}
+
+.help-content h3, .faq-content h3, .contact-content h3 {
+    margin-bottom: 20px;
+    color: var(--text);
+    font-size: 1.4rem;
+}
+
+.help-item {
+    display: flex;
+    gap: 16px;
+    margin-bottom: 16px;
+    align-items: flex-start;
+}
+
+.help-number {
+    width: 36px;
+    height: 36px;
+    background: linear-gradient(135deg, var(--accent), var(--accent2));
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-weight: 700;
+    color: white;
+    flex-shrink: 0;
+}
+
+.help-text {
+    color: var(--text2);
+    line-height: 1.6;
+    padding-top: 4px;
+}
+
+.faq-item {
+    background: var(--bg3);
+    border-radius: 12px;
+    margin-bottom: 12px;
+    overflow: hidden;
+    border: 1px solid var(--border);
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.faq-item:hover {
+    border-color: var(--accent);
+}
+
+.faq-question {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px 20px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.faq-toggle {
+    transition: transform 0.3s;
+    font-size: 1.2rem;
+}
+
+.faq-item.active .faq-toggle {
+    transform: rotate(180deg);
+}
+
+.faq-answer {
+    display: none;
+    padding: 0 20px 20px;
+    color: var(--text2);
+    line-height: 1.7;
+}
+
+.faq-item.active .faq-answer {
+    display: block;
+}
+
+.contact-form-group {
+    margin-bottom: 20px;
+}
+
+.contact-form-group label {
+    display: block;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text);
+}
+
+.contact-form-group input,
+.contact-form-group textarea {
+    width: 100%;
+    padding: 14px 16px;
+    background: var(--bg3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: all 0.3s;
+}
+
+.contact-form-group input:focus,
+.contact-form-group textarea:focus {
+    outline: none;
+    border-color: var(--accent);
+    box-shadow: 0 0 0 3px rgba(74, 222, 128, 0.1);
+}
+
+.contact-form-group textarea {
+    resize: vertical;
+    min-height: 120px;
+}
+
 @media (max-width: 600px) {
     .tool-container {
         padding: 20px;
@@ -746,6 +867,18 @@
         <button class="operation-tab" data-operation="decrypt">
             <span class="lang-tr">🔓 Şifre Çöz</span>
             <span class="lang-en">🔓 Decrypt</span>
+        </button>
+        <button class="operation-tab" data-operation="help">
+            <span class="lang-tr">❓ Yardım</span>
+            <span class="lang-en">❓ Help</span>
+        </button>
+        <button class="operation-tab" data-operation="faq">
+            <span class="lang-tr">❔ SSS</span>
+            <span class="lang-en">❔ FAQ</span>
+        </button>
+        <button class="operation-tab" data-operation="contact">
+            <span class="lang-tr">📧 İletişim</span>
+            <span class="lang-en">📧 Contact</span>
         </button>
     </div>
 
@@ -808,6 +941,119 @@
             <div class="encryption-note" id="encryptionNote">
                 <span class="lang-tr"><strong>Önemli:</strong> Şifrenizi kimseyle paylaşmayın ve saklayın. Şifresiz dosya geri getirilemez! Şifreleme <strong>uçtan uca</strong> yapılır, şifreniz sunucuya gönderilmez.</span>
                 <span class="lang-en"><strong>Important:</strong> Don't share your password and keep it safe. Files cannot be recovered without the password! Encryption is done <strong>end-to-end</strong>, your password is never sent to the server.</span>
+            </div>
+        </div>
+    </div>
+
+    <div class="help-section" id="helpSection" style="display: none;">
+        <div class="help-content">
+            <h3>📖 Nasıl Kullanılır?</h3>
+            <div class="help-item">
+                <div class="help-number">1</div>
+                <div class="help-text">
+                    <strong>Dosya Seç:</strong> Dosyalarınızı sürükleyip bırakın veya tıklayarak seçin
+                </div>
+            </div>
+            <div class="help-item">
+                <div class="help-number">2</div>
+                <div class="help-text">
+                    <strong>Hedef Format Seç:</strong> Dönüştürmek istediğiniz formatı listeden seçin
+                </div>
+            </div>
+            <div class="help-item">
+                <div class="help-number">3</div>
+                <div class="help-text">
+                    <strong>İşlemi Başlat:</strong> "İşlemi Başlat" butonuna tıklayın
+                </div>
+            </div>
+            
+            <h4 style="margin-top: 30px;">Desteklenen Formatlar:</h4>
+            <ul style="margin-top: 10px; color: var(--text2); line-height: 1.8;">
+                <li><strong>Resimler:</strong> JPG, PNG, WEBP, GIF, BMP, TIFF, SVG</li>
+                <li><strong>Belgeler:</strong> DOCX, PDF, TXT, MD, CSV, JSON, XML, HTML</li>
+                <li><strong>Ofis:</strong> XLSX, PPTX</li>
+                <li><strong>Videolar:</strong> MP4, AVI, MOV, MKV, WebM, FLV, WMV (FFmpeg gerekir)</li>
+                <li><strong>Sesler:</strong> MP3, WAV, OGG, FLAC, AAC, M4A (FFmpeg gerekir)</li>
+            </ul>
+        </div>
+    </div>
+
+    <div class="faq-section" id="faqSection" style="display: none;">
+        <div class="faq-content">
+            <h3>❔ Sık Sorulan Sorular</h3>
+            
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    <span>Dosyalarım güvende mi?</span>
+                    <span class="faq-toggle">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Evet! Dosyalarınız sunucuda saklanmaz. İşlemden hemen sonra bellekten silinir. Şifreleme işlemleri ise uçtan uca yapılır ve şifreniz hiçbir zaman sunucuya gönderilmez.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    <span>Maksimum dosya boyutu ne kadar?</span>
+                    <span class="faq-toggle">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Tek dosya için maksimum 50 MB sınırı vardır. Birden fazla dosya yükleyebilirsiniz.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    <span>Şifremi unuttum ne yapacağım?</span>
+                    <span class="faq-toggle">▼</span>
+                </div>
+                <div class="faq-answer">
+                    Üzgünüz, şifrenizi unuttuğunuzda dosyayı geri almanın hiçbir yolu yoktur. Lütfen şifrenizi güvenli bir yerde saklayın.
+                </div>
+            </div>
+            
+            <div class="faq-item" onclick="toggleFaq(this)">
+                <div class="faq-question">
+                    <span>PDF birleştirme nasıl çalışır?</span>
+                    <span class="faq-toggle">▼</span>
+                </div>
+                <div class="faq-answer">
+                    "PDF Birleştir" sekmesine gidin, birleştirmek istediğiniz PDF dosyalarını seçin ve sıralayın. Sonra "İşlemi Başlat" butonuna tıklayın.
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <div class="contact-section" id="contactSection" style="display: none;">
+        <div class="contact-content">
+            <h3>📧 İletişim</h3>
+            <p style="color: var(--text2); margin-bottom: 20px;">
+                Hata bildirmek, öneri göndermek veya yardım almak için bize ulaşın!
+            </p>
+            
+            <div class="contact-form-group">
+                <label>Ad Soyad</label>
+                <input type="text" id="contactName" placeholder="Adınızı ve soyadınızı girin" />
+            </div>
+            
+            <div class="contact-form-group">
+                <label>E-posta</label>
+                <input type="email" id="contactEmail" placeholder="E-posta adresinizi girin" />
+            </div>
+            
+            <div class="contact-form-group">
+                <label>Mesaj</label>
+                <textarea id="contactMessage" rows="5" placeholder="Mesajınızı yazın..."></textarea>
+            </div>
+            
+            <button class="convert-btn" onclick="sendContactMessage()">
+                <span class="lang-tr">Gönder</span>
+                <span class="lang-en">Send</span>
+            </button>
+            
+            <div style="margin-top: 30px; padding: 15px; background: var(--bg2); border-radius: 12px;">
+                <strong>📧 Doğrudan E-posta:</strong><br>
+                <a href="mailto:yigit@yigitgulyurt.net.tr" style="color: var(--accent);">yigit@yigitgulyurt.net.tr</a>
             </div>
         </div>
     </div>
@@ -1310,6 +1556,72 @@ operationTabs.forEach(tab => {
 function updateUI() {
     const encryptionSection = document.getElementById('encryptionSection');
     const encryptionNote = document.getElementById('encryptionNote');
+    const helpSection = document.getElementById('helpSection');
+    const faqSection = document.getElementById('faqSection');
+    const contactSection = document.getElementById('contactSection');
+    const uploadArea = document.getElementById('uploadArea');
+    const uploadModeTabs = document.querySelector('.upload-mode-tabs');
+    const filesList = document.getElementById('filesList');
+    const formatSection = document.getElementById('formatSection');
+    const convertBtn = document.getElementById('convertBtn');
+    const featuresGrid = document.querySelector('.features-grid');
+    const historySection = document.querySelector('.history-section');
+    const keyboardHints = document.querySelector('.keyboard-hints');
+    
+    if (currentOperation === 'help') {
+        helpSection.style.display = 'block';
+        faqSection.style.display = 'none';
+        contactSection.style.display = 'none';
+        uploadArea.style.display = 'none';
+        uploadModeTabs.style.display = 'none';
+        filesList.style.display = 'none';
+        formatSection.style.display = 'none';
+        encryptionSection.style.display = 'none';
+        convertBtn.style.display = 'none';
+        featuresGrid.style.display = 'none';
+        historySection.style.display = 'none';
+        keyboardHints.style.display = 'none';
+        return;
+    } else if (currentOperation === 'faq') {
+        helpSection.style.display = 'none';
+        faqSection.style.display = 'block';
+        contactSection.style.display = 'none';
+        uploadArea.style.display = 'none';
+        uploadModeTabs.style.display = 'none';
+        filesList.style.display = 'none';
+        formatSection.style.display = 'none';
+        encryptionSection.style.display = 'none';
+        convertBtn.style.display = 'none';
+        featuresGrid.style.display = 'none';
+        historySection.style.display = 'none';
+        keyboardHints.style.display = 'none';
+        return;
+    } else if (currentOperation === 'contact') {
+        helpSection.style.display = 'none';
+        faqSection.style.display = 'none';
+        contactSection.style.display = 'block';
+        uploadArea.style.display = 'none';
+        uploadModeTabs.style.display = 'none';
+        filesList.style.display = 'none';
+        formatSection.style.display = 'none';
+        encryptionSection.style.display = 'none';
+        convertBtn.style.display = 'none';
+        featuresGrid.style.display = 'none';
+        historySection.style.display = 'none';
+        keyboardHints.style.display = 'none';
+        return;
+    } else {
+        helpSection.style.display = 'none';
+        faqSection.style.display = 'none';
+        contactSection.style.display = 'none';
+        uploadArea.style.display = 'block';
+        uploadModeTabs.style.display = 'flex';
+        filesList.style.display = 'block';
+        convertBtn.style.display = 'block';
+        featuresGrid.style.display = 'grid';
+        historySection.style.display = 'block';
+        keyboardHints.style.display = 'flex';
+    }
     
     if (currentOperation === 'merge_pdf' || currentOperation === 'encrypt' || currentOperation === 'decrypt') {
         formatSection.style.display = 'none';
@@ -1345,6 +1657,37 @@ function updateUI() {
     
     updateFormatOptions();
     checkProcessEnabled();
+}
+
+function toggleFaq(element) {
+    element.classList.toggle('active');
+}
+
+function sendContactMessage() {
+    const name = document.getElementById('contactName').value.trim();
+    const email = document.getElementById('contactEmail').value.trim();
+    const message = document.getElementById('contactMessage').value.trim();
+    
+    if (!name || !email || !message) {
+        showToast(
+            document.documentElement.getAttribute('data-lang') === 'en' 
+                ? 'Please fill in all fields!' 
+                : 'Lütfen tüm alanları doldurun!', 
+            'error'
+        );
+        return;
+    }
+    
+    const subject = encodeURIComponent('Dosya Dönüştürücü - İletişim Formu');
+    const body = encodeURIComponent(`Ad Soyad: ${name}\nE-posta: ${email}\n\nMesaj:\n${message}`);
+    window.location.href = `mailto:yigit@yigitgulyurt.net.tr?subject=${subject}&body=${body}`;
+    
+    showToast(
+        document.documentElement.getAttribute('data-lang') === 'en' 
+            ? 'Opening your email client...' 
+            : 'E-posta istemciniz açılıyor...', 
+        'success'
+    );
 }
 
 uploadArea.addEventListener('click', () => fileInput.click());
