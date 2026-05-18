@@ -1567,4 +1567,35 @@ def file_converter():
                 mimetype='application/zip'
             )
 
+
+@main_bp.route('/dosya-donusturucu/iletisim', methods=['POST'])
+@limiter.limit("5 per hour", methods=['POST'])
+def file_converter_contact():
+    if request.method == 'POST':
+        if request.form.get('website'):
+            return jsonify({'success': False, 'error': 'Honeypot detected'}), 400
+
+        name    = bleach.clean(request.form.get('name', '').strip())
+        email   = bleach.clean(request.form.get('email', '').strip())
+        message = bleach.clean(request.form.get('message', '').strip())
+        subject = 'Dosya Dönüştürücü'
+
+        if not name or not email or not message:
+            return jsonify({'success': False, 'error': 'Lütfen zorunlu alanları doldurun.'}), 400
+
+        if len(message) < 10:
+            return jsonify({'success': False, 'error': 'Mesajınız çok kısa, lütfen biraz daha detay verin.'}), 400
+
+        if len(message) > 3000:
+            return jsonify({'success': False, 'error': 'Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.'}), 400
+
+        msg = ContactMessage(name=name, email=email, subject=subject, message=message)
+        db.session.add(msg)
+        db.session.commit()
+        
+        app = current_app._get_current_object()
+        Thread(target=send_async_notification, args=(app, name, email, subject, message)).start()
+
+        return jsonify({'success': True, 'message': 'Mesajınız alındı, teşekkürler!'})
+
     return render_template('tools/file_converter.html')

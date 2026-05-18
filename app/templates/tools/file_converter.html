@@ -58,6 +58,36 @@
     text-align: center;
 }
 
+.info-tabs {
+    display: flex;
+    gap: 8px;
+    margin-bottom: 20px;
+    justify-content: center;
+}
+
+.info-tab {
+    padding: 10px 16px;
+    border-radius: 10px;
+    background: transparent;
+    border: 1px solid var(--border);
+    color: var(--text2);
+    font-weight: 500;
+    cursor: pointer;
+    transition: all 0.3s;
+    font-size: 14px;
+}
+
+.info-tab:hover {
+    background: var(--bg3);
+    color: var(--text);
+}
+
+.info-tab.active {
+    background: rgba(59, 130, 246, 0.15);
+    border-color: #3b82f6;
+    color: #3b82f6;
+}
+
 .operation-tab:hover {
     background: var(--bg2);
 }
@@ -868,15 +898,18 @@
             <span class="lang-tr">🔓 Şifre Çöz</span>
             <span class="lang-en">🔓 Decrypt</span>
         </button>
-        <button class="operation-tab" data-operation="help">
+    </div>
+
+    <div class="info-tabs">
+        <button class="info-tab" data-info="help" onclick="showInfoSection('help')">
             <span class="lang-tr">❓ Yardım</span>
             <span class="lang-en">❓ Help</span>
         </button>
-        <button class="operation-tab" data-operation="faq">
+        <button class="info-tab" data-info="faq" onclick="showInfoSection('faq')">
             <span class="lang-tr">❔ SSS</span>
             <span class="lang-en">❔ FAQ</span>
         </button>
-        <button class="operation-tab" data-operation="contact">
+        <button class="info-tab" data-info="contact" onclick="showInfoSection('contact')">
             <span class="lang-tr">📧 İletişim</span>
             <span class="lang-en">📧 Contact</span>
         </button>
@@ -1031,25 +1064,29 @@
                 Hata bildirmek, öneri göndermek veya yardım almak için bize ulaşın!
             </p>
             
-            <div class="contact-form-group">
-                <label>Ad Soyad</label>
-                <input type="text" id="contactName" placeholder="Adınızı ve soyadınızı girin" />
-            </div>
-            
-            <div class="contact-form-group">
-                <label>E-posta</label>
-                <input type="email" id="contactEmail" placeholder="E-posta adresinizi girin" />
-            </div>
-            
-            <div class="contact-form-group">
-                <label>Mesaj</label>
-                <textarea id="contactMessage" rows="5" placeholder="Mesajınızı yazın..."></textarea>
-            </div>
-            
-            <button class="convert-btn" onclick="sendContactMessage()">
-                <span class="lang-tr">Gönder</span>
-                <span class="lang-en">Send</span>
-            </button>
+            <form id="contactForm">
+                <input type="text" name="website" id="contactWebsite" style="display: none;" tabindex="-1" autocomplete="off" />
+                
+                <div class="contact-form-group">
+                    <label>Ad Soyad</label>
+                    <input type="text" id="contactName" name="name" placeholder="Adınızı ve soyadınızı girin" required />
+                </div>
+                
+                <div class="contact-form-group">
+                    <label>E-posta</label>
+                    <input type="email" id="contactEmail" name="email" placeholder="E-posta adresinizi girin" required />
+                </div>
+                
+                <div class="contact-form-group">
+                    <label>Mesaj</label>
+                    <textarea id="contactMessage" name="message" rows="5" placeholder="Mesajınızı yazın..." required></textarea>
+                </div>
+                
+                <button type="submit" class="convert-btn" id="contactSubmitBtn">
+                    <span class="lang-tr">Gönder</span>
+                    <span class="lang-en">Send</span>
+                </button>
+            </form>
             
             <div style="margin-top: 30px; padding: 15px; background: var(--bg2); border-radius: 12px;">
                 <strong>📧 Doğrudan E-posta:</strong><br>
@@ -1553,6 +1590,31 @@ operationTabs.forEach(tab => {
     });
 });
 
+let currentInfoSection = null;
+
+function showInfoSection(section) {
+    const helpSection = document.getElementById('helpSection');
+    const faqSection = document.getElementById('faqSection');
+    const contactSection = document.getElementById('contactSection');
+    const infoTabs = document.querySelectorAll('.info-tab');
+    
+    infoTabs.forEach(tab => {
+        tab.classList.toggle('active', tab.dataset.info === section);
+    });
+    
+    if (section === currentInfoSection) {
+        currentInfoSection = null;
+        helpSection.style.display = 'none';
+        faqSection.style.display = 'none';
+        contactSection.style.display = 'none';
+    } else {
+        currentInfoSection = section;
+        helpSection.style.display = section === 'help' ? 'block' : 'none';
+        faqSection.style.display = section === 'faq' ? 'block' : 'none';
+        contactSection.style.display = section === 'contact' ? 'block' : 'none';
+    }
+}
+
 function updateUI() {
     const encryptionSection = document.getElementById('encryptionSection');
     const encryptionNote = document.getElementById('encryptionNote');
@@ -1568,38 +1630,10 @@ function updateUI() {
     const historySection = document.querySelector('.history-section');
     const keyboardHints = document.querySelector('.keyboard-hints');
     
-    if (currentOperation === 'help') {
-        helpSection.style.display = 'block';
-        faqSection.style.display = 'none';
-        contactSection.style.display = 'none';
-        uploadArea.style.display = 'none';
-        uploadModeTabs.style.display = 'none';
-        filesList.style.display = 'none';
-        formatSection.style.display = 'none';
-        encryptionSection.style.display = 'none';
-        convertBtn.style.display = 'none';
-        featuresGrid.style.display = 'none';
-        historySection.style.display = 'none';
-        keyboardHints.style.display = 'none';
-        return;
-    } else if (currentOperation === 'faq') {
-        helpSection.style.display = 'none';
-        faqSection.style.display = 'block';
-        contactSection.style.display = 'none';
-        uploadArea.style.display = 'none';
-        uploadModeTabs.style.display = 'none';
-        filesList.style.display = 'none';
-        formatSection.style.display = 'none';
-        encryptionSection.style.display = 'none';
-        convertBtn.style.display = 'none';
-        featuresGrid.style.display = 'none';
-        historySection.style.display = 'none';
-        keyboardHints.style.display = 'none';
-        return;
-    } else if (currentOperation === 'contact') {
-        helpSection.style.display = 'none';
-        faqSection.style.display = 'none';
-        contactSection.style.display = 'block';
+    if (currentInfoSection) {
+        helpSection.style.display = currentInfoSection === 'help' ? 'block' : 'none';
+        faqSection.style.display = currentInfoSection === 'faq' ? 'block' : 'none';
+        contactSection.style.display = currentInfoSection === 'contact' ? 'block' : 'none';
         uploadArea.style.display = 'none';
         uploadModeTabs.style.display = 'none';
         filesList.style.display = 'none';
@@ -1663,32 +1697,48 @@ function toggleFaq(element) {
     element.classList.toggle('active');
 }
 
-function sendContactMessage() {
-    const name = document.getElementById('contactName').value.trim();
-    const email = document.getElementById('contactEmail').value.trim();
-    const message = document.getElementById('contactMessage').value.trim();
-    
-    if (!name || !email || !message) {
-        showToast(
-            document.documentElement.getAttribute('data-lang') === 'en' 
-                ? 'Please fill in all fields!' 
-                : 'Lütfen tüm alanları doldurun!', 
-            'error'
-        );
-        return;
+document.addEventListener('DOMContentLoaded', function() {
+    const contactForm = document.getElementById('contactForm');
+    if (contactForm) {
+        contactForm.addEventListener('submit', async function(e) {
+            e.preventDefault();
+            
+            const submitBtn = document.getElementById('contactSubmitBtn');
+            const originalText = submitBtn.innerHTML;
+            
+            submitBtn.disabled = true;
+            submitBtn.innerHTML = '<span class="lang-tr">Gönderiliyor...</span><span class="lang-en">Sending...</span>';
+            
+            const formData = new FormData(contactForm);
+            
+            try {
+                const response = await fetch('/dosya-donusturucu/iletisim', {
+                    method: 'POST',
+                    body: formData
+                });
+                
+                const result = await response.json();
+                
+                if (result.success) {
+                    showToast(result.message, 'success');
+                    contactForm.reset();
+                } else {
+                    showToast(result.error, 'error');
+                }
+            } catch (error) {
+                showToast(
+                    document.documentElement.getAttribute('data-lang') === 'en' 
+                        ? 'An error occurred, please try again later!' 
+                        : 'Bir hata oluştu, lütfen daha sonra tekrar deneyin!', 
+                    'error'
+                );
+            } finally {
+                submitBtn.disabled = false;
+                submitBtn.innerHTML = originalText;
+            }
+        });
     }
-    
-    const subject = encodeURIComponent('Dosya Dönüştürücü - İletişim Formu');
-    const body = encodeURIComponent(`Ad Soyad: ${name}\nE-posta: ${email}\n\nMesaj:\n${message}`);
-    window.location.href = `mailto:yigit@yigitgulyurt.net.tr?subject=${subject}&body=${body}`;
-    
-    showToast(
-        document.documentElement.getAttribute('data-lang') === 'en' 
-            ? 'Opening your email client...' 
-            : 'E-posta istemciniz açılıyor...', 
-        'success'
-    );
-}
+});
 
 uploadArea.addEventListener('click', () => fileInput.click());
 
