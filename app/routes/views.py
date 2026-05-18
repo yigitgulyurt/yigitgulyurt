@@ -348,6 +348,8 @@ def detail(slug):
 @contact_bp.route('/', methods=['GET', 'POST'])
 @limiter.limit("5 per hour", methods=['POST'])
 def index():
+    referrer = bleach.clean(request.args.get('referrer', '').strip())
+    
     if request.method == 'POST':
         # Honeypot check
         if request.form.get('website'):
@@ -357,18 +359,25 @@ def index():
         email   = bleach.clean(request.form.get('email', '').strip())
         subject = bleach.clean(request.form.get('subject', '').strip())
         message = bleach.clean(request.form.get('message', '').strip())
+        referrer_form = bleach.clean(request.form.get('referrer', '').strip())
 
         if not name or not email or not message:
             flash('Lütfen zorunlu alanları doldurun.', 'error')
-            return render_template('contact/index.html')
+            if referrer_form:
+                return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+            return render_template('contact/index.html', subject=subject)
 
         if len(message) < 10:
             flash('Mesajınız çok kısa, lütfen biraz daha detay verin.', 'error')
-            return render_template('contact/index.html')
+            if referrer_form:
+                return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+            return render_template('contact/index.html', subject=subject)
 
         if len(message) > 3000:
             flash('Mesajınız çok uzun, lütfen daha kısa bir mesaj gönderin.', 'error')
-            return render_template('contact/index.html')
+            if referrer_form:
+                return render_template('contact/index.html', subject=subject, referrer=referrer_form)
+            return render_template('contact/index.html', subject=subject)
 
         msg = ContactMessage(name=name, email=email, subject=subject, message=message)
         db.session.add(msg)
@@ -379,10 +388,14 @@ def index():
         Thread(target=send_async_notification, args=(app, name, email, subject, message)).start()
 
         flash('Mesajınız alındı, teşekkürler!', 'success')
+        
+        # Eğer referrer dosya_donusturucu ise oraya geri dön
+        if referrer_form == 'dosya_donusturucu':
+            return redirect(url_for('main.file_converter'))
         return redirect(url_for('contact.index'))
     
     subject_from_query = bleach.clean(request.args.get('subject', '').strip())
-    return render_template('contact/index.html', subject=subject_from_query)
+    return render_template('contact/index.html', subject=subject_from_query, referrer=referrer)
 
 # --- Admin Routes ---
 @admin_bp.route('/giris', methods=['GET', 'POST'])
