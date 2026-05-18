@@ -763,6 +763,11 @@ def unit_converter():
 @main_bp.route('/dosya-donusturucu', methods=['GET', 'POST'])
 @limiter.limit("30 per hour", methods=['POST'])
 def file_converter():
+    import hashlib
+    import time
+    import tracemalloc
+    import os
+
     MAX_FILE_SIZE = 50 * 1024 * 1024  # 50 MB
     MAX_URL_RESPONSE_SIZE = 50 * 1024 * 1024  # 50 MB
     PBKDF2_ITERATIONS = 100000
@@ -771,12 +776,7 @@ def file_converter():
     CACHE_MAX_SIZE = 100  # MB
     CACHE_TTL = 3600  # saniye (1 saat)
 
-    import hashlib
-    import time
-    import tracemalloc
-
     from io import BytesIO
-    import os
     from concurrent.futures import ThreadPoolExecutor, ProcessPoolExecutor, as_completed
     from urllib.parse import urlparse
     import zipfile
