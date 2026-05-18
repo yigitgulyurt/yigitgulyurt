@@ -1853,9 +1853,42 @@ async function processFiles() {
     loading.classList.add('show');
     progressContainer.classList.add('show');
     convertBtn.disabled = true;
-    updateProgress(0, `<span class="lang-tr">Hazırlanıyor...</span><span class="lang-en">Preparing...</span>`);
-
+    
+    const isEnglish = document.documentElement.getAttribute('data-lang') === 'en';
+    let totalFiles = currentUploadMode === 'file' ? selectedFiles.length : 1;
+    let processedFiles = 0;
+    
+    const getProgressLabel = (percent) => {
+        let label = '';
+        if (currentOperation === 'convert') {
+            label = isEnglish 
+                ? `<span class="lang-en">Processing... %${percent}</span><span class="lang-tr">İşleniyor... %${percent}</span>` 
+                : `<span class="lang-tr">İşleniyor... %${percent}</span><span class="lang-en">Processing... %${percent}</span>`;
+        } else if (currentOperation === 'merge_pdf') {
+            label = isEnglish 
+                ? `<span class="lang-en">Merging PDFs... %${percent}</span><span class="lang-tr">PDFler birleştiriliyor... %${percent}</span>` 
+                : `<span class="lang-tr">PDFler birleştiriliyor... %${percent}</span><span class="lang-en">Merging PDFs... %${percent}</span>`;
+        }
+        return label;
+    };
+    
+    updateProgress(0, getProgressLabel(0));
+    
+    let progressInterval;
     try {
+        let progressStep = 0;
+        let targetProgress = 0;
+        
+        progressInterval = setInterval(() => {
+            const currentWidth = parseInt(progressBar.style.width) || 0;
+            if (currentWidth < 90) {
+                progressStep++;
+                const logValue = Math.log(progressStep + 1) / Math.log(15);
+                targetProgress = Math.min(Math.round(90 * logValue), 90);
+                const newWidth = Math.min(currentWidth + 2, targetProgress);
+                updateProgress(newWidth, getProgressLabel(newWidth));
+            }
+        }, 100);
 
         const response = await fetch(window.location.href, {
             method: 'POST',
