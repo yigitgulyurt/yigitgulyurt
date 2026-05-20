@@ -1996,8 +1996,24 @@ async function processFiles() {
                 let finalFilename = filename;
                 
                 if (customName) {
-                    const fileExt = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')) : '';
-                    finalFilename = customName + fileExt;
+                    if (currentOperation === 'encrypt') {
+                        const tempFilename = filename.replace('.encrypted', '');
+                        let originalExt = '';
+                        if (tempFilename.includes('.')) {
+                            originalExt = tempFilename.substring(tempFilename.lastIndexOf('.'));
+                        }
+                        finalFilename = customName + originalExt + '.encrypted';
+                    } else if (currentOperation === 'decrypt') {
+                        const tempFilename = filename.replace('.encrypted', '');
+                        let originalExt = '';
+                        if (tempFilename.includes('.')) {
+                            originalExt = tempFilename.substring(tempFilename.lastIndexOf('.'));
+                        }
+                        finalFilename = customName + originalExt;
+                    } else {
+                        const fileExt = filename.includes('.') ? filename.substring(filename.lastIndexOf('.')) : '';
+                        finalFilename = customName + fileExt;
+                    }
                 }
                 
                 const resultBlob = new Blob([data], { type: 'application/octet-stream' });
