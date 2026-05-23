@@ -16,11 +16,17 @@ limiter                  = Limiter(key_func=get_remote_address, default_limits=[
 @limiter.request_filter
 def vip_request_filter():
     """
-    Statik dosyalar, iç ağ IP'leri ve kendi domainimizden gelen istekleri rate limit'ten muaf tutar.
+    font., image., css., js. subdomainleri, statik dosyalar ve iç ağ IP'leri rate limit'ten muaf tutar.
     """
-    # Statik dosyaları muaf tut
-    if request.path.startswith('/static/') or request.path.endswith(('.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot')):
+    # Subdomainleri kontrol et (font, image, css, js)
+    host = request.host
+    exempt_subdomains = ['font.', 'image.', 'css.', 'js.']
+    if any(host.startswith(sub) for sub in exempt_subdomains):
         return True
+    
+    # # Statik dosyaları muaf tut
+    # if request.path.startswith('/static/') or request.path.endswith(('.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot')):
+    #     return True
     
     # Yerel geliştirme ve iç ağ IP'lerini muaf tut
     ip = request.remote_addr
