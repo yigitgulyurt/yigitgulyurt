@@ -1,4 +1,4 @@
-from flask import Flask
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_migrate import Migrate
 from flask_login import LoginManager
@@ -12,6 +12,48 @@ migrate                  = Migrate()
 login_manager            = LoginManager()
 login_manager.login_view = 'admin.login'
 limiter                  = Limiter(key_func=get_remote_address, default_limits=["200 per day", "50 per hour"])
+
+@limiter.request_filter
+def vip_request_filter():
+    """
+    Statik dosyalar, iç ağ IP'leri ve kendi domainimizden gelen istekleri rate limit'ten muaf tutar.
+    """
+    # Statik dosyaları muaf tut
+    if request.path.startswith('/static/') or request.path.endswith(('.js', '.css', '.png', '.jpg', '.jpeg', '.gif', '.svg', '.ico', '.woff', '.woff2', '.ttf', '.eot')):
+        return True
+    
+    # Yerel geliştirme ve iç ağ IP'lerini muaf tut
+    ip = request.remote_addr
+    if (
+        ip in ['127.0.0.1', '::1'] or
+        ip.startswith('10.') or 
+        (ip.startswith('172.') and 16 <= int(ip.split('.')[1]) <= 31) or 
+        ip.startswith('192.168.')
+    ):
+        return True
+    
+    # Kendi domainimizden gelen istekleri muaf tut
+    referer = request.headers.get('Referer', '')
+    origin = request.headers.get('Origin', '')
+    
+    allowed_domains = [
+        'https://yigitgulyurt.net.tr',
+        'https://www.yigitgulyurt.net.tr',
+        'http://yigitgulyurt.net.tr',
+        'http://www.yigitgulyurt.net.tr',
+        'http://localhost',
+        'http://127.0.0.1'
+        ]
+    
+    def is_allowed_domain(url):
+        if not url:
+            return False
+        return any(url.startswith(domain) for domain in allowed_domains)
+    
+    if is_allowed_domain(referer) or is_allowed_domain(origin):
+        return True
+    
+    return False
 
 def create_app(config_class=Config):
     app = Flask(__name__)
