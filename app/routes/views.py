@@ -382,7 +382,7 @@ def index():
         flash('Mesajınız alındı, teşekkürler!', 'success')
         
         if source == 'file_converter':
-            return redirect(url_for('main.file_converter'), code=218)
+            return redirect(url_for('main.file_converter'), code=302)
         else:
             return redirect(url_for('contact.index'))
     
