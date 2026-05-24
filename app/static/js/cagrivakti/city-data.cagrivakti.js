@@ -12,7 +12,8 @@ const uluslararasiSehirler = [
     // North America & Caribbean
     { sehir: "Washington", code: "US", timezone: "America/New_York" }, { sehir: "New-York", code: "US", timezone: "America/New_York" }, { sehir: "Los-Angeles", code: "US", timezone: "America/Los_Angeles" },
     { sehir: "Ottawa", code: "CA", timezone: "America/Toronto" }, { sehir: "Toronto", code: "CA", timezone: "America/Toronto" }, { sehir: "Mexico-City", code: "MX", timezone: "America/Mexico_City" },
-    { sehir: "Havana", code: "CU", timezone: "America/Havana" }, { sehir: "Guatemala-City", code: "GT", timezone: "America/Guatemala" }, { sehir: "San-Salvador", code: "SV", timezone: "America/El_Salvador" },
+    { sehir: "Havana", code: "CU", timezone: "America/Havana" }, { sehir: "Guatemala-City", code: "GT", timezone: "America/Guatemala" },
+
     { sehir: "Tegucigalpa", code: "HN", timezone: "America/Tegucigalpa" }, { sehir: "Managua", code: "NI", timezone: "America/Managua" }, { sehir: "San-Jose", code: "CR", timezone: "America/Costa_Rica" },
     { sehir: "Panama-City", code: "PA", timezone: "America/Panama" }, { sehir: "Kingston", code: "JM", timezone: "America/Jamaica" }, { sehir: "Santo-Domingo", code: "DO", timezone: "America/Santo_Domingo" },
     { sehir: "Port-au-Prince", code: "HT", timezone: "America/Port-au-Prince" }, { sehir: "Nassau", code: "BS", timezone: "America/Nassau" }, { sehir: "Belmopan", code: "BZ", timezone: "America/Belize" },
