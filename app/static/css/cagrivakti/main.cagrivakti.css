@@ -1140,3 +1140,7 @@ to {
         align-items: center;
     }
 }
+
+@view-transition {
+    --view-transition: auto;
+}
