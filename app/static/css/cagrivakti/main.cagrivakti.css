@@ -1140,29 +1140,3 @@ to {
         align-items: center;
     }
 }
-
-@view-transition {
-    --view-transition: auto;
-}
-::view-transition-group(root) {
-    animation-timing-function: ease;
-    animation-delay: 1s;
-}
-
-::view-transition-old(root) {
-   animation-name: slide-our;
-}
-::view-transition-new(root) {
-    animation-name: slide-in;
-}
-@keyframes slide-out {
-    to {
-        translate: -100vw;
-    }
-}
-@keyframes slide-in {
-    from {
-        translate: 100vw;
-    }
-}
-
