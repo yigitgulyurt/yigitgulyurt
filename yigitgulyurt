@@ -17,10 +17,9 @@ proxy_headers_hash_bucket_size 128;
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr harita.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr;
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -65,6 +64,10 @@ server {
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
     client_max_body_size 50M;
+
+
+
+
 }
 
 # HTTP → HTTPS yönlendirme (ana site)
@@ -95,13 +98,13 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name xn--canl-oza.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
     ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;   # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     return 301 https://canli.yigitgulyurt.net.tr$request_uri;
+
 }
 
 server {
@@ -124,8 +127,8 @@ server {
 
     listen [::]:443 ssl; # managed by Certbot
     listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/obsidian.yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/obsidian.yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
     ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
 
@@ -149,6 +152,7 @@ server {
 
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
+
 }
 
 server {
@@ -169,9 +173,8 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name font.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -185,6 +188,7 @@ server {
 
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
+
 }
 
 # ══════════════════════════════════════════════
@@ -194,9 +198,8 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name js.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -225,6 +228,7 @@ server {
         }
         access_log off;
     }
+
 }
 # ══════════════════════════════════════════════
 # CSS — css.yigitgulyurt.net.tr
@@ -233,9 +237,8 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name css.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -264,27 +267,49 @@ server {
         }
         access_log off;
     }
+
 }
 
 server {
+    if ($host = font.yigitgulyurt.net.tr) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     listen 80;
     listen [::]:80;
     server_name font.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
+
+
 }
 
 server {
+    if ($host = js.yigitgulyurt.net.tr) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     listen 80;
     listen [::]:80;
     server_name js.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
+
+
 }
 
 server {
+    if ($host = css.yigitgulyurt.net.tr) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     listen 80;
     listen [::]:80;
     server_name css.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
+
+
 }
 
 # ══════════════════════════════════════════════
@@ -294,9 +319,8 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name image.yigitgulyurt.net.tr;
-
-    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -334,16 +358,29 @@ server {
         }
         access_log off;
     }
+
 }
 
 server {
+    if ($host = image.yigitgulyurt.net.tr) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     listen 80;
     listen [::]:80;
     server_name image.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
+
+
 }
 
 server {
+    if ($host = harita.yigitgulyurt.net.tr) {
+        return 301 https://$host$request_uri;
+    } # managed by Certbot
+
+
     listen 80;
     server_name harita.yigitgulyurt.net.tr;
 
@@ -351,5 +388,25 @@ server {
         proxy_pass http://127.0.0.1:8100;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
+    }
+
+
+}
+
+server {
+    listen 443 ssl;
+    server_name harita.yigitgulyurt.net.tr;
+
+    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    include /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+
+    location / {
+        proxy_pass http://127.0.0.1:8100;
+        proxy_set_header Host $host;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+        proxy_set_header X-Real-IP $remote_addr;
     }
 }
