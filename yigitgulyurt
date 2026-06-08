@@ -17,7 +17,7 @@ proxy_headers_hash_bucket_size 128;
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
-    server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr;
+    server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr harita.yigitgulyurt.net.tr;
 
     ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
@@ -341,4 +341,15 @@ server {
     listen [::]:80;
     server_name image.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
+}
+
+server {
+    listen 80;
+    server_name harita.yigitgulyurt.net.tr;
+
+    location / {
+        proxy_pass http://127.0.0.1:8100;
+        proxy_set_header Upgrade $http_upgrade;
+        proxy_set_header Connection "upgrade";
+    }
 }
