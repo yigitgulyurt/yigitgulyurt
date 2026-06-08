@@ -1,27 +1,19 @@
 # /etc/nginx/sites-available/yigitgulyurt
-# ─────────────────────────────────────────────
-# Kurulum sonrası obsidian SSL için:
-#   sudo certbot --nginx -d obsidian.yigitgulyurt.net.tr
-# Kurulum sonrası font SSL için:
-#   sudo certbot --nginx -d font.yigitgulyurt.net.tr
-# Kurulum sonrası image SSL için:
-#   sudo certbot --nginx -d image.yigitgulyurt.net.tr
-# ─────────────────────────────────────────────
 
 # ══════════════════════════════════════════════
 # ANA SITE — yigitgulyurt.net.tr + www + canli
 # ══════════════════════════════════════════════
-proxy_headers_hash_max_size 1024;
-proxy_headers_hash_bucket_size 128;
-
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
+
+    client_max_body_size 50M;
 
     location /canli-kaynak/ {
         proxy_pass http://127.0.0.1:8888/;
@@ -29,7 +21,6 @@ server {
         proxy_set_header Host $host;
         add_header Access-Control-Allow-Origin *;
 
-        # m3u8 playlist — kısa cache (sürekli güncelleniyor)
         location ~* \.m3u8$ {
             proxy_pass http://127.0.0.1:8888;
             proxy_cache hls_cache;
@@ -41,7 +32,6 @@ server {
             add_header X-Cache-Status $upstream_cache_status;
         }
 
-        # .m4s ve .mp4 segmentler — uzun cache (değişmez)
         location ~* \.(m4s|mp4|ts)$ {
             proxy_pass http://127.0.0.1:8888;
             proxy_cache hls_cache;
@@ -63,31 +53,12 @@ server {
         include proxy_params;
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
-    client_max_body_size 50M;
-
-
-
-
 }
 
-# HTTP → HTTPS yönlendirme (ana site)
 server {
     listen 80;
     listen [::]:80;
     server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr;
-
-    if ($host = canli.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-    if ($host = www.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-    if ($host = yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
     return 301 https://$host$request_uri;
 }
 
@@ -98,83 +69,69 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name xn--canl-oza.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;   # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     return 301 https://canli.yigitgulyurt.net.tr$request_uri;
-
 }
 
 server {
     listen 80;
     listen [::]:80;
     server_name xn--canl-oza.yigitgulyurt.net.tr;
-
-    if ($host = xn--canl-oza.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-    return 404; # managed by Certbot
+    return 301 https://$host$request_uri;
 }
 
 # ══════════════════════════════════════════════
-# OBSIDİAN — obsidian.yigitgulyurt.net.tr
+# OBSİDİAN — obsidian.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
+    listen 443 ssl;
+    listen [::]:443 ssl;
     server_name obsidian.yigitgulyurt.net.tr;
 
-    listen [::]:443 ssl; # managed by Certbot
-    listen 443 ssl; # managed by Certbot
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
-    include /etc/letsencrypt/options-ssl-nginx.conf; # managed by Certbot
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem; # managed by Certbot
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Static dosyalar
     location /static/ {
         alias /var/www/yigitgulyurt/app/static/;
         expires 30d;
         add_header Cache-Control "public, immutable";
     }
 
-    # Flask uygulamasına ilet
     location / {
         include proxy_params;
         proxy_set_header Host $host;
         proxy_set_header X-Real-IP $remote_addr;
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-
-        # KRİTİK: Google OAuth ve ProxyFix için
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
-
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
-
 }
 
 server {
-    if ($host = obsidian.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
     listen 80;
     listen [::]:80;
     server_name obsidian.yigitgulyurt.net.tr;
-    return 404; # managed by Certbot
+    return 301 https://$host$request_uri;
 }
 
 # ══════════════════════════════════════════════
-# FONTS — font.yigitgulyurt.net.tr
+# FONT — font.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name font.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
@@ -185,10 +142,15 @@ server {
         proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
         proxy_set_header X-Forwarded-Proto $scheme;
         proxy_set_header X-Forwarded-Host $host;
-
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
+}
 
+server {
+    listen 80;
+    listen [::]:80;
+    server_name font.yigitgulyurt.net.tr;
+    return 301 https://$host$request_uri;
 }
 
 # ══════════════════════════════════════════════
@@ -198,15 +160,14 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name js.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
         alias /var/www/yigitgulyurt/app/static/js/;
-
-        # JS dosyaları için kritik
         types { }
         default_type application/javascript;
 
@@ -228,8 +189,15 @@ server {
         }
         access_log off;
     }
-
 }
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name js.yigitgulyurt.net.tr;
+    return 301 https://$host$request_uri;
+}
+
 # ══════════════════════════════════════════════
 # CSS — css.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
@@ -237,15 +205,14 @@ server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name css.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
         alias /var/www/yigitgulyurt/app/static/css/;
-
-        # CSS dosyaları için kritik
         types { }
         default_type text/css;
 
@@ -267,76 +234,28 @@ server {
         }
         access_log off;
     }
-
 }
 
 server {
-    if ($host = font.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    listen 80;
-    listen [::]:80;
-    server_name font.yigitgulyurt.net.tr;
-    return 301 https://$host$request_uri;
-
-
-}
-
-server {
-    if ($host = js.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    listen 80;
-    listen [::]:80;
-    server_name js.yigitgulyurt.net.tr;
-    return 301 https://$host$request_uri;
-
-
-}
-
-server {
-    if ($host = css.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
     listen 80;
     listen [::]:80;
     server_name css.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
-
-
 }
 
 # ══════════════════════════════════════════════
-# IMAGES — image.yigitgulyurt.net.tr
+# IMAGE — image.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
     listen 443 ssl;
     listen [::]:443 ssl;
     server_name image.yigitgulyurt.net.tr;
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem; # managed by Certbot
-    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem; # managed by Certbot
+
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
     include             /etc/letsencrypt/options-ssl-nginx.conf;
     ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
-    # Galeri (Flask uygulamasına yönlendir)
-    location / {
-        include proxy_params;
-        proxy_set_header Host $host;
-        proxy_set_header X-Real-IP $remote_addr;
-        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
-        proxy_set_header X-Forwarded-Proto $scheme;
-        proxy_set_header X-Forwarded-Host $host;
-
-        proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
-    }
-
-    # Doğrudan dosya erişimi (static/image dizininden)
     location /file/ {
         alias /var/www/yigitgulyurt/app/static/image/;
 
@@ -359,54 +278,52 @@ server {
         access_log off;
     }
 
+    location / {
+        include proxy_params;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+        proxy_set_header X-Forwarded-Host $host;
+        proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
+    }
 }
 
 server {
-    if ($host = image.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
     listen 80;
     listen [::]:80;
     server_name image.yigitgulyurt.net.tr;
     return 301 https://$host$request_uri;
-
-
 }
 
-server {
-    if ($host = harita.yigitgulyurt.net.tr) {
-        return 301 https://$host$request_uri;
-    } # managed by Certbot
-
-
-    listen 80;
-    server_name harita.yigitgulyurt.net.tr;
-
-    location / {
-        proxy_pass http://127.0.0.1:8100;
-        proxy_set_header Upgrade $http_upgrade;
-        proxy_set_header Connection "upgrade";
-    }
-
-
-}
-
+# ══════════════════════════════════════════════
+# HARİTA — harita.yigitgulyurt.net.tr
+# ══════════════════════════════════════════════
 server {
     listen 443 ssl;
+    listen [::]:443 ssl;
     server_name harita.yigitgulyurt.net.tr;
 
-    ssl_certificate /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
+    ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
     ssl_certificate_key /etc/letsencrypt/live/yigitgulyurt.net.tr/privkey.pem;
-    include /etc/letsencrypt/options-ssl-nginx.conf;
-    ssl_dhparam /etc/letsencrypt/ssl-dhparams.pem;
+    include             /etc/letsencrypt/options-ssl-nginx.conf;
+    ssl_dhparam         /etc/letsencrypt/ssl-dhparams.pem;
 
     location / {
         proxy_pass http://127.0.0.1:8100;
+        proxy_http_version 1.1;
         proxy_set_header Host $host;
         proxy_set_header Upgrade $http_upgrade;
         proxy_set_header Connection "upgrade";
         proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
     }
+}
+
+server {
+    listen 80;
+    listen [::]:80;
+    server_name harita.yigitgulyurt.net.tr;
+    return 301 https://$host$request_uri;
 }
