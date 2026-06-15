@@ -14,3 +14,13 @@
 </div>
 
 ###
+
+## 📜 Lisans / License
+
+Tüm Hakları Saklıdır © 2026 Yiğit Gülyurt
+
+Bu proje özel lisans ile korunmaktadır. Detaylı bilgi için [LICENSE](/LICENSE) dosyasına veya [web sitesindeki lisans sayfasına](https://yigitgulyurt.net.tr/lisans) bakınız.
+
+All Rights Reserved © 2026 Yiğit Gülyurt
+
+This project is protected under a proprietary license. See the [LICENSE](/LICENSE) file or the [license page on the website](https://yigitgulyurt.net.tr/lisans) for details.

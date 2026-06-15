@@ -211,6 +211,17 @@ def cv():
     projects = Project.query.order_by(Project.order, Project.created_at.desc()).all()
     return render_template('main/cv.html', projects=projects)
 
+@main_bp.route('/lisans')
+def lisans():
+    license_path = os.path.join(os.path.dirname(current_app.root_path), 'LICENSE')
+    try:
+        with open(license_path, 'r', encoding='utf-8') as f:
+            license_content = f.read()
+    except Exception as e:
+        current_app.logger.error(f"Lisans dosyası okunamadı: {e}")
+        license_content = "Lisans dosyası bulunamadı."
+    return render_template('main/license.html', license_content=license_content)
+
 @main_bp.route('/sitemap.xml')
 def sitemap():
     pages = []
@@ -220,6 +231,7 @@ def sitemap():
         ('main.index',    '1.0',  'weekly'),
         ('main.about',    '0.8',  'monthly'),
         ('main.cv',       '0.7',  'monthly'),
+        ('main.lisans',   '0.7',  'monthly'),
         ('projects.index','0.9',  'weekly'),
         ('blog.index',    '0.9',  'weekly'),
         ('contact.index', '0.5',  'monthly'),

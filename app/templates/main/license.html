@@ -1,0 +1,25 @@
+{% extends "base/base.html" %}
+{% block title %}Lisans{% endblock %}
+{% block description %}Yiğit Gülyurt yazılım projelerinin lisans bilgileri.{% endblock %}
+{% block og_image %}https://yigitgulyurt.net.tr/og-image?title=Lisans&subtitle=Tüm+hakları+saklıdır.&theme=default&prompt=$+./LICENSE&domain=yigitgulyurt.net.tr{% endblock %}
+{% block og_title %}Lisans | Yiğit Gülyurt{% endblock %}
+{% block og_description %}Tüm hakları saklıdır.{% endblock %}
+{% block tw_image %}https://yigitgulyurt.net.tr/og-image?title=Lisans&subtitle=Tüm+hakları+saklıdır.&theme=default&prompt=$+./LICENSE&domain=yigitgulyurt.net.tr{% endblock %}
+{% block tw_title %}Lisans | Yiğit Gülyurt{% endblock %}
+{% block tw_description %}Tüm hakları saklıdır.{% endblock %}
+
+{% block content %}
+<div class="page">
+  <div class="hero-prompt">$ cat LICENSE</div>
+  <h1 class="page-title">Lisans</h1>
+  <div class="page-subtitle">
+    <span class="lang-tr">Tüm Hakları Saklıdır</span>
+    <span class="lang-en">All Rights Reserved</span>
+  </div>
+
+  <div class="about-section">
+    <pre style="white-space: pre-wrap; font-family: 'Courier New', Courier, monospace; color: var(--text2); background: rgba(0,0,0,0.2); padding: 20px; border-radius: 10px;">{{ license_content }}</pre>
+  </div>
+
+</div>
+{% endblock %}
