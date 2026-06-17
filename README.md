@@ -1,3 +1,4 @@
+---
 <div align="center">
   <img height="150" src="https://media0.giphy.com/media/v1.Y2lkPTc5MGI3NjExbHkxamtkbW1yNTlla2F1ZW4xdWJuMDVma3dhenZtc2JqdnY2amJwcCZlcD12MV9pbnRlcm5hbF9naWZfYnlfaWQmY3Q9Zw/4CImuRIGS1A3hNj2xe/giphy.gif"  />
 </div>
@@ -14,13 +15,5 @@
 </div>
 
 ###
+---
 
-## 📜 Lisans / License
-
-Tüm Hakları Saklıdır © 2026 Yiğit Gülyurt
-
-Bu proje özel lisans ile korunmaktadır. Detaylı bilgi için [LICENSE](/LICENSE) dosyasına veya [web sitesindeki lisans sayfasına](https://yigitgulyurt.net.tr/lisans) bakınız.
-
-All Rights Reserved © 2026 Yiğit Gülyurt
-
-This project is protected under a proprietary license. See the [LICENSE](/LICENSE) file or the [license page on the website](https://yigitgulyurt.net.tr/lisans) for details.
