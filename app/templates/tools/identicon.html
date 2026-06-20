@@ -1,0 +1,300 @@
+{% extends "base/base.html" %}
+
+{% block title %}Identicon Oluşturucu{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 24px;
+}
+
+.text-input {
+    flex: 1;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 16px 20px;
+    color: var(--text);
+    font-size: 1rem;
+    transition: border-color 0.3s;
+}
+
+.text-input:focus {
+    outline: none;
+    border-color: var(--primary);
+}
+
+.btn-generate {
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    padding: 16px 28px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.btn-generate:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.options-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(180px, 1fr));
+    gap: 16px;
+    margin-bottom: 24px;
+}
+
+.option-group {
+    background: rgba(0, 0, 0, 0.15);
+    padding: 16px;
+    border-radius: 12px;
+}
+
+.option-label {
+    display: block;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+    margin-bottom: 8px;
+    text-transform: uppercase;
+    letter-spacing: 1px;
+}
+
+.option-input {
+    width: 100%;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    padding: 10px 14px;
+    color: var(--text);
+}
+
+.identicon-wrapper {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 20px;
+    padding: 24px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 16px;
+}
+
+.identicon-display {
+    border-radius: 16px;
+    overflow: hidden;
+}
+
+.action-buttons {
+    display: flex;
+    gap: 12px;
+    flex-wrap: wrap;
+    justify-content: center;
+}
+
+.action-btn {
+    padding: 12px 24px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.action-btn:hover {
+    transform: translateY(-2px);
+}
+
+.btn-download-png {
+    background: #22c55e;
+    color: white;
+}
+
+.btn-download-svg {
+    background: #f59e0b;
+    color: white;
+}
+
+.btn-random {
+    background: #6366f1;
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔐 Identicon Oluşturucu</span>
+        <span class="lang-en">🔐 Identicon Generator</span>
+    </h1>
+
+    <div class="input-group">
+        <input type="text" id="inputText" class="text-input" placeholder="Metin girin (isim, e-posta vb.)">
+        <button class="btn-generate" onclick="generateIdenticon()">
+            <span class="lang-tr">Oluştur</span>
+            <span class="lang-en">Generate</span>
+        </button>
+    </div>
+
+    <div class="options-grid">
+        <div class="option-group">
+            <label class="option-label">Boyut</label>
+            <input type="number" id="sizeInput" class="option-input" value="256" min="64" max="1024" step="32">
+        </div>
+        <div class="option-group">
+            <label class="option-label">Grid Boyutu</label>
+            <input type="number" id="gridSizeInput" class="option-input" value="5" min="3" max="10" step="1">
+        </div>
+    </div>
+
+    <div class="identicon-wrapper">
+        <div id="identiconDisplay" class="identicon-display"></div>
+        <div class="action-buttons">
+            <button class="action-btn btn-download-png" onclick="downloadIdenticon('png')">
+                <span class="lang-tr">İndir (PNG)</span>
+                <span class="lang-en">Download (PNG)</span>
+            </button>
+            <button class="action-btn btn-download-svg" onclick="downloadIdenticon('svg')">
+                <span class="lang-tr">İndir (SVG)</span>
+                <span class="lang-en">Download (SVG)</span>
+            </button>
+            <button class="action-btn btn-random" onclick="generateRandomIdenticon()">
+                <span class="lang-tr">Rastgele</span>
+                <span class="lang-en">Random</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let currentSvg = '';
+let currentHash = 0;
+
+// Simple hash function for string
+function hashString(str) {
+    let hash = 0;
+    for (let i = 0; i < str.length; i++) {
+        const char = str.charCodeAt(i);
+        hash = ((hash << 5) - hash) + char;
+        hash = hash & hash;
+    }
+    return Math.abs(hash);
+}
+
+// Generate color from hash
+function getColorFromHash(hash, index) {
+    const hue = ((hash + index * 137) % 360);
+    const saturation = 70 + (hash % 30);
+    const lightness = 55 + (hash % 20);
+    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
+}
+
+// Generate SVG identicon
+function generateIdenticonSVG(text, size = 256, gridSize = 5) {
+    const hash = hashString(text || 'default');
+    const fgColor = getColorFromHash(hash, 1);
+    const bgColor = '#ffffff';
+    const radius = size / 10;
+
+    const cellSize = Math.floor(size / gridSize);
+    const padding = Math.floor((size - cellSize * gridSize) / 2);
+
+    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
+    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}" rx="${radius}" ry="${radius}"/>`;
+
+    for (let y = 0; y < gridSize; y++) {
+        for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
+            const bitIndex = y * gridSize + x;
+            const bitValue = (hash >> (bitIndex % 32)) & 1;
+
+            if (bitValue) {
+                const rectX = padding + x * cellSize;
+                const rectY = padding + y * cellSize;
+                const rectWidth = cellSize - 1;
+                const rectHeight = cellSize - 1;
+
+                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
+
+                const mirrorX = gridSize - 1 - x;
+                if (mirrorX !== x) {
+                    const mirrorRectX = padding + mirrorX * cellSize;
+                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
+                }
+            }
+        }
+    }
+
+    svgContent += `</svg>`;
+    return svgContent;
+}
+
+// Generate identicon (both canvas for PNG and SVG for display and SVG download
+function generateIdenticonFromText(text, size = 256, gridSize = 5) {
+    const svg = generateIdenticonSVG(text, size, gridSize);
+    currentSvg = svg;
+    const displayDiv = document.getElementById('identiconDisplay');
+    displayDiv.innerHTML = svg;
+}
+
+function generateIdenticon() {
+    const text = document.getElementById('inputText').value;
+    const size = parseInt(document.getElementById('sizeInput').value);
+    const gridSize = parseInt(document.getElementById('gridSizeInput').value);
+    generateIdenticonFromText(text, size, gridSize);
+}
+
+function generateRandomIdenticon() {
+    const randomText = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+    document.getElementById('inputText').value = randomText;
+    generateIdenticon();
+}
+
+function downloadIdenticon(format) {
+    if (format === 'svg') {
+        const blob = new Blob([currentSvg], { type: 'image/svg+xml' });
+        const url = URL.createObjectURL(blob);
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = 'identicon.svg';
+        link.click();
+        URL.revokeObjectURL(url);
+    } else {
+        // Convert SVG to canvas for PNG download
+        const size = parseInt(document.getElementById('sizeInput').value);
+        const canvas = document.createElement('canvas');
+        canvas.width = size;
+        canvas.height = size;
+        const ctx = canvas.getContext('2d');
+        const img = new Image();
+        img.onload = function() {
+            ctx.drawImage(img, 0, 0);
+            const link = document.createElement('a');
+            link.download = 'identicon.png';
+            link.href = canvas.toDataURL('image/png');
+            link.click();
+        };
+        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(currentSvg)));
+    }
+}
+
+// Initialize on load
+document.addEventListener('DOMContentLoaded', () => {
+    generateIdenticonFromText('yigitgulyurt', 256, 5);
+});
+</script>
+{% endblock %}

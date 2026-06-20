@@ -779,6 +779,10 @@ def log_ip():
 def unit_converter():
     return render_template('tools/unit_converter.html')
 
+@tools_bp.route('/identicon-olusturucu')
+def identicon():
+    return render_template('tools/identicon.html')
+
 
 @main_bp.route('/dosya-donusturucu', methods=['GET', 'POST'])
 @limiter.limit("30 per hour", methods=['POST'])
