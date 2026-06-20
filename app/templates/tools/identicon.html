@@ -182,73 +182,28 @@
 
 {% block scripts %}
 <script>
-let currentSvg = '';
+let currentText = 'yigitgulyurt';
+let currentSize = 420;
+let currentGrid = 5;
+let debounceTimer = null;
 
-// GitHub-style color palette
-const githubColors = [
-    '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',
-    '#88CC44', '#CCDD44', '#FFDD00', '#FFAA00', '#FF8800',
-    '#EE5555', '#DD4477', '#AA3399', '#8833DD', '#6644FF'
-];
-
-// Simple hash function for string
-function hashString(str) {
-    let hash = 0;
-    for (let i = 0; i < str.length; i++) {
-        const char = str.charCodeAt(i);
-        hash = ((hash << 5) - hash) + char;
-        hash = hash & hash;
+async function generateIdenticonFromText(text, size = 420, gridSize = 5) {
+    currentText = text || 'default';
+    currentSize = size;
+    currentGrid = gridSize;
+    
+    try {
+        const response = await fetch(`{{ url_for('tools.identicon_api') }}?text=${encodeURIComponent(currentText)}&size=${currentSize}&grid=${currentGrid}`);
+        const svg = await response.text();
+        const displayDiv = document.getElementById('identiconDisplay');
+        displayDiv.innerHTML = svg;
+    } catch (error) {
+        console.error('Error generating identicon:', error);
+        showToast('Identicon oluşturulurken hata oluştu', 'error');
     }
-    return Math.abs(hash);
 }
 
-// Generate GitHub-style SVG identicon
-function generateIdenticonSVG(text, size = 420, gridSize = 5) {
-    const hash = hashString(text || 'default');
-    const colorIndex = hash % githubColors.length;
-    const fgColor = githubColors[colorIndex];
-    const bgColor = '#f0f0f0';
-
-    const cellSize = Math.floor(size / (gridSize + 1)); // +1 for padding
-    const padding = Math.floor((size - cellSize * gridSize) / 2);
-
-    let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
-    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}"/>`;
-
-    for (let y = 0; y < gridSize; y++) {
-        for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
-            const bitIndex = y * gridSize + x;
-            const bitValue = (hash >> (bitIndex % 32)) & 1;
-
-            if (bitValue) {
-                const rectX = padding + x * cellSize;
-                const rectY = padding + y * cellSize;
-                const rectWidth = cellSize;
-                const rectHeight = cellSize;
-
-                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
-
-                const mirrorX = gridSize - 1 - x;
-                if (mirrorX !== x) {
-                    const mirrorRectX = padding + mirrorX * cellSize;
-                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
-                }
-            }
-        }
-    }
-
-    svgContent += `</svg>`;
-    return svgContent;
-}
-
-function generateIdenticonFromText(text, size = 420, gridSize = 5) {
-    const svg = generateIdenticonSVG(text, size, gridSize);
-    currentSvg = svg;
-    const displayDiv = document.getElementById('identiconDisplay');
-    displayDiv.innerHTML = svg;
-}
-
-function generateIdenticon(updateUrl = true) {
+async function generateIdenticon(updateUrl = true) {
     const text = document.getElementById('inputText').value;
     const size = parseInt(document.getElementById('sizeInput').value);
     const gridSize = parseInt(document.getElementById('gridSizeInput').value);
@@ -263,8 +218,17 @@ function generateIdenticon(updateUrl = true) {
         window.history.replaceState({}, '', url);
     }
     
-    generateIdenticonFromText(text, size, gridSize);
+    await generateIdenticonFromText(text, size, gridSize);
 }
+
+function debounce(func, wait) {
+    return function(...args) {
+        clearTimeout(debounceTimer);
+        debounceTimer = setTimeout(() => func.apply(this, args), wait);
+    };
+}
+
+const debouncedGenerateIdenticon = debounce(() => generateIdenticon(), 300);
 
 function generateRandomIdenticon() {
     const randomText = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
@@ -273,33 +237,22 @@ function generateRandomIdenticon() {
 }
 
 function downloadIdenticon(format) {
-    if (format === 'svg') {
-        const blob = new Blob([currentSvg], { type: 'image/svg+xml' });
-        const url = URL.createObjectURL(blob);
-        const link = document.createElement('a');
-        link.href = url;
-        link.download = 'identicon.svg';
-        link.click();
-        URL.revokeObjectURL(url);
-    } else {
-        const size = parseInt(document.getElementById('sizeInput').value);
-        const canvas = document.createElement('canvas');
-        canvas.width = size;
-        canvas.height = size;
-        const ctx = canvas.getContext('2d');
-        const img = new Image();
-        img.onload = function() {
-            ctx.drawImage(img, 0, 0);
-            const link = document.createElement('a');
-            link.download = 'identicon.png';
-            link.href = canvas.toDataURL('image/png');
-            link.click();
-        };
-        img.src = 'data:image/svg+xml;base64,' + btoa(unescape(encodeURIComponent(currentSvg)));
+    const url = new URL('{{ url_for('tools.identicon_api') }}', window.location.origin);
+    url.searchParams.set('text', encodeURIComponent(currentText));
+    url.searchParams.set('size', currentSize);
+    url.searchParams.set('grid', currentGrid);
+    
+    if (format === 'png') {
+        url.pathname = '{{ url_for('tools.identicon_png_api') }}';
     }
+    
+    const link = document.createElement('a');
+    link.href = url.toString();
+    link.download = `identicon.${format}`;
+    link.click();
 }
 
-document.addEventListener('DOMContentLoaded', () => {
+document.addEventListener('DOMContentLoaded', async () => {
     const urlParams = new URLSearchParams(window.location.search);
     const textFromUrl = urlParams.get('text') || 'yigitgulyurt';
     const sizeFromUrl = urlParams.get('size') ? parseInt(urlParams.get('size')) : 420;
@@ -309,7 +262,12 @@ document.addEventListener('DOMContentLoaded', () => {
     document.getElementById('sizeInput').value = sizeFromUrl;
     document.getElementById('gridSizeInput').value = gridFromUrl;
     
-    generateIdenticon(false); // Don't update URL when loading
+    // Add debounced event listeners
+    document.getElementById('inputText').oninput = debouncedGenerateIdenticon;
+    document.getElementById('sizeInput').oninput = debouncedGenerateIdenticon;
+    document.getElementById('gridSizeInput').oninput = debouncedGenerateIdenticon;
+    
+    await generateIdenticon(false); // Don't update URL when loading
 });
 </script>
 {% endblock %}

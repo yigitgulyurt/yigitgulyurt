@@ -784,6 +784,114 @@ def identicon():
     return render_template('tools/identicon.html')
 
 
+                                                                                                                                                                                                                                                                                                                                                                                                                          # GitHub-style color palette
+GITHUB_COLORS = [
+    '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',
+    '#88CC44', '#CCDD44', '#FFDD00', '#FFAA00', '#FF8800',
+    '#EE5555', '#DD4477', '#AA3399', '#8833DD', '#6644FF'
+]
+
+
+def hash_string(text):
+    """Simple hash function for string"""
+    hash_val = 0
+    for char in text:
+        hash_val = ((hash_val << 5) - hash_val) + ord(char)
+        hash_val = hash_val & hash_val
+    return abs(hash_val)
+
+
+def generate_identicon_svg(text, size=420, grid_size=5):
+    """Generate GitHub-style identicon SVG"""
+    hash_val = hash_string(text)
+    color_index = hash_val % len(GITHUB_COLORS)
+    fg_color = GITHUB_COLORS[color_index]
+    bg_color = '#f0f0f0'
+    
+    cell_size = size // (grid_size + 1)  # +1 for padding
+    padding = (size - cell_size * grid_size) // 2
+    
+    svg = f'<svg xmlns="http://www.w3.org/2000/svg" width="{size}" height="{size}" viewBox="0 0 {size} {size}">'
+    svg += f'<rect x="0" y="0" width="{size}" height="{size}" fill="{bg_color}"/>'
+    
+    for y in range(grid_size):
+        for x in range((grid_size + 1) // 2):
+            bit_index = y * grid_size + x
+            bit_value = (hash_val >> (bit_index % 32)) & 1
+            
+            if bit_value:
+                rect_x = padding + x * cell_size
+                rect_y = padding + y * cell_size
+                svg += f'<rect x="{rect_x}" y="{rect_y}" width="{cell_size}" height="{cell_size}" fill="{fg_color}"/>'
+                
+                mirror_x = grid_size - 1 - x
+                if mirror_x != x:
+                    mirror_rect_x = padding + mirror_x * cell_size
+                    svg += f'<rect x="{mirror_rect_x}" y="{rect_y}" width="{cell_size}" height="{cell_size}" fill="{fg_color}"/>'
+    
+    svg += '</svg>'
+    return svg
+
+
+@tools_bp.route('/api/identicon', methods=['GET', 'POST'])
+@limiter.limit("100 per minute")
+def identicon_api():
+    """API endpoint for generating identicons"""
+    if request.method == 'GET':
+        text = request.args.get('text', 'default')
+        size = int(request.args.get('size', 420))
+        grid = int(request.args.get('grid', 5))
+    else:  # POST
+        data = request.get_json() or {}
+        text = data.get('text', 'default')
+        size = int(data.get('size', 420))
+        grid = int(data.get('grid', 5))
+    
+    # Validate parameters
+    size = max(64, min(1024, size))
+    grid = max(3, min(10, grid))
+    
+    svg = generate_identicon_svg(text, size, grid)
+    return Response(svg, mimetype='image/svg+xml')
+
+
+@tools_bp.route('/api/identicon/png', methods=['GET', 'POST'])
+@limiter.limit("50 per minute")
+def identicon_png_api():
+    """API endpoint for generating identicons as PNG"""
+    from io import BytesIO
+    from reportlab.graphics import renderPM
+    from svglib.svglib import svg2rlg
+    
+    if request.method == 'GET':
+        text = request.args.get('text', 'default')
+        size = int(request.args.get('size', 420))
+        grid = int(request.args.get('grid', 5))
+    else:  # POST
+        data = request.get_json() or {}
+        text = data.get('text', 'default')
+        size = int(data.get('size', 420))
+        grid = int(data.get('grid', 5))
+    
+    # Validate parameters
+    size = max(64, min(1024, size))
+    grid = max(3, min(10, grid))
+    
+    svg = generate_identicon_svg(text, size, grid)
+    
+    try:
+        # Convert SVG to PNG using svglib and reportlab
+        drawing = svg2rlg(BytesIO(svg.encode('utf-8')))
+        png_buffer = BytesIO()
+        renderPM.drawToFile(drawing, png_buffer, fmt='PNG', dpi=300)
+        png_buffer.seek(0)
+        return Response(png_buffer.getvalue(), mimetype='image/png')
+    except Exception as e:
+        # Fallback: return SVG if conversion fails
+        current_app.logger.warning(f"PNG conversion failed: {e}, falling back to SVG")
+        return Response(svg, mimetype='image/svg+xml')
+
+
 @main_bp.route('/dosya-donusturucu', methods=['GET', 'POST'])
 @limiter.limit("30 per hour", methods=['POST'])
 def file_converter():
