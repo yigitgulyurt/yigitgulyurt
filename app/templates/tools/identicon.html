@@ -93,7 +93,7 @@
 }
 
 .identicon-display {
-    border-radius: 16px;
+    border-radius: 24px;
     overflow: hidden;
 }
 
@@ -152,7 +152,7 @@
     <div class="options-grid">
         <div class="option-group">
             <label class="option-label">Boyut</label>
-            <input type="number" id="sizeInput" class="option-input" value="256" min="64" max="1024" step="32">
+            <input type="number" id="sizeInput" class="option-input" value="420" min="64" max="1024" step="32">
         </div>
         <div class="option-group">
             <label class="option-label">Grid Boyutu</label>
@@ -183,7 +183,13 @@
 {% block scripts %}
 <script>
 let currentSvg = '';
-let currentHash = 0;
+
+// GitHub-style color palette
+const githubColors = [
+    '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',
+    '#88CC44', '#CCDD44', '#FFDD00', '#FFAA00', '#FF8800',
+    '#EE5555', '#DD4477', '#AA3399', '#8833DD', '#6644FF'
+];
 
 // Simple hash function for string
 function hashString(str) {
@@ -196,26 +202,20 @@ function hashString(str) {
     return Math.abs(hash);
 }
 
-// Generate color from hash
-function getColorFromHash(hash, index) {
-    const hue = ((hash + index * 137) % 360);
-    const saturation = 70 + (hash % 30);
-    const lightness = 55 + (hash % 20);
-    return `hsl(${hue}, ${saturation}%, ${lightness}%)`;
-}
-
-// Generate SVG identicon
-function generateIdenticonSVG(text, size = 256, gridSize = 5) {
+// Generate GitHub-style SVG identicon
+function generateIdenticonSVG(text, size = 420, gridSize = 5) {
     const hash = hashString(text || 'default');
-    const fgColor = getColorFromHash(hash, 1);
-    const bgColor = '#ffffff';
-    const radius = size / 10;
+    const colorIndex = hash % githubColors.length;
+    const fgColor = githubColors[colorIndex];
+    const bgColor = '#f0f0f0';
+    const outerRadius = size * 0.12;
 
-    const cellSize = Math.floor(size / gridSize);
+    const cellSize = Math.floor(size / (gridSize + 1)); // +1 for padding
     const padding = Math.floor((size - cellSize * gridSize) / 2);
+    const cellRadius = cellSize * 0.25;
 
     let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
-    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}" rx="${radius}" ry="${radius}"/>`;
+    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}" rx="${outerRadius}" ry="${outerRadius}"/>`;
 
     for (let y = 0; y < gridSize; y++) {
         for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
@@ -225,15 +225,15 @@ function generateIdenticonSVG(text, size = 256, gridSize = 5) {
             if (bitValue) {
                 const rectX = padding + x * cellSize;
                 const rectY = padding + y * cellSize;
-                const rectWidth = cellSize - 1;
-                const rectHeight = cellSize - 1;
+                const rectWidth = cellSize - 2;
+                const rectHeight = cellSize - 2;
 
-                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
+                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}" rx="${cellRadius}" ry="${cellRadius}"/>`;
 
                 const mirrorX = gridSize - 1 - x;
                 if (mirrorX !== x) {
                     const mirrorRectX = padding + mirrorX * cellSize;
-                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
+                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}" rx="${cellRadius}" ry="${cellRadius}"/>`;
                 }
             }
         }
@@ -243,8 +243,7 @@ function generateIdenticonSVG(text, size = 256, gridSize = 5) {
     return svgContent;
 }
 
-// Generate identicon (both canvas for PNG and SVG for display and SVG download
-function generateIdenticonFromText(text, size = 256, gridSize = 5) {
+function generateIdenticonFromText(text, size = 420, gridSize = 5) {
     const svg = generateIdenticonSVG(text, size, gridSize);
     currentSvg = svg;
     const displayDiv = document.getElementById('identiconDisplay');
@@ -274,7 +273,6 @@ function downloadIdenticon(format) {
         link.click();
         URL.revokeObjectURL(url);
     } else {
-        // Convert SVG to canvas for PNG download
         const size = parseInt(document.getElementById('sizeInput').value);
         const canvas = document.createElement('canvas');
         canvas.width = size;
@@ -292,9 +290,8 @@ function downloadIdenticon(format) {
     }
 }
 
-// Initialize on load
 document.addEventListener('DOMContentLoaded', () => {
-    generateIdenticonFromText('yigitgulyurt', 256, 5);
+    generateIdenticonFromText('yigitgulyurt', 420, 5);
 });
 </script>
 {% endblock %}
