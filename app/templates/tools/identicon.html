@@ -208,14 +208,12 @@ function generateIdenticonSVG(text, size = 420, gridSize = 5) {
     const colorIndex = hash % githubColors.length;
     const fgColor = githubColors[colorIndex];
     const bgColor = '#f0f0f0';
-    const outerRadius = size * 0.12;
 
     const cellSize = Math.floor(size / (gridSize + 1)); // +1 for padding
     const padding = Math.floor((size - cellSize * gridSize) / 2);
-    const cellRadius = cellSize * 0.25;
 
     let svgContent = `<svg xmlns="http://www.w3.org/2000/svg" width="${size}" height="${size}" viewBox="0 0 ${size} ${size}">`;
-    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}" rx="${outerRadius}" ry="${outerRadius}"/>`;
+    svgContent += `<rect x="0" y="0" width="${size}" height="${size}" fill="${bgColor}"/>`;
 
     for (let y = 0; y < gridSize; y++) {
         for (let x = 0; x < Math.ceil(gridSize / 2); x++) {
@@ -225,15 +223,15 @@ function generateIdenticonSVG(text, size = 420, gridSize = 5) {
             if (bitValue) {
                 const rectX = padding + x * cellSize;
                 const rectY = padding + y * cellSize;
-                const rectWidth = cellSize - 2;
-                const rectHeight = cellSize - 2;
+                const rectWidth = cellSize;
+                const rectHeight = cellSize;
 
-                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}" rx="${cellRadius}" ry="${cellRadius}"/>`;
+                svgContent += `<rect x="${rectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
 
                 const mirrorX = gridSize - 1 - x;
                 if (mirrorX !== x) {
                     const mirrorRectX = padding + mirrorX * cellSize;
-                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}" rx="${cellRadius}" ry="${cellRadius}"/>`;
+                    svgContent += `<rect x="${mirrorRectX}" y="${rectY}" width="${rectWidth}" height="${rectHeight}" fill="${fgColor}"/>`;
                 }
             }
         }
