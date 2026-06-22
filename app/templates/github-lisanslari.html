@@ -1,0 +1,349 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>GitHub Lisansları</title>
+<style>
+  :root {
+    --bg: #f8f7f4;
+    --bg2: #ffffff;
+    --border: #e2e0d8;
+    --border2: #ccc9bf;
+    --text: #1a1a18;
+    --text2: #5a5955;
+    --text3: #8a8880;
+    --mono: 'Courier New', monospace;
+    --radius: 10px;
+    --shadow: 0 1px 3px rgba(0,0,0,.07), 0 4px 16px rgba(0,0,0,.05);
+  }
+  @media (prefers-color-scheme: dark) {
+    :root {
+      --bg: #141413;
+      --bg2: #1e1e1c;
+      --border: #2e2e2b;
+      --border2: #3e3e3a;
+      --text: #e8e6de;
+      --text2: #9a9890;
+      --text3: #6a6864;
+    }
+  }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  body {
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+    background: var(--bg);
+    color: var(--text);
+    line-height: 1.6;
+    padding: 40px 20px 80px;
+  }
+
+  .container { max-width: 760px; margin: 0 auto; }
+
+  header { margin-bottom: 32px; }
+  header h1 {
+    font-size: 26px;
+    font-weight: 600;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+  header p { font-size: 14px; color: var(--text2); }
+
+  .legend {
+    display: flex;
+    flex-wrap: wrap;
+    gap: 8px;
+    margin-bottom: 24px;
+  }
+
+  .badge {
+    font-size: 11px;
+    font-weight: 600;
+    padding: 3px 10px;
+    border-radius: 99px;
+    letter-spacing: .3px;
+  }
+  .badge.permissive { background: #e6f4d8; color: #2d6a0a; border: 1px solid #b8dfa0; }
+  .badge.copyleft   { background: #dbeafe; color: #1e40af; border: 1px solid #93c5fd; }
+  .badge.weak       { background: #fef3c7; color: #92400e; border: 1px solid #fcd34d; }
+  .badge.none       { background: #f1f0ec; color: #4a4945; border: 1px solid #d1cfc7; }
+
+  @media (prefers-color-scheme: dark) {
+    .badge.permissive { background: #1a3a08; color: #86efac; border-color: #166534; }
+    .badge.copyleft   { background: #1e2a4a; color: #93c5fd; border-color: #1e40af; }
+    .badge.weak       { background: #3a2800; color: #fcd34d; border-color: #92400e; }
+    .badge.none       { background: #2a2a28; color: #a8a5a0; border-color: #3e3e3a; }
+  }
+
+  .card {
+    background: var(--bg2);
+    border: 1px solid var(--border);
+    border-radius: var(--radius);
+    margin-bottom: 10px;
+    box-shadow: var(--shadow);
+    overflow: hidden;
+    transition: border-color .2s;
+  }
+  .card:hover { border-color: var(--border2); }
+
+  .card-head {
+    padding: 14px 18px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    cursor: pointer;
+    user-select: none;
+  }
+
+  .card-title {
+    font-size: 15px;
+    font-weight: 500;
+    flex: 1;
+  }
+
+  .tag {
+    font-family: var(--mono);
+    font-size: 11px;
+    color: var(--text3);
+    background: var(--bg);
+    padding: 2px 7px;
+    border-radius: 5px;
+    border: 1px solid var(--border);
+  }
+
+  .chevron {
+    color: var(--text3);
+    font-size: 12px;
+    transition: transform .2s;
+    flex-shrink: 0;
+  }
+  .chevron.open { transform: rotate(180deg); }
+
+  .card-body {
+    display: none;
+    padding: 0 18px 16px;
+    border-top: 1px solid var(--border);
+  }
+  .card-body.open { display: block; }
+
+  .desc {
+    font-size: 14px;
+    color: var(--text2);
+    line-height: 1.65;
+    margin: 12px 0 14px;
+  }
+
+  .pills { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 10px; }
+
+  .pill {
+    font-size: 12px;
+    padding: 4px 10px;
+    border-radius: 99px;
+    border: 1px solid var(--border2);
+    color: var(--text2);
+    display: flex;
+    align-items: center;
+    gap: 5px;
+  }
+  .pill.yes { border-color: #86efac; color: #166534; background: #f0fdf4; }
+  .pill.cond { border-color: #fcd34d; color: #92400e; background: #fffbeb; }
+  .pill.no  { border-color: #fca5a5; color: #991b1b; background: #fef2f2; }
+
+  @media (prefers-color-scheme: dark) {
+    .pill.yes  { border-color: #166534; color: #86efac; background: #052e16; }
+    .pill.cond { border-color: #92400e; color: #fcd34d; background: #2a1a00; }
+    .pill.no   { border-color: #991b1b; color: #fca5a5; background: #2a0a0a; }
+  }
+
+  .pill.yes::before  { content: "✓ "; }
+  .pill.cond::before { content: "⚠ "; }
+  .pill.no::before   { content: "✗ "; }
+
+  .usecase {
+    font-size: 12px;
+    color: var(--text3);
+    font-style: italic;
+    margin-top: 10px;
+    padding-top: 10px;
+    border-top: 1px solid var(--border);
+  }
+  .usecase strong { color: var(--text2); font-style: normal; }
+
+  .pill-section-label {
+    font-size: 11px;
+    color: var(--text3);
+    font-weight: 600;
+    letter-spacing: .5px;
+    text-transform: uppercase;
+    margin: 10px 0 5px;
+  }
+
+  footer {
+    margin-top: 40px;
+    font-size: 12px;
+    color: var(--text3);
+    text-align: center;
+  }
+</style>
+</head>
+<body>
+<div class="container">
+  <header>
+    <h1>GitHub Lisansları</h1>
+    <p>GitHub'ın sunduğu açık kaynak lisanslarının karşılaştırmalı özeti. Karta tıkla → detaylar.</p>
+  </header>
+
+  <div class="legend">
+    <span class="badge permissive">Permissive</span>
+    <span class="badge copyleft">Copyleft (güçlü)</span>
+    <span class="badge weak">Copyleft (zayıf)</span>
+    <span class="badge none">Lisanssız</span>
+  </div>
+
+  <div id="list"></div>
+
+  <footer>Hazırlandığı tarih: <span id="date"></span></footer>
+</div>
+
+<script>
+const licenses = [
+  {
+    name: "MIT License", tag: "MIT", type: "permissive",
+    desc: "En popüler açık kaynak lisansı. Neredeyse hiçbir kısıtlama getirmez — lisans metnini koruyarak istediğin her şeyi yapabilirsin. Ticari kullanım, değiştirme, dağıtım, kapalı kaynak entegrasyon hepsi serbest.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Lisans ve telif hakkı bildirimi"],
+    limits: [],
+    usecase: "Geniş benimsenme istiyorsan, her şeye açık bir kütüphane veya araç yayımlıyorsan."
+  },
+  {
+    name: "Apache License 2.0", tag: "Apache-2.0", type: "permissive",
+    desc: "MIT'e benzer ama patent koruması ekler. Katkıda bulunanlar, kullanıcılara patent hakları verir. Büyük kurumsal projelerde tercih edilir.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Patent kullanımı","Özel kullanım"],
+    conds: ["Lisans ve telif hakkı bildirimi","Yapılan değişiklikleri belirt"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok","Marka hakkı yok"],
+    usecase: "Patent riski önemliyse veya kurumsal kullanıcılar hedefliyorsan."
+  },
+  {
+    name: "GNU GPLv3", tag: "GPL-3.0", type: "copyleft",
+    desc: "Güçlü copyleft: bu lisansla yayımlanan kodu kullanan yazılımı kapalı kaynak yapamazsın. Türevi çalışmaların da GPL ile yayımlanması zorunlu.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Patent kullanımı","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla","Lisans ve telif hakkı bildirimi","Türevler de GPL olmalı","Değişiklikleri belirt"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Kodunun sonsuza kadar özgür kalmasını istiyorsan, kapalı kaynak projelerde kullanılmasını istemiyorsan."
+  },
+  {
+    name: "GNU GPLv2", tag: "GPL-2.0", type: "copyleft",
+    desc: "GPLv3'ün önceki versiyonu. Linux kernel bu lisansı kullanır. GPLv3'teki patent ve Tivoization korumalarını içermez.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla","Lisans ve telif hakkı bildirimi","Türevler de GPL olmalı"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Linux kernel veya eski GPL uyumlu ekosistem ile çalışıyorsan."
+  },
+  {
+    name: "GNU LGPLv2.1", tag: "LGPL-2.1", type: "weak",
+    desc: "Zayıf copyleft: kütüphanenin kendisini değiştirirsen değişiklikleri açık kaynak yapman gerekir, ama kütüphaneyi kullanan uygulama kapalı kaynak kalabilir.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla","Kütüphane değişiklikleri LGPL olmalı","Lisans bildirimi"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Hem açık kaynak hem ticari projelerin kullanabileceği bir kütüphane yazıyorsan."
+  },
+  {
+    name: "Mozilla Public License 2.0", tag: "MPL-2.0", type: "weak",
+    desc: "Dosya bazlı zayıf copyleft. MPL ile lisanslanan dosyaları değiştirirsen o dosyaları açık kaynak yapman gerekir; ama bunları MIT veya GPL kodlarla aynı projede karıştırabilirsin.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Patent kullanımı","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla (sadece MPL dosyaları)","Lisans bildirimi"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok","Marka hakkı yok"],
+    usecase: "GPL'nin katılığından kaçınmak ama değiştirilen dosyaların açık kalmasını sağlamak istiyorsan."
+  },
+  {
+    name: "BSD 2-Clause", tag: "BSD-2-Clause", type: "permissive",
+    desc: "MIT'e çok benzer. Kaynak ve binary dağıtımda telif hakkı bildirimini korumanı gerektirir. Tarihsel sebeplerle hâlâ kullanılıyor.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Kaynak ve binary'de lisans bildirimi"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "BSD kökenli projeler veya MIT yerine geçici tercih."
+  },
+  {
+    name: "BSD 3-Clause", tag: "BSD-3-Clause", type: "permissive",
+    desc: "BSD 2-Clause'a ek olarak non-endorsement maddesi içerir: projenin adını, izin almadan reklam veya onay amaçlı kullanamazsın.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Lisans bildirimi","Marka/isim kullanımında izin gerekli"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Kurumsal marka koruması istiyorsan."
+  },
+  {
+    name: "Boost Software License 1.0", tag: "BSL-1.0", type: "permissive",
+    desc: "MIT ve BSD'den bile daha az kısıtlayıcı. Binary dağıtımda bile lisans bildirimi gerekmez — sadece kaynak kodunu dağıtırken gerekli. C++ Boost kütüphaneleri bu lisansı kullanır.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: ["Kaynak dağıtımda lisans bildirimi"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Header-only kütüphaneler veya minimum yük istiyorsan."
+  },
+  {
+    name: "The Unlicense", tag: "Unlicense", type: "none",
+    desc: "Kodu public domain'e bırakır. Hiçbir koşul yok. Bazı ülkeler yasal olarak public domain'i tanımadığından alternatif olarak CC0 tercih edilebilir.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Özel kullanım"],
+    conds: [],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Kodu tamamen serbest bırakmak, herhangi bir koşul koymamak istiyorsan."
+  },
+  {
+    name: "GNU AGPLv3", tag: "AGPL-3.0", type: "copyleft",
+    desc: "GPLv3'ün en güçlü versiyonu. Ağ üzerinden servis olarak sunarsan (SaaS) bile kaynak kodu açıklamak zorunda kalırsın. ASP loophole'ü kapatmak için tasarlandı.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Patent kullanımı","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla","Ağ kullanımında da açıkla","Türevler de AGPL olmalı"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "SaaS modeliyle kapalı kaynak kullanılmasını kesinlikle önlemek istiyorsan."
+  },
+  {
+    name: "Eclipse Public License 2.0", tag: "EPL-2.0", type: "weak",
+    desc: "MPL'ye benzer dosya bazlı copyleft. Ticari dostu ama değiştirilen EPL dosyaları açık kaynak kalmalı. Java ekosisteminde, özellikle Eclipse projelerinde yaygın.",
+    perms: ["Ticari kullanım","Değiştirme","Dağıtım","Patent kullanımı","Özel kullanım"],
+    conds: ["Kaynak kodu açıkla (EPL dosyaları)","Lisans bildirimi"],
+    limits: ["Hukuki sorumluluk yok","Garanti yok"],
+    usecase: "Java kütüphane ekosistemi veya Eclipse tabanlı projeler."
+  },
+];
+
+const typeLabel = {
+  permissive: "Permissive",
+  copyleft: "Copyleft",
+  weak: "Zayıf copyleft",
+  none: "Lisanssız"
+};
+
+function render() {
+  const list = document.getElementById('list');
+  list.innerHTML = licenses.map((l, i) => `
+    <div class="card">
+      <div class="card-head" onclick="toggle(${i})">
+        <span class="card-title">${l.name}</span>
+        <span class="tag">${l.tag}</span>
+        <span class="badge ${l.type}">${typeLabel[l.type]}</span>
+        <span class="chevron" id="chev-${i}">▾</span>
+      </div>
+      <div class="card-body" id="body-${i}">
+        <p class="desc">${l.desc}</p>
+        ${l.perms.length ? `<div class="pill-section-label">İzinler</div><div class="pills">${l.perms.map(p=>`<span class="pill yes">${p}</span>`).join('')}</div>` : ''}
+        ${l.conds.length ? `<div class="pill-section-label">Koşullar</div><div class="pills">${l.conds.map(c=>`<span class="pill cond">${c}</span>`).join('')}</div>` : ''}
+        ${l.limits.length ? `<div class="pill-section-label">Sınırlar</div><div class="pills">${l.limits.map(x=>`<span class="pill no">${x}</span>`).join('')}</div>` : ''}
+        <p class="usecase"><strong>Ne zaman kullan:</strong> ${l.usecase}</p>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggle(i) {
+  const body = document.getElementById('body-' + i);
+  const chev = document.getElementById('chev-' + i);
+  const isOpen = body.classList.contains('open');
+  body.classList.toggle('open', !isOpen);
+  chev.classList.toggle('open', !isOpen);
+}
+
+render();
+document.getElementById('date').textContent = new Date().toLocaleDateString('tr-TR');
+</script>
+</body>
+</html>

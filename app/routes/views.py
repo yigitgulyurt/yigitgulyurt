@@ -349,6 +349,10 @@ def detail(slug):
 def index():
     projects = Project.query.order_by(Project.order, Project.created_at.desc()).all()
     return render_template('projects/index.html', projects=projects)
+    
+@projects_bp.route('/github')
+def github():
+    return render_template('github-lisanslari.html')
 
 @projects_bp.route('/<slug>')
 def detail(slug):
@@ -783,8 +787,7 @@ def unit_converter():
 def identicon():
     return render_template('tools/identicon.html')
 
-
-                                                                                                                                                                                                                                                                                                                                                                                                                          # GitHub-style color palette
+# GitHub-style color palette
 GITHUB_COLORS = [
     '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',
     '#88CC44', '#CCDD44', '#FFDD00', '#FFAA00', '#FF8800',
