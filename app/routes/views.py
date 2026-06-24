@@ -354,10 +354,10 @@ def index():
 def detail(slug):
     project = Project.query.filter_by(slug=slug).first_or_404()
     
-    # CSS dosyasını şablona gönder
+    # CSS dosyasını şablona gönder (domain'den)
     custom_css = None
     if project.custom_css_file:
-        custom_css = url_for('static', filename=f'css/{project.custom_css_file}')
+        custom_css = f"https://css.yigitgulyurt.net.tr/{project.custom_css_file}"
     
     if project.content_type == 'html':
         if project.custom_html_file:
