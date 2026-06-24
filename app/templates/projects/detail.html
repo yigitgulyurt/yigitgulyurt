@@ -1,6 +1,11 @@
 {% extends "base/base.html" %}
 
 {% block title %}{{ project.title }}{% endblock %}
+{% block head %}
+  {% if custom_css %}
+    <link rel="stylesheet" href="{{ custom_css }}">
+  {% endif %}
+{% endblock %}
 {% block description %}{{ project.description or project.title }}{% endblock %}
 {% block og_type %}article{% endblock %}
 {% block og_title %}{{ project.title }} | Yiğit Gülyurt{% endblock %}

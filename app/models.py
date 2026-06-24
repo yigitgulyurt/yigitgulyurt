@@ -27,18 +27,23 @@ def load_user(user_id):
 
 class Project(db.Model):
     __tablename__ = 'projects'
-    id            = db.Column(db.Integer, primary_key=True)
-    title         = db.Column(db.String(128), nullable=False)
-    slug          = db.Column(db.String(128), unique=True, nullable=False)
-    description   = db.Column(db.Text)
-    tech_stack    = db.Column(db.String(256))   # virgülle ayrılmış: "Flask, nginx, Redis"
-    live_url      = db.Column(db.String(256))
-    github_url    = db.Column(db.String(256))
-    image         = db.Column(db.String(256))        # static/img/ altındaki dosya adı
-    content       = db.Column(db.Text)                   # Markdown — detay sayfası
-    featured      = db.Column(db.Boolean, default=False)
-    order         = db.Column(db.Integer, default=0)
-    created_at    = db.Column(db.DateTime, default=datetime.utcnow)
+    id                  = db.Column(db.Integer, primary_key=True)
+    title               = db.Column(db.String(128), nullable=False)
+    slug                = db.Column(db.String(128), unique=True, nullable=False)
+    description         = db.Column(db.Text)
+    tech_stack          = db.Column(db.String(256))   # virgülle ayrılmış: "Flask, nginx, Redis"
+    live_url            = db.Column(db.String(256))
+    github_url          = db.Column(db.String(256))
+    image               = db.Column(db.String(256))        # static/img/ altındaki dosya adı
+    content             = db.Column(db.Text)                   # Markdown veya raw HTML — detay sayfası (eski yöntem, yedek)
+    content_type        = db.Column(db.String(32), default="markdown")  # "markdown" veya "html" veya "template"
+    template_name       = db.Column(db.String(256))            # eğer content_type "template" ise: "projects/custom/benim_sablonum.html" gibi
+    custom_html_file    = db.Column(db.String(256))            # projects/html/slug.html
+    custom_css_file     = db.Column(db.String(256))            # static/css/yigitgulyurt/projects/slug.css
+    custom_markdown_file= db.Column(db.String(256))            # projects/markdown/slug.md
+    featured            = db.Column(db.Boolean, default=False)
+    order               = db.Column(db.Integer, default=0)
+    created_at          = db.Column(db.DateTime, default=datetime.utcnow)
 
     @property
     def tech_list(self):

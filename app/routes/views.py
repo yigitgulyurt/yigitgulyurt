@@ -349,16 +349,39 @@ def detail(slug):
 def index():
     projects = Project.query.order_by(Project.order, Project.created_at.desc()).all()
     return render_template('projects/index.html', projects=projects)
-    
-@projects_bp.route('/github')
-def github():
-    return render_template('github-lisanslari.html')
 
 @projects_bp.route('/<slug>')
 def detail(slug):
     project = Project.query.filter_by(slug=slug).first_or_404()
-    project.content_html = md.markdown(project.content or '', extensions=['fenced_code', 'tables'])
-    return render_template('projects/detail.html', project=project)
+    
+    # CSS dosyasını şablona gönder
+    custom_css = None
+    if project.custom_css_file:
+        custom_css = url_for('static', filename=f'css/{project.custom_css_file}')
+    
+    if project.content_type == 'html':
+        if project.custom_html_file:
+            return render_template(project.custom_html_file, project=project, custom_css=custom_css)
+        else:
+            project.content_html = project.content or ''
+    elif project.content_type == 'template' and project.template_name:
+        return render_template(project.template_name, project=project, custom_css=custom_css)
+    elif project.content_type == 'markdown':
+        if project.custom_markdown_file:
+            # Markdown dosyasını oku ve parse et
+            markdown_path = os.path.join(current_app.root_path, 'templates', project.custom_markdown_file)
+            try:
+                with open(markdown_path, 'r', encoding='utf-8') as f:
+                    markdown_content = f.read()
+                    project.content_html = md.markdown(markdown_content, extensions=['fenced_code', 'tables'])
+            except FileNotFoundError:
+                project.content_html = md.markdown(project.content or '', extensions=['fenced_code', 'tables'])
+        else:
+            project.content_html = md.markdown(project.content or '', extensions=['fenced_code', 'tables'])
+    else:
+        project.content_html = md.markdown(project.content or '', extensions=['fenced_code', 'tables'])
+    
+    return render_template('projects/detail.html', project=project, custom_css=custom_css)
 
 # --- Contact Routes ---
 @contact_bp.route('/', methods=['GET', 'POST'])
@@ -461,10 +484,15 @@ def projects():
 def project_edit(id=None):
     project = Project.query.get_or_404(id) if id else Project()
     if request.method == 'POST':
+        old_slug = project.slug
         project.title = request.form['title']
         project.slug = request.form.get('slug') or slugify(request.form['title'])
         project.description = request.form.get('description')
         project.tech_stack = request.form.get('tech_stack')
+        project.content_type = request.form.get('content_type', 'markdown')
+        project.template_name = request.form.get('template_name') or None
+        
+        # Kapak görseli yükle
         image_file = request.files.get('image')
         if image_file and image_file.filename:
             filename = secure_filename(image_file.filename)
@@ -472,6 +500,52 @@ def project_edit(id=None):
             os.makedirs(upload_dir, exist_ok=True)
             image_file.save(os.path.join(upload_dir, filename))
             project.image = filename
+        
+        # HTML dosyası yükle
+        html_file = request.files.get('html_file')
+        if html_file and html_file.filename:
+            html_filename = f"{project.slug}.html"
+            html_upload_dir = os.path.join(current_app.root_path, 'templates', 'projects', 'html')
+            os.makedirs(html_upload_dir, exist_ok=True)
+            html_file.save(os.path.join(html_upload_dir, html_filename))
+            project.custom_html_file = f"projects/html/{html_filename}"
+            
+            # Eski slug farklıysa eski dosyayı sil
+            if old_slug and old_slug != project.slug:
+                old_html_path = os.path.join(html_upload_dir, f"{old_slug}.html")
+                if os.path.exists(old_html_path):
+                    os.remove(old_html_path)
+        
+        # CSS dosyası yükle
+        css_file = request.files.get('css_file')
+        if css_file and css_file.filename:
+            css_filename = f"{project.slug}.css"
+            css_upload_dir = os.path.join(current_app.root_path, 'static', 'css', 'yigitgulyurt', 'projects')
+            os.makedirs(css_upload_dir, exist_ok=True)
+            css_file.save(os.path.join(css_upload_dir, css_filename))
+            project.custom_css_file = f"yigitgulyurt/projects/{css_filename}"
+            
+            # Eski slug farklıysa eski dosyayı sil
+            if old_slug and old_slug != project.slug:
+                old_css_path = os.path.join(css_upload_dir, f"{old_slug}.css")
+                if os.path.exists(old_css_path):
+                    os.remove(old_css_path)
+        
+        # Markdown dosyası yükle
+        markdown_file = request.files.get('markdown_file')
+        if markdown_file and markdown_file.filename:
+            markdown_filename = f"{project.slug}.md"
+            markdown_upload_dir = os.path.join(current_app.root_path, 'templates', 'projects', 'markdown')
+            os.makedirs(markdown_upload_dir, exist_ok=True)
+            markdown_file.save(os.path.join(markdown_upload_dir, markdown_filename))
+            project.custom_markdown_file = f"projects/markdown/{markdown_filename}"
+            
+            # Eski slug farklıysa eski dosyayı sil
+            if old_slug and old_slug != project.slug:
+                old_markdown_path = os.path.join(markdown_upload_dir, f"{old_slug}.md")
+                if os.path.exists(old_markdown_path):
+                    os.remove(old_markdown_path)
+        
         project.content, project.live_url = request.form.get('content'), request.form.get('live_url')
         project.github_url = request.form.get('github_url')
         project.featured, project.order = bool(request.form.get('featured')), int(request.form.get('order') or 0)

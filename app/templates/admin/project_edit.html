@@ -26,10 +26,67 @@
     <input type="text" name="tech_stack" value="{{ project.tech_stack or '' }}" placeholder="Flask, nginx, Python">
   </div>
 
-  <!-- MARKDOWN EDITOR -->
   <div class="form-group">
-    <div class="editor-toolbar">
-      <span style="font-size:11px;color:var(--accent)">// içerik (Markdown) — proje detay sayfasında görünür</span>
+    <label>// içerik tipi</label>
+    <select id="content-type-select" name="content_type" style="width:100%">
+      <option value="markdown" {{ 'selected' if (project.content_type or 'markdown') == 'markdown' }}>Markdown</option>
+      <option value="html" {{ 'selected' if project.content_type == 'html' }}>HTML (raw)</option>
+      <option value="template" {{ 'selected' if project.content_type == 'template' }}>Özel HTML Şablonu</option>
+    </select>
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">
+      Markdown: Basit içerikler için; HTML: Özel stiller; Özel Şablon: Tamamen özel sayfa (templates/projects/custom/...)
+    </div>
+  </div>
+
+  <!-- DOSYA YÜKLEME ALANLARI (İÇERİK TİPİNE GÖRE) -->
+  
+  <!-- MARKDOWN DOSYA YÜKLEME -->
+  <div class="form-group" id="markdown-file-group" style="display:none">
+    <label>// Markdown Dosyası (.md)</label>
+    {% if project.custom_markdown_file %}
+    <div style="margin-bottom:8px">
+      <span style="color:var(--text2);font-size:11px">Mevcut dosya: {{ project.custom_markdown_file }}</span>
+    </div>
+    {% endif %}
+    <input type="file" name="markdown_file" accept=".md" style="width:100%">
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">Dosya otomatik olarak projects/markdown/{{ project.slug or 'slug' }}.md olarak kaydedilecek</div>
+  </div>
+  
+  <!-- HTML DOSYA YÜKLEME -->
+  <div class="form-group" id="html-file-group" style="display:none">
+    <label>// HTML Dosyası (.html)</label>
+    {% if project.custom_html_file %}
+    <div style="margin-bottom:8px">
+      <span style="color:var(--text2);font-size:11px">Mevcut dosya: {{ project.custom_html_file }}</span>
+    </div>
+    {% endif %}
+    <input type="file" name="html_file" accept=".html" style="width:100%">
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">Jinja şablonları desteklenir! Dosya projects/html/{{ project.slug or 'slug' }}.html olarak kaydedilecek</div>
+  </div>
+  
+  <!-- CSS DOSYA YÜKLEME (TÜM TİPLER İÇİN) -->
+  <div class="form-group" id="css-file-group">
+    <label>// Özel CSS Dosyası (.css) - İsteğe Bağlı</label>
+    {% if project.custom_css_file %}
+    <div style="margin-bottom:8px">
+      <span style="color:var(--text2);font-size:11px">Mevcut dosya: {{ project.custom_css_file }}</span>
+    </div>
+    {% endif %}
+    <input type="file" name="css_file" accept=".css" style="width:100%">
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">Dosya static/css/yigitgulyurt/projects/{{ project.slug or 'slug' }}.css olarak kaydedilecek</div>
+  </div>
+  
+  <!-- ÖZEL ŞABLON SEÇİMİ (SADECE TEMPLATE TİPİNDE GÖRÜNÜR) -->
+  <div class="form-group" id="template-name-group" style="display:none">
+    <label>// şablon dosyası</label>
+    <input type="text" name="template_name" value="{{ project.template_name or '' }}" placeholder="projects/custom/benim_proje.html">
+    <div style="font-size:11px;color:var(--text2);margin-top:4px">Örnek: projects/custom/benim_sablonum.html — dosyayı app/templates/ altına kaydedin</div>
+  </div>
+
+  <!-- ESKİ İÇERİK ALANI (YEDek) -->
+  <div class="form-group" id="content-group">
+    <div class="editor-toolbar" id="markdown-toolbar">
+      <span style="font-size:11px;color:var(--accent)">// içerik (eski yöntem, dosya yoksa kullanılır)</span>
       <div style="display:flex;gap:6px;flex-wrap:wrap">
         <button type="button" class="editor-btn" onclick="insertMd('**','**')" title="Kalın"><strong>B</strong></button>
         <button type="button" class="editor-btn" onclick="insertMd('*','*')" title="İtalik"><em>I</em></button>
@@ -42,12 +99,12 @@
         <button type="button" class="editor-btn" onclick="renderPreview()" style="color:var(--accent);border-color:var(--accent)">⟳ önizle</button>
       </div>
     </div>
-    <div class="editor-split">
+    <div class="editor-split" id="markdown-split">
       <textarea
         name="content"
         id="md-editor"
         class="editor-textarea"
-        placeholder="Markdown yaz...">{{ project.content or '' }}</textarea>
+        placeholder="İçerik yaz...">{{ project.content or '' }}</textarea>
       <div id="md-preview" class="editor-preview blog-content">
         <span style="color:var(--text2);font-size:12px">önizleme burada görünür...</span>
       </div>
@@ -103,6 +160,45 @@
 const editor  = document.getElementById('md-editor');
 const preview = document.getElementById('md-preview');
 const PREVIEW_URL = '{{ url_for("admin.preview") }}';
+const contentTypeSelect = document.getElementById('content-type-select');
+const templateNameGroup = document.getElementById('template-name-group');
+const contentGroup = document.getElementById('content-group');
+const markdownToolbar = document.getElementById('markdown-toolbar');
+const markdownSplit = document.getElementById('markdown-split');
+const markdownFileGroup = document.getElementById('markdown-file-group');
+const htmlFileGroup = document.getElementById('html-file-group');
+
+// Content type değişikliklerini yönet
+function updateContentTypeUI() {
+    const selectedType = contentTypeSelect.value;
+    
+    // Tüm grupları sıfırla
+    templateNameGroup.style.display = 'none';
+    contentGroup.style.display = 'block';
+    markdownFileGroup.style.display = 'none';
+    htmlFileGroup.style.display = 'none';
+    markdownToolbar.style.display = 'flex';
+    markdownSplit.style.display = 'grid';
+    preview.style.display = 'block';
+    
+    if (selectedType === 'template') {
+        templateNameGroup.style.display = 'block';
+        contentGroup.style.display = 'none';
+    } else if (selectedType === 'markdown') {
+        markdownFileGroup.style.display = 'block';
+        markdownToolbar.style.display = 'flex';
+        markdownSplit.style.display = 'grid';
+        preview.style.display = 'block';
+    } else if (selectedType === 'html') {
+        htmlFileGroup.style.display = 'block';
+        markdownToolbar.style.display = 'none';
+        markdownSplit.style.display = 'block';
+        preview.style.display = 'none';
+    }
+}
+
+contentTypeSelect.addEventListener('change', updateContentTypeUI);
+updateContentTypeUI();
 
 let undoStack = [editor.value];
 let undoIndex = 0;

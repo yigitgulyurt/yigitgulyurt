@@ -1,0 +1,54 @@
+{% extends "base/base.html" %}
+
+{% block title %}{{ project.title }}{% endblock %}
+{% block head %}
+  {% if custom_css %}
+    <link rel="stylesheet" href="{{ custom_css }}">
+  {% endif %}
+{% endblock %}
+
+{% block content %}
+<div style="max-width:1000px;margin:40px auto;padding:0 20px">
+    <h1 style="font-size:3rem;margin-bottom:16px;color:var(--primary)">{{ project.title }}</h1>
+    <p style="font-size:1.2rem;color:var(--text2);margin-bottom:32px">{{ project.description }}</p>
+    
+    {% if project.image %}
+    <img src="https://image.yigitgulyurt.net.tr/file/yigitgulyurt/projects/{{ project.image }}" 
+         alt="{{ project.title }}" 
+         style="width:100%;border-radius:16px;margin-bottom:32px;object-fit:cover">
+    {% endif %}
+    
+    <div style="display:flex;gap:16px;flex-wrap:wrap;margin-bottom:32px">
+        {% if project.live_url %}
+        <a href="{{ project.live_url }}" target="_blank" 
+           style="display:inline-flex;align-items:center;gap:8px;background:var(--primary);color:white;padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">
+            → Canlıya Git
+        </a>
+        {% endif %}
+        {% if project.github_url %}
+        <a href="{{ project.github_url }}" target="_blank" 
+           style="display:inline-flex;align-items:center;gap:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.1);color:var(--text);padding:12px 24px;border-radius:10px;text-decoration:none;font-weight:600">
+            GitHub
+        </a>
+        {% endif %}
+    </div>
+    
+    <div style="background:var(--card-bg);border-radius:16px;padding:24px;border:1px solid rgba(255,255,255,0.05)">
+        <h3 style="margin-bottom:16px">Teknolojiler</h3>
+        <div style="display:flex;gap:12px;flex-wrap:wrap">
+            {% for tech in project.tech_list %}
+            <span style="background:rgba(var(--primary-rgb),0.1);color:var(--primary);padding:8px 16px;border-radius:8px;font-size:0.9rem;font-weight:600">
+                {{ tech }}
+            </span>
+            {% endfor %}
+        </div>
+    </div>
+    
+    <div style="margin-top:40px;background:linear-gradient(135deg,var(--card-bg),rgba(255,255,255,0.02));border-radius:20px;padding:40px;border:1px solid rgba(255,255,255,0.05)">
+        <h2 style="margin-bottom:16px">Bu, tamamen özel bir şablon!</h2>
+        <p style="font-size:1.1rem;line-height:1.8;color:var(--text2)">
+            Buraya istediğiniz içeriği ve stili koyabilirsiniz. {{ project.title }} için tamamen özelleştirilmiş bir sayfa!
+        </p>
+    </div>
+</div>
+{% endblock %}
