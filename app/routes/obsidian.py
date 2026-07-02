@@ -1,7 +1,7 @@
 """
 app/routes/obsidian.py
 Obsidian vault — Rclone / Local Filesystem entegrasyonu
-Subdomain: obsidian.yigitgulyurt.net.tr
+Subdomain: yigitgulyurt.net.tr/obsidian
 """
 
 import re

@@ -23,18 +23,18 @@ const PAGE_ASSETS = [
 
 // ── Subdomain Dosyaları (js. ve css.yigitgulyurt.net.tr) ───────────────────
 const JS_ASSETS = [
-    'https://js.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.js',
-    'https://js.yigitgulyurt.net.tr/yigitgulyurt/toastify.yigitgulyurt.js'
+    "https://js.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.js",
+    "https://js.yigitgulyurt.net.tr/yigitgulyurt/toastify.yigitgulyurt.js"
 ];
 
 const CSS_ASSETS = [
-    'https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css',
-    'https://css.yigitgulyurt.net.tr/yigitgulyurt/toastify.yigitgulyurt.css'
+    "https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css",
+    "https://css.yigitgulyurt.net.tr/yigitgulyurt/toastify.yigitgulyurt.css"
 ];
 
 // Request objelerine çevir (cross-origin için zorunlu)
-const JS_REQUESTS = JS_ASSETS.map(url => new Request(url, { mode: 'cors', credentials: 'omit' }));
-const CSS_REQUESTS = CSS_ASSETS.map(url => new Request(url, { mode: 'cors', credentials: 'omit' }));
+const JS_REQUESTS = JS_ASSETS.map(url => new Request(url, { mode: "cors", credentials: "omit" }));
+const CSS_REQUESTS = CSS_ASSETS.map(url => new Request(url, { mode: "cors", credentials: "omit" }));
 
 // ── Hiç önbelleğe alınmayacak URL'ler ──────────────────────────────────────
 const NO_CACHE_URLS = [
@@ -78,8 +78,8 @@ self.addEventListener('fetch', (event) => {
 
     // Font ve admin bypass
     if (
-        url.hostname === 'font.yigitgulyurt.net.tr' ||
-        url.hostname === 'image.yigitgulyurt.net.tr' ||
+        url.hostname === 'yigitgulyurt.net.tr/font' ||
+        url.hostname === 'yigitgulyurt.net.tr/image' ||
         url.pathname.startsWith('/admin') ||
         url.pathname.startsWith('/obsidian')
     ) {

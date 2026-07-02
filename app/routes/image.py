@@ -1,7 +1,7 @@
 """
 app/routes/image.py
 Görsel servis sistemi
-Subdomain: image.yigitgulyurt.net.tr
+Subdomain: yigitgulyurt.net.tr/image
 """
 
 import os

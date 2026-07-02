@@ -137,17 +137,17 @@ def subdomain():
         },
         {
             "name": "Görsel Galerisi",
-            "url": "https://image.yigitgulyurt.net.tr",
+            "url": "https://yigitgulyurt.net.tr/image",
             "description": "Görsel galerisi ve dosya paylaşımı"
         },
         {
             "name": "Font Kütüphanesi",
-            "url": "https://font.yigitgulyurt.net.tr",
+            "url": "https://yigitgulyurt.net.tr/font",
             "description": "Özel font servisi ve font kütüphanesi"
         },
         {
             "name": "Canlı Yayın",
-            "url": "https://canli.yigitgulyurt.net.tr",
+            "url": "https://yigitgulyurt.net.tr/canli",
             "description": "Canlı yayın platformu"
         },
         {
@@ -246,7 +246,7 @@ def sitemap():
             'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),
         })
     pages.append({
-        'loc': 'https://font.yigitgulyurt.net.tr/',
+        'loc': 'https://yigitgulyurt.net.tr/font/',
         'priority': '0.9',
         'changefreq': 'weekly',
         'lastmod': datetime.utcnow().strftime('%Y-%m-%d'),

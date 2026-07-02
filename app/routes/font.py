@@ -1,7 +1,7 @@
 """
 app/routes/font.py
 Google Fonts benzeri font servis sistemi
-Subdomain: font.yigitgulyurt.net.tr
+Subdomain: yigitgulyurt.net.tr/font
 """
 
 import os

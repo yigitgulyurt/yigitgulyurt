@@ -16,12 +16,11 @@ limiter                  = Limiter(key_func=get_remote_address, default_limits=[
 @limiter.request_filter
 def vip_request_filter():
     """
-    font., image., css., js. subdomainleri, statik dosyalar ve iç ağ IP'leri rate limit'ten muaf tutar.
+    /font/, /image/, /canli/, /obsidian/ prefixleri, statik dosyalar ve iç ağ IP'leri rate limit'ten muaf tutar.
     """
-    # Subdomainleri kontrol et (font, image, css, js)
-    host = request.host
-    exempt_subdomains = ['font.', 'image.', 'css.', 'js.']
-    if any(host.startswith(sub) for sub in exempt_subdomains):
+    # URL prefixlerini kontrol et
+    exempt_prefixes = ['/font/', '/image/', '/canli/', '/obsidian/']
+    if any(request.path.startswith(prefix) for prefix in exempt_prefixes):
         return True
     
     # # Statik dosyaları muaf tut
@@ -68,7 +67,7 @@ def create_app(config_class=Config):
     # Nginx arkasında HTTPS ve IP bilgilerini doğru almak için
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
-    app.config['SESSION_COOKIE_DOMAIN'] = '.yigitgulyurt.net.tr'
+    # Artık subdomain kullanmadığımız için cookie domain ayarına gerek yok
 
     db.init_app(app)
     migrate.init_app(app, db)
