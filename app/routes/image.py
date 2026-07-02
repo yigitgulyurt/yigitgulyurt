@@ -8,7 +8,7 @@ import os
 from flask import Blueprint, request, Response, current_app, send_from_directory, abort, render_template, url_for
 from flask_login import login_required
 
-image_bp = Blueprint('image', __name__, subdomain='image')
+image_bp = Blueprint('image', __name__)
 
 ALLOWED_IMAGE_EXTENSIONS = ('.png', '.jpg', '.jpeg', '.gif', '.webp', '.svg', '.ico', '.bmp')
 

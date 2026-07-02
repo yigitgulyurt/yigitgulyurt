@@ -9,7 +9,7 @@ import re
 import time
 from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort
 
-font_bp = Blueprint('font', __name__, subdomain='font')
+font_bp = Blueprint('font', __name__)
 
 # Global cache değişkenleri
 _fonts_cache      = None
@@ -139,8 +139,8 @@ def cssy():
     fonts_data = get_fonts_data()
     css_output = []
     
-    # Base URL'i belirle (font subdomain'i üzerinden)
-    base_url = f"https://font.{current_app.config.get('SERVER_NAME', 'yigitgulyurt.net.tr')}"
+    # Base URL'i belirle (url prefix üzerinden)
+    base_url = f"https://{current_app.config.get('SERVER_NAME', 'yigitgulyurt.net.tr')}/font"
 
     for param in families_param:
         # Parametre formatı: FamilyName:ital,wght@0,100..900;1,100..900

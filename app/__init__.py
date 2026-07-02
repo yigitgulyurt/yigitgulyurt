@@ -88,10 +88,10 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tools_bp, url_prefix='/araclar')
     app.register_blueprint(og_bp)
-    app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
-    app.register_blueprint(obsidian_bp, subdomain='obsidian')
-    app.register_blueprint(font_bp, subdomain='font')
-    app.register_blueprint(image_bp, subdomain='image')
+    app.register_blueprint(stream_bp, url_prefix='/canli')
+    app.register_blueprint(obsidian_bp, url_prefix='/obsidian')
+    app.register_blueprint(font_bp, url_prefix='/font')
+    app.register_blueprint(image_bp, url_prefix='/image')
 
     register_context_processors(app)
 

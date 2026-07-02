@@ -16,7 +16,7 @@ from flask import (
 )
 from werkzeug.utils import secure_filename
 
-obsidian_bp = Blueprint('obsidian', __name__, subdomain='obsidian')
+obsidian_bp = Blueprint('obsidian', __name__)
 
 def obsidian_auth(f):
     @wraps(f)
