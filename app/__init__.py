@@ -96,28 +96,20 @@ def create_app(config_class=Config):
     from app.routes.font import font_bp
     from app.routes.image import image_bp
 
-    # ÖNCE SUBDOMAINLİ BLUEPRINTLER KAYDEDİLSİN! (öncelikli)
+    # ÖNCE SUBDOMAINLİ BLUEPRINTLER KAYDEDİLSİN! (öncelikli - ÇOK ÖNEMLİ!)
     app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
     app.register_blueprint(obsidian_bp, subdomain='obsidian')
     app.register_blueprint(font_bp, subdomain='font')
     app.register_blueprint(image_bp, subdomain='image')
     
-    # SONRA GENEL BLUEPRINTLER - SADECE ANA DOMAIN VE WWW. İÇİN!
-    # Aynı blueprint'i iki kez kaydederken benzersiz isimler verelim
-    app.register_blueprint(main_bp, subdomain='', name='main_root')
-    app.register_blueprint(main_bp, subdomain='www', name='main_www')
-    app.register_blueprint(projects_bp, url_prefix='/projeler', subdomain='', name='projects_root')
-    app.register_blueprint(projects_bp, url_prefix='/projeler', subdomain='www', name='projects_www')
-    app.register_blueprint(blog_bp, url_prefix='/blog', subdomain='', name='blog_root')
-    app.register_blueprint(blog_bp, url_prefix='/blog', subdomain='www', name='blog_www')
-    app.register_blueprint(contact_bp, url_prefix='/iletisim', subdomain='', name='contact_root')
-    app.register_blueprint(contact_bp, url_prefix='/iletisim', subdomain='www', name='contact_www')
-    app.register_blueprint(admin_bp, url_prefix='/admin', subdomain='', name='admin_root')
-    app.register_blueprint(admin_bp, url_prefix='/admin', subdomain='www', name='admin_www')
-    app.register_blueprint(tools_bp, url_prefix='/araclar', subdomain='', name='tools_root')
-    app.register_blueprint(tools_bp, url_prefix='/araclar', subdomain='www', name='tools_www')
-    app.register_blueprint(og_bp, subdomain='', name='og_root')
-    app.register_blueprint(og_bp, subdomain='www', name='og_www')
+    # SONRA GENEL BLUEPRINTLER
+    app.register_blueprint(main_bp)
+    app.register_blueprint(projects_bp, url_prefix='/projeler')
+    app.register_blueprint(blog_bp, url_prefix='/blog')
+    app.register_blueprint(contact_bp, url_prefix='/iletisim')
+    app.register_blueprint(admin_bp, url_prefix='/admin')
+    app.register_blueprint(tools_bp, url_prefix='/araclar')
+    app.register_blueprint(og_bp)
 
     register_context_processors(app)
 
