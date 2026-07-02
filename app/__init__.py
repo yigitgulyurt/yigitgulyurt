@@ -69,8 +69,8 @@ def create_app(config_class=Config):
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
     # Debug rotası: Host ve diğer bilgileri göster
-    @app.route('/debug-host')
-    def debug_host():
+    @app.route('/debug-info')
+    def debug_info():
         from flask import request, jsonify
         return jsonify({
             'host': request.host,
@@ -79,7 +79,8 @@ def create_app(config_class=Config):
             'x_forwarded_proto': request.headers.get('X-Forwarded-Proto'),
             'x_real_ip': request.headers.get('X-Real-IP'),
             'x_forwarded_for': request.headers.get('X-Forwarded-For'),
-            'url': request.url
+            'url': request.url,
+            'url_root': request.url_root
         })
 
     app.config['SESSION_COOKIE_DOMAIN'] = '.yigitgulyurt.net.tr'
@@ -101,14 +102,21 @@ def create_app(config_class=Config):
     app.register_blueprint(font_bp, subdomain='font')
     app.register_blueprint(image_bp, subdomain='image')
     
-    # SONRA GENEL BLUEPRINTLER - ama app.before_request ile subdomain kontrolü yapalım
-    app.register_blueprint(main_bp)
-    app.register_blueprint(projects_bp, url_prefix='/projeler')
-    app.register_blueprint(blog_bp, url_prefix='/blog')
-    app.register_blueprint(contact_bp, url_prefix='/iletisim')
-    app.register_blueprint(admin_bp, url_prefix='/admin')
-    app.register_blueprint(tools_bp, url_prefix='/araclar')
-    app.register_blueprint(og_bp)
+    # SONRA GENEL BLUEPRINTLER - SADECE ANA DOMAIN VE WWW. İÇİN!
+    app.register_blueprint(main_bp, subdomain='')
+    app.register_blueprint(main_bp, subdomain='www')
+    app.register_blueprint(projects_bp, url_prefix='/projeler', subdomain='')
+    app.register_blueprint(projects_bp, url_prefix='/projeler', subdomain='www')
+    app.register_blueprint(blog_bp, url_prefix='/blog', subdomain='')
+    app.register_blueprint(blog_bp, url_prefix='/blog', subdomain='www')
+    app.register_blueprint(contact_bp, url_prefix='/iletisim', subdomain='')
+    app.register_blueprint(contact_bp, url_prefix='/iletisim', subdomain='www')
+    app.register_blueprint(admin_bp, url_prefix='/admin', subdomain='')
+    app.register_blueprint(admin_bp, url_prefix='/admin', subdomain='www')
+    app.register_blueprint(tools_bp, url_prefix='/araclar', subdomain='')
+    app.register_blueprint(tools_bp, url_prefix='/araclar', subdomain='www')
+    app.register_blueprint(og_bp, subdomain='')
+    app.register_blueprint(og_bp, subdomain='www')
 
     register_context_processors(app)
 

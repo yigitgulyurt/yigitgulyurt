@@ -110,6 +110,10 @@ def get_fonts_data():
     _fonts_cache_time = now
     return fonts
 
+@font_bp.route('/test-simple')
+def test_simple():
+    return "FONT SUBdomain CALISTI!"
+
 @font_bp.route('/')
 def index():
     """Fontların listelendiği ana sayfa."""
