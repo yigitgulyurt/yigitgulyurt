@@ -81,6 +81,13 @@ def create_app(config_class=Config):
     from app.routes.font import font_bp
     from app.routes.image import image_bp
 
+    # ÖNCE SUBDOMAINLİ BLUEPRINTLER KAYDEDİLSİN! (öncelikli)
+    app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
+    app.register_blueprint(obsidian_bp, subdomain='obsidian')
+    app.register_blueprint(font_bp, subdomain='font')
+    app.register_blueprint(image_bp, subdomain='image')
+    
+    # SONRA GENEL BLUEPRINTLER
     app.register_blueprint(main_bp)
     app.register_blueprint(projects_bp, url_prefix='/projeler')
     app.register_blueprint(blog_bp, url_prefix='/blog')
@@ -88,10 +95,6 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tools_bp, url_prefix='/araclar')
     app.register_blueprint(og_bp)
-    app.register_blueprint(stream_bp)  # subdomain='canli' blueprint'te tanımlı
-    app.register_blueprint(obsidian_bp, subdomain='obsidian')
-    app.register_blueprint(font_bp, subdomain='font')
-    app.register_blueprint(image_bp, subdomain='image')
 
     register_context_processors(app)
 
