@@ -7,7 +7,7 @@ Subdomain: font.yigitgulyurt.net.tr
 import os
 import re
 import time
-from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort
+from flask import Blueprint, render_template, request, Response, current_app, send_from_directory, abort, jsonify
 
 font_bp = Blueprint('font', __name__, subdomain='font')
 
@@ -227,4 +227,36 @@ def serve_font(family, filename):
     response = send_from_directory(fonts_dir, filename)
     response.headers['Access-Control-Allow-Origin'] = '*'
     response.headers['Cache-Control'] = 'public, max-age=31536000, immutable'
+    return response
+
+
+@font_bp.route('/api/fonts')
+def api_fonts():
+    """
+    Tüm fontların metadata'sını JSON olarak döndüren API endpoint'i.
+    Yapay zekaların fontları kolayca algılaması için tasarlanmıştır.
+    """
+    fonts_data = get_fonts_data()
+    
+    unique_fonts = {}
+    for data in fonts_data.values():
+        if data['display_name'] not in unique_fonts:
+            unique_fonts[data['display_name']] = {
+                'name': data['display_name'],
+                'category': data.get('category', 'Sans-Serif'),
+                'variants': data['variants'],
+                'available_weights': sorted(list({v['weight'] for v in data['variants']})),
+                'available_styles': sorted(list({v['style'] for v in data['variants']})),
+                'available_formats': sorted(list({v['format'] for v in data['variants']}))
+            }
+    
+    result = {
+        'status': 'success',
+        'count': len(unique_fonts),
+        'fonts': list(unique_fonts.values())
+    }
+    
+    response = jsonify(result)
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    response.headers['Cache-Control'] = 'public, max-age=300'
     return response

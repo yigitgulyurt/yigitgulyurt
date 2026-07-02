@@ -985,6 +985,53 @@ to {
     margin-bottom: 10px;
 }
 
+/* Grid Layout for Links */
+.footer-links-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 40px;
+    width: 100%;
+    text-align: left;
+    margin-bottom: 20px;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.footer-column h4 {
+    color: var(--text);
+    font-size: 1.1rem;
+    margin-bottom: 8px;
+    font-weight: 600;
+    padding-bottom: 8px;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.footer-column a {
+    font-size: 0.9rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: 6px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-column a:hover {
+    color: var(--primary);
+    transform: translateX(4px);
+}
+
+.footer-column a svg.icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
 .footer-links {
     display: flex;
     flex-wrap: wrap;
@@ -1036,11 +1083,21 @@ to {
     padding: 4px 10px;
     border-radius: 4px;
     font-weight: 500;
+    display: flex;
+    align-items: center;
+    gap: 6px;
 }
 
 .footer-popular-cities a:hover {
     color: var(--primary);
     background: rgba(255,255,255,0.05);
+    transform: translateY(-1px);
+}
+
+.footer-popular-cities a svg.icon {
+    width: 14px;
+    height: 14px;
+    color: var(--primary);
 }
 
 .footer-creator {
@@ -1063,6 +1120,16 @@ to {
 
 .national-identity {
     margin: 20px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+}
+
+.national-identity svg.icon {
+    width: 24px;
+    height: 24px;
+    color: #ff5252;
 }
 
 .national-identity .text {
@@ -1071,6 +1138,12 @@ to {
     color: #ff5252;
     text-decoration: none;
     letter-spacing: 1px;
+    transition: all 0.2s ease;
+}
+
+.national-identity .text:hover {
+    transform: scale(1.05);
+    text-shadow: 0 0 20px rgba(255, 82, 82, 0.4);
 }
 
 .footer-brand a {
@@ -1087,4 +1160,30 @@ to {
 .footer-copy {
     font-size: 0.9rem;
     opacity: 0.8;
+}
+
+@media (max-width: 992px) {
+    .footer-links-grid {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+@media (max-width: 576px) {
+    .footer-links-grid {
+        grid-template-columns: 1fr;
+        text-align: center;
+    }
+    
+    .footer-column {
+        align-items: center;
+    }
+    
+    .footer-column h4 {
+        width: 100%;
+        text-align: center;
+    }
+    
+    .footer-column a {
+        justify-content: center;
+    }
 }
