@@ -109,6 +109,22 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tools_bp, url_prefix='/araclar')
     app.register_blueprint(og_bp)
+    
+    # Ana blueprint'ini sadece ana domain ve www. için çalışacak şekilde ayarla
+    from flask import request, abort
+    @main_bp.before_request
+    def check_subdomain():
+        host = request.host
+        if host not in ['yigitgulyurt.net.tr', 'www.yigitgulyurt.net.tr']:
+            # Eğer bilinen bir subdomain ise, flask diğer blueprint'leri arasın
+            # Bilinen subdomainler: canli, obsidian, font, image, css, js, harita
+            known_subdomains = ['canli', 'obsidian', 'font', 'image', 'css', 'js', 'harita']
+            subdomain = host.split('.')[0] if len(host.split('.')) > 2 else None
+            if subdomain in known_subdomains:
+                # Bu subdomain için başka bir blueprint var, flask onu bulsun
+                return None
+            # Bilinmeyen bir subdomain ise 404 döndür
+            abort(404)
 
     register_context_processors(app)
 
