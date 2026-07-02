@@ -68,6 +68,20 @@ def create_app(config_class=Config):
     # Nginx arkasında HTTPS ve IP bilgilerini doğru almak için
     app.wsgi_app = ProxyFix(app.wsgi_app, x_for=1, x_proto=1, x_host=1, x_prefix=1)
 
+    # Debug rotası: Host ve diğer bilgileri göster
+    @app.route('/debug-host')
+    def debug_host():
+        from flask import request, jsonify
+        return jsonify({
+            'host': request.host,
+            'server_name': app.config.get('SERVER_NAME'),
+            'x_forwarded_host': request.headers.get('X-Forwarded-Host'),
+            'x_forwarded_proto': request.headers.get('X-Forwarded-Proto'),
+            'x_real_ip': request.headers.get('X-Real-IP'),
+            'x_forwarded_for': request.headers.get('X-Forwarded-For'),
+            'url': request.url
+        })
+
     app.config['SESSION_COOKIE_DOMAIN'] = '.yigitgulyurt.net.tr'
 
     db.init_app(app)
