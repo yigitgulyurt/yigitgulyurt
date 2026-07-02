@@ -101,7 +101,7 @@ def create_app(config_class=Config):
     app.register_blueprint(font_bp, subdomain='font')
     app.register_blueprint(image_bp, subdomain='image')
     
-    # SONRA GENEL BLUEPRINTLER
+    # SONRA GENEL BLUEPRINTLER - ama app.before_request ile subdomain kontrolü yapalım
     app.register_blueprint(main_bp)
     app.register_blueprint(projects_bp, url_prefix='/projeler')
     app.register_blueprint(blog_bp, url_prefix='/blog')
@@ -109,22 +109,6 @@ def create_app(config_class=Config):
     app.register_blueprint(admin_bp, url_prefix='/admin')
     app.register_blueprint(tools_bp, url_prefix='/araclar')
     app.register_blueprint(og_bp)
-    
-    # Ana blueprint'ini sadece ana domain ve www. için çalışacak şekilde ayarla
-    from flask import request, abort
-    @main_bp.before_request
-    def check_subdomain():
-        host = request.host
-        if host not in ['yigitgulyurt.net.tr', 'www.yigitgulyurt.net.tr']:
-            # Eğer bilinen bir subdomain ise, flask diğer blueprint'leri arasın
-            # Bilinen subdomainler: canli, obsidian, font, image, css, js, harita
-            known_subdomains = ['canli', 'obsidian', 'font', 'image', 'css', 'js', 'harita']
-            subdomain = host.split('.')[0] if len(host.split('.')) > 2 else None
-            if subdomain in known_subdomains:
-                # Bu subdomain için başka bir blueprint var, flask onu bulsun
-                return None
-            # Bilinmeyen bir subdomain ise 404 döndür
-            abort(404)
 
     register_context_processors(app)
 
