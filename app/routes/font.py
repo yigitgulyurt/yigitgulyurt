@@ -82,7 +82,9 @@ def get_fonts_data():
                         style = "italic"
                     
                     weight = "400"
-                    for key, val in WEIGHT_MAP.items():
+                    # Uzun anahtarları önce kontrol et (ExtraBold Bold'dan önce gelsin)
+                    sorted_weights = sorted(WEIGHT_MAP.items(), key=lambda x: len(x[0]), reverse=True)
+                    for key, val in sorted_weights:
                         if key in name_no_ext:
                             weight = val
                             break
