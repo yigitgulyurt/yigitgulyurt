@@ -861,6 +861,70 @@ def unit_converter():
 def identicon():
     return render_template('tools/identicon.html')
 
+@tools_bp.route('/url-encode-decode')
+def url_encode_decode():
+    return render_template('tools/url_encode_decode.html')
+
+@tools_bp.route('/uuid-uretici')
+def uuid_generator():
+    return render_template('tools/uuid_generator.html')
+
+@tools_bp.route('/regex-test')
+def regex_test():
+    return render_template('tools/regex_test.html')
+
+@tools_bp.route('/json-yaml-donusturucu')
+def json_yaml_converter():
+    return render_template('tools/json_yaml_converter.html')
+
+@tools_bp.route('/jwt-decoder')
+def jwt_decoder():
+    return render_template('tools/jwt_decoder.html')
+
+@tools_bp.route('/http-header-kontrolcusu')
+def http_header_checker():
+    return render_template('tools/http_header_checker.html')
+
+@tools_bp.route('/css-minifier-beautifier')
+def css_minifier_beautifier():
+    return render_template('tools/css_minifier_beautifier.html')
+
+@tools_bp.route('/html-entity-encode-decode')
+def html_entity_encode_decode():
+    return render_template('tools/html_entity_encode_decode.html')
+
+@tools_bp.route('/tarih-saat-donusturucu')
+def datetime_converter():
+    return render_template('tools/datetime_converter.html')
+
+@tools_bp.route('/renk-donusturucu')
+def color_converter():
+    return render_template('tools/color_converter.html')
+
+@tools_bp.route('/hash-uretici')
+def hash_generator():
+    return render_template('tools/hash_generator.html')
+
+@tools_bp.route('/cron-olusturucu')
+def cron_generator():
+    return render_template('tools/cron_generator.html')
+
+@tools_bp.route('/markdown-preview')
+def markdown_preview():
+    return render_template('tools/markdown_preview.html')
+
+@tools_bp.route('/csv-goruntuleyici')
+def csv_viewer():
+    return render_template('tools/csv_viewer.html')
+
+@tools_bp.route('/dns-sorgulayici')
+def dns_lookup():
+    return render_template('tools/dns_lookup.html')
+
+@tools_bp.route('/ip-subnet-hesaplayici')
+def ip_subnet_calculator():
+    return render_template('tools/ip_subnet_calculator.html')
+
 # GitHub-style color palette
 GITHUB_COLORS = [
     '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',

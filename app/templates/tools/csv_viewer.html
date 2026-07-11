@@ -1,0 +1,144 @@
+{% extends "base/base.html" %}
+
+{% block title %}CSV Görüntüleyici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 15px;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.csv-table-wrapper {
+    margin-top: 25px;
+    overflow-x: auto;
+}
+
+.csv-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.csv-table th, .csv-table td {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.csv-table th {
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.csv-table tr:hover {
+    background: rgba(0,0,0,0.15);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📊 CSV Görüntüleyici</span>
+        <span class="lang-en">📊 CSV Viewer</span>
+    </h1>
+    
+    <textarea id="csv-input" placeholder="Ad,Soyad,Yas
+Ali,Veli,25
+Ahmet,Mehmet,30" oninput="renderCSV()"></textarea>
+
+    <button class="btn" onclick="renderCSV()">
+        <span class="lang-tr">Görüntüle</span>
+        <span class="lang-en">Render</span>
+    </button>
+
+    <div class="csv-table-wrapper" id="csv-output"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function renderCSV() {
+    const csv = document.getElementById('csv-input').value;
+    if (!csv.trim()) {
+        document.getElementById('csv-output').innerHTML = '';
+        return;
+    }
+
+    const lines = csv.trim().split('\n');
+    const rows = lines.map(line => {
+        const result = [];
+        let current = '';
+        let inQuotes = false;
+        for (let i = 0; i < line.length; i++) {
+            const char = line[i];
+            if (char === '"') {
+                inQuotes = !inQuotes;
+            } else if (char === ',' && !inQuotes) {
+                result.push(current.trim());
+                current = '';
+            } else {
+                current += char;
+            }
+        }
+        result.push(current.trim());
+        return result;
+    });
+
+    let html = '<table class="csv-table">';
+    rows.forEach((row, i) => {
+        const tag = i === 0 ? 'th' : 'td';
+        html += '<tr>';
+        row.forEach(cell => {
+            html += `<${tag}>${cell.replace(/"/g, '')}</${tag}>`;
+        });
+        html += '</tr>';
+    });
+    html += '</table>';
+
+    document.getElementById('csv-output').innerHTML = html;
+}
+
+// Örnek içerik
+document.getElementById('csv-input').value = `Ad,Soyad,Yas,Sehir
+Ali,Veli,25,Istanbul
+Ahmet,Mehmet,30,Ankara
+Ayşe,Fatma,28,Izmir`;
+renderCSV();
+</script>
+{% endblock %}

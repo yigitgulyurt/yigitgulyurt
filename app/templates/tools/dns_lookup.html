@@ -1,0 +1,125 @@
+{% extends "base/base.html" %}
+
+{% block title %}DNS Sorgulayıcı{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+input[type="text"], select {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-size: 0.95rem;
+}
+
+input[type="text"] {
+    flex: 1;
+}
+
+.btn {
+    padding: 15px 25px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.result-section {
+    margin-top: 25px;
+}
+
+.dns-result {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.note {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 166, 77, 0.1);
+    border-left: 3px solid #ffa64d;
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🌐 DNS Sorgulayıcı</span>
+        <span class="lang-en">🌐 DNS Lookup</span>
+    </h1>
+    
+    <div class="input-group">
+        <input type="text" id="domain-input" placeholder="example.com">
+        <select id="record-type">
+            <option value="A">A</option>
+            <option value="AAAA">AAAA</option>
+            <option value="MX">MX</option>
+            <option value="NS">NS</option>
+            <option value="TXT">TXT</option>
+        </select>
+        <button class="btn" onclick="showDemo()">
+            <span class="lang-tr">Demo</span>
+            <span class="lang-en">Demo</span>
+        </button>
+    </div>
+
+    <div class="note">
+        <span class="lang-tr">💡 Not: Tarayıcı güvenlik kısıtlamaları nedeniyle gerçek DNS sorgusu için sunucu tarafı bir API gerekmektedir. Bu bir demo görselleştirmedir.</span>
+        <span class="lang-en">💡 Note: Real DNS lookup requires a server-side API due to browser security restrictions. This is a demo visualization.</span>
+    </div>
+
+    <div id="result" style="display: none;" class="result-section"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function showDemo() {
+    const demoResults = [
+        { type: 'A', value: '93.184.216.34' },
+        { type: 'MX', value: '10 mx1.example.com' },
+        { type: 'MX', value: '20 mx2.example.com' },
+        { type: 'NS', value: 'ns1.example.com' },
+        { type: 'NS', value: 'ns2.example.com' },
+    ];
+    document.getElementById('result').style.display = 'block';
+    document.getElementById('result').innerHTML = demoResults.map(r => `
+        <div class="dns-result">
+            <strong style="color: var(--primary); margin-right: 15px;">${r.type}</strong>
+            <span>${r.value}</span>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

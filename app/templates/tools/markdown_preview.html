@@ -1,0 +1,143 @@
+{% extends "base/base.html" %}
+
+{% block title %}Markdown Preview{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 1000px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.md-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+}
+
+@media (max-width: 768px) {
+    .md-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+textarea {
+    width: 100%;
+    min-height: 400px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.md-preview {
+    min-height: 400px;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.15);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    overflow-y: auto;
+}
+
+.md-preview h1, .md-preview h2, .md-preview h3 {
+    color: var(--text);
+    margin-top: 20px;
+    margin-bottom: 10px;
+}
+
+.md-preview p {
+    margin-bottom: 15px;
+    line-height: 1.7;
+}
+
+.md-preview code {
+    background: rgba(0,0,0,0.3);
+    padding: 2px 6px;
+    border-radius: 4px;
+    font-family: 'JetBrains Mono', monospace;
+}
+
+.md-preview pre {
+    background: rgba(0,0,0,0.3);
+    padding: 15px;
+    border-radius: 8px;
+    overflow-x: auto;
+}
+
+.md-preview ul, .md-preview ol {
+    margin-left: 20px;
+    margin-bottom: 15px;
+}
+
+.md-preview a {
+    color: var(--primary);
+    text-decoration: underline;
+}
+
+.label {
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/marked/marked.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📝 Markdown Preview</span>
+        <span class="lang-en">📝 Markdown Preview</span>
+    </h1>
+    
+    <div class="md-wrapper">
+        <div>
+            <div class="label">Markdown</div>
+            <textarea id="md-input" placeholder="# Başlık\n\nMarkdown yazın..." oninput="updatePreview()"></textarea>
+        </div>
+        <div>
+            <div class="label">Preview</div>
+            <div id="md-preview" class="md-preview"></div>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updatePreview() {
+    const md = document.getElementById('md-input').value;
+    const html = marked.parse(md);
+    document.getElementById('md-preview').innerHTML = html;
+}
+
+// Örnek içerik
+document.getElementById('md-input').value = `# Markdown Preview
+
+Bu bir **Markdown** önizleme aracıdır.
+
+## Özellikler
+
+- Gerçek zamanlı önizleme
+- Basit ve hızlı
+- Kod blokları: \`console.log('Merhaba')\`
+
+### Liste
+
+1. İlk madde
+2. İkinci madde
+3. Üçüncü madde
+
+> Alıntı bloğu da mevcuttur.
+`;
+updatePreview();
+</script>
+{% endblock %}

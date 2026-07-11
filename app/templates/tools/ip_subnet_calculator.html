@@ -1,0 +1,167 @@
+{% extends "base/base.html" %}
+
+{% block title %}IP Subnet Hesaplayıcı{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 25px;
+}
+
+input[type="text"], input[type="number"], select {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+input[type="text"] {
+    flex: 1;
+}
+
+.btn {
+    padding: 15px 25px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.result-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.result-label {
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔢 IP Subnet Hesaplayıcı</span>
+        <span class="lang-en">🔢 IP Subnet Calculator</span>
+    </h1>
+    
+    <div class="input-group">
+        <input type="text" id="ip-input" value="192.168.1.100" placeholder="192.168.1.100">
+        <span style="color: var(--text); font-weight: bold; padding-top: 12px;">/</span>
+        <select id="prefix-input" onchange="calculateSubnet()">
+            ${Array.from({length: 33}, (_, i) => `<option value="${i}">${i}</option>`).join('')}
+        </select>
+        <button class="btn" onclick="calculateSubnet()">
+            <span class="lang-tr">Hesapla</span>
+            <span class="lang-en">Calculate</span>
+        </button>
+    </div>
+
+    <div class="result-grid" id="results"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+// Select'i doldur
+document.addEventListener('DOMContentLoaded', () => {
+    const select = document.getElementById('prefix-input');
+    select.innerHTML = '';
+    for (let i = 0; i <= 32; i++) {
+        const opt = document.createElement('option');
+        opt.value = i;
+        opt.textContent = i;
+        if (i === 24) opt.selected = true;
+        select.appendChild(opt);
+    }
+    calculateSubnet();
+    document.getElementById('ip-input').addEventListener('input', calculateSubnet);
+});
+
+function ipToLong(ip) {
+    return ip.split('.').reduce((acc, octet) => (acc << 8) + parseInt(octet, 10), 0) >>> 0;
+}
+
+function longToIp(long) {
+    return [
+        (long >>> 24) & 255,
+        (long >>> 16) & 255,
+        (long >>> 8) & 255,
+        long & 255
+    ].join('.');
+}
+
+function calculateSubnet() {
+    const ipStr = document.getElementById('ip-input').value;
+    const prefix = parseInt(document.getElementById('prefix-input').value);
+    
+    if (!ipStr || isNaN(prefix)) return;
+    
+    const ipLong = ipToLong(ipStr);
+    const maskLong = (0xffffffff << (32 - prefix)) >>> 0;
+    const networkLong = (ipLong & maskLong) >>> 0;
+    const broadcastLong = (networkLong | (~maskLong >>> 0)) >>> 0;
+    const wildcardLong = (~maskLong) >>> 0;
+    const firstHostLong = networkLong + 1;
+    const lastHostLong = broadcastLong - 1;
+    const totalHosts = Math.pow(2, 32 - prefix);
+    const usableHosts = totalHosts - 2;
+    
+    const results = [
+        { label: 'IP Address', value: ipStr },
+        { label: 'Subnet Mask', value: longToIp(maskLong) },
+        { label: 'Network Address', value: longToIp(networkLong) },
+        { label: 'Broadcast Address', value: longToIp(broadcastLong) },
+        { label: 'Wildcard Mask', value: longToIp(wildcardLong) },
+        { label: 'First Host', value: longToIp(firstHostLong) },
+        { label: 'Last Host', value: longToIp(lastHostLong) },
+        { label: 'Total Hosts', value: totalHosts.toLocaleString() },
+        { label: 'Usable Hosts', value: (usableHosts > 0 ? usableHosts : totalHosts).toLocaleString() },
+    ];
+    
+    document.getElementById('results').innerHTML = results.map(r => `
+        <div class="result-item">
+            <span class="result-label">${r.label}</span>
+            <span class="result-value">${r.value}</span>
+        </div>
+    `).join('');
+}
+</script>
+{% endblock %}

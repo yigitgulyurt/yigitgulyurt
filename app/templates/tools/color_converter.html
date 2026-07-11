@@ -1,0 +1,215 @@
+{% extends "base/base.html" %}
+
+{% block title %}Renk Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.color-preview {
+    height: 100px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+input[type="color"] {
+    width: 60px;
+    height: 50px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+}
+
+input[type="text"] {
+    flex: 1;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.result-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.result-label {
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🎨 Renk Dönüştürücü</span>
+        <span class="lang-en">🎨 Color Converter</span>
+    </h1>
+    
+    <div class="color-preview" id="color-preview" style="background: #4ade80;"></div>
+
+    <div class="input-group">
+        <input type="color" id="color-picker" value="#4ade80" oninput="updateFromPicker()">
+        <input type="text" id="hex-input" value="#4ade80" placeholder="#ffffff" oninput="updateFromHex()">
+    </div>
+
+    <div class="input-group">
+        <input type="text" id="rgb-input" value="rgb(74, 222, 128)" placeholder="rgb(0,0,0)" oninput="updateFromRgb()">
+    </div>
+
+    <div class="result-grid" id="results"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function hexToRgb(hex) {
+    const result = /^#?([a-f\d]{2})([a-f\d]{2})([a-f\d]{2})$/i.exec(hex);
+    return result ? {
+        r: parseInt(result[1], 16),
+        g: parseInt(result[2], 16),
+        b: parseInt(result[3], 16)
+    } : null;
+}
+
+function rgbToHsl(r, g, b) {
+    r /= 255; g /= 255; b /= 255;
+    const max = Math.max(r, g, b), min = Math.min(r, g, b);
+    let h, s, l = (max + min) / 2;
+
+    if (max === min) {
+        h = s = 0;
+    } else {
+        const d = max - min;
+        s = l > 0.5 ? d / (2 - max - min) : d / (max + min);
+        switch (max) {
+            case r: h = ((g - b) / d + (g < b ? 6 : 0)) / 6; break;
+            case g: h = ((b - r) / d + 2) / 6; break;
+            case b: h = ((r - g) / d + 4) / 6; break;
+        }
+    }
+
+    return {
+        h: Math.round(h * 360),
+        s: Math.round(s * 100),
+        l: Math.round(l * 100)
+    };
+}
+
+function updateFromPicker() {
+    const hex = document.getElementById('color-picker').value;
+    document.getElementById('hex-input').value = hex;
+    const rgb = hexToRgb(hex);
+    document.getElementById('rgb-input').value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+    updateResults(hex, rgb);
+}
+
+function updateFromHex() {
+    let hex = document.getElementById('hex-input').value;
+    if (!hex.startsWith('#')) hex = '#' + hex;
+    if (hex.length === 4) {
+        hex = '#' + hex[1] + hex[1] + hex[2] + hex[2] + hex[3] + hex[3];
+    }
+    const rgb = hexToRgb(hex);
+    if (rgb) {
+        document.getElementById('color-picker').value = hex;
+        document.getElementById('rgb-input').value = `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})`;
+        updateResults(hex, rgb);
+    }
+}
+
+function updateFromRgb() {
+    const rgbStr = document.getElementById('rgb-input').value;
+    const match = rgbStr.match(/rgb\s*\(\s*(\d+)\s*,\s*(\d+)\s*,\s*(\d+)\s*\)/);
+    if (match) {
+        const r = parseInt(match[1]), g = parseInt(match[2]), b = parseInt(match[3]);
+        const hex = '#' + [r, g, b].map(x => x.toString(16).padStart(2, '0')).join('');
+        document.getElementById('color-picker').value = hex;
+        document.getElementById('hex-input').value = hex;
+        updateResults(hex, { r, g, b });
+    }
+}
+
+function updateResults(hex, rgb) {
+    document.getElementById('color-preview').style.background = hex;
+    
+    const hsl = rgbToHsl(rgb.r, rgb.g, rgb.b);
+    const results = [
+        { label: 'HEX', value: hex },
+        { label: 'RGB', value: `rgb(${rgb.r}, ${rgb.g}, ${rgb.b})` },
+        { label: 'HSL', value: `hsl(${hsl.h}, ${hsl.s}%, ${hsl.l}%)` },
+        { label: 'RGB Object', value: `{ r: ${rgb.r}, g: ${rgb.g}, b: ${rgb.b} }` },
+    ];
+    
+    document.getElementById('results').innerHTML = results.map(r => `
+        <div class="result-item">
+            <span class="result-label">${r.label}</span>
+            <div style="display: flex; align-items: center;">
+                <span class="result-value">${r.value}</span>
+                <button class="copy-btn" onclick="copyText('${r.value}')">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Kopyalandı!", "success");
+    });
+}
+
+document.addEventListener('DOMContentLoaded', updateFromPicker);
+</script>
+{% endblock %}

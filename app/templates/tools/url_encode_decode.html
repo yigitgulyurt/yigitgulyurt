@@ -1,0 +1,153 @@
+{% extends "base/base.html" %}
+
+{% block title %}URL Encode/Decode{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+textarea {
+    width: 100%;
+    min-height: 150px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    margin: 20px 0;
+}
+
+.btn {
+    flex: 1;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+}
+
+.result-section {
+    margin-top: 20px;
+}
+
+.result-label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.copy-btn {
+    background: transparent;
+    border: 1px solid var(--primary);
+    color: var(--primary);
+    padding: 5px 12px;
+    border-radius: 6px;
+    font-size: 0.85rem;
+    cursor: pointer;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔗 URL Encode/Decode</span>
+        <span class="lang-en">🔗 URL Encode/Decode</span>
+    </h1>
+    
+    <textarea id="input-text" placeholder="Metin girin..."></textarea>
+
+    <div class="btn-group">
+        <button class="btn" onclick="encodeUrl()">
+            <span class="lang-tr">Encode</span>
+            <span class="lang-en">Encode</span>
+        </button>
+        <button class="btn btn-secondary" onclick="decodeUrl()">
+            <span class="lang-tr">Decode</span>
+            <span class="lang-en">Decode</span>
+        </button>
+    </div>
+
+    <div class="result-section">
+        <div class="result-label">
+            <span>
+                <span class="lang-tr">Sonuç:</span>
+                <span class="lang-en">Result:</span>
+            </span>
+            <button class="copy-btn" onclick="copyResult()">
+                <span class="lang-tr">Kopyala</span>
+                <span class="lang-en">Copy</span>
+            </button>
+        </div>
+        <textarea id="result-text" readonly placeholder="Sonuç burada görünecek..."></textarea>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function encodeUrl() {
+    const input = document.getElementById('input-text').value;
+    try {
+        document.getElementById('result-text').value = encodeURIComponent(input);
+    } catch (e) {
+        showToast("Encode hatası!", "error");
+    }
+}
+
+function decodeUrl() {
+    const input = document.getElementById('input-text').value;
+    try {
+        document.getElementById('result-text').value = decodeURIComponent(input);
+    } catch (e) {
+        showToast("Decode hatası! Geçersiz URL encode edilmiş metin.", "error");
+    }
+}
+
+function copyResult() {
+    const result = document.getElementById('result-text').value;
+    if (!result) return;
+    
+    navigator.clipboard.writeText(result).then(() => {
+        showToast("Kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}

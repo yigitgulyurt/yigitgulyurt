@@ -1,0 +1,242 @@
+{% extends "base/base.html" %}
+
+{% block title %}CSS Minifier/Beautifier{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.converter-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .converter-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+}
+
+.label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.stats {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    display: flex;
+    gap: 30px;
+}
+
+.stat-item {
+    text-align: center;
+}
+
+.stat-value {
+    font-size: 1.5rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🎨 CSS Minifier/Beautifier</span>
+        <span class="lang-en">🎨 CSS Minifier/Beautifier</span>
+    </h1>
+    
+    <div class="converter-wrapper">
+        <div>
+            <div class="label">
+                <span>Giriş</span>
+                <button class="copy-btn" onclick="copyInput()">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+            <textarea id="css-input" placeholder="CSS girin..."></textarea>
+        </div>
+        <div>
+            <div class="label">
+                <span>Çıkış</span>
+                <button class="copy-btn" onclick="copyOutput()">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+            <textarea id="css-output" placeholder="Sonuç..." readonly></textarea>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn" onclick="minifyCSS()">
+            <span class="lang-tr">Minify</span>
+            <span class="lang-en">Minify</span>
+        </button>
+        <button class="btn btn-secondary" onclick="beautifyCSS()">
+            <span class="lang-tr">Beautify</span>
+            <span class="lang-en">Beautify</span>
+        </button>
+    </div>
+
+    <div id="stats" style="display: none;" class="stats"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function minifyCSS() {
+    const css = document.getElementById('css-input').value;
+    if (!css) return;
+    
+    let minified = css
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\s*([\{\}\:\;\,])\s*/g, '$1')
+        .replace(/;\}/g, '}')
+        .trim();
+    
+    document.getElementById('css-output').value = minified;
+    showStats(css, minified);
+    showToast("Minify edildi!", "success");
+}
+
+function beautifyCSS() {
+    const css = document.getElementById('css-input').value;
+    if (!css) return;
+    
+    let beautified = css
+        .replace(/\/\*[\s\S]*?\*\//g, '')
+        .replace(/\s+/g, ' ')
+        .replace(/\{/g, ' {\n    ')
+        .replace(/\}/g, '\n}\n')
+        .replace(/;/g, ';\n    ')
+        .split('\n').map(line => line.trim()).filter(line => line).join('\n');
+    
+    document.getElementById('css-output').value = beautified;
+    showToast("Beautify edildi!", "success");
+}
+
+function showStats(original, result) {
+    const origLen = original.length;
+    const resLen = result.length;
+    const savings = origLen > resLen ? ((1 - resLen / origLen) * 100).toFixed(1) : 0;
+    
+    document.getElementById('stats').style.display = 'flex';
+    document.getElementById('stats').innerHTML = `
+        <div class="stat-item">
+            <div class="stat-value">${origLen}</div>
+            <div class="stat-label">
+                <span class="lang-tr">Orijinal</span>
+                <span class="lang-en">Original</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${resLen}</div>
+            <div class="stat-label">
+                <span class="lang-tr">Sonuç</span>
+                <span class="lang-en">Result</span>
+            </div>
+        </div>
+        <div class="stat-item">
+            <div class="stat-value">${savings}%</div>
+            <div class="stat-label">
+                <span class="lang-tr">Kazanç</span>
+                <span class="lang-en">Savings</span>
+            </div>
+        </div>
+    `;
+}
+
+function copyInput() {
+    const val = document.getElementById('css-input').value;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => showToast("Kopyalandı!", "success"));
+}
+
+function copyOutput() {
+    const val = document.getElementById('css-output').value;
+    if (!val) return;
+    navigator.clipboard.writeText(val).then(() => showToast("Kopyalandı!", "success"));
+}
+</script>
+{% endblock %}

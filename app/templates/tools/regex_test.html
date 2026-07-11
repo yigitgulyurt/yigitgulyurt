@@ -1,0 +1,239 @@
+{% extends "base/base.html" %}
+
+{% block title %}RegEx Test Aracı{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.regex-input-group {
+    display: flex;
+    gap: 10px;
+    margin-bottom: 20px;
+    align-items: center;
+}
+
+.pattern-wrapper {
+    flex: 1;
+    display: flex;
+    align-items: center;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    padding: 0 15px;
+}
+
+.delimiter {
+    color: var(--primary);
+    font-size: 1.5rem;
+    font-weight: 700;
+}
+
+#regex-pattern {
+    flex: 1;
+    background: transparent;
+    border: none;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1rem;
+    padding: 15px 10px;
+    outline: none;
+}
+
+.flags-group {
+    display: flex;
+    gap: 10px;
+}
+
+.flag-label {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    cursor: pointer;
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    transition: all 0.2s;
+}
+
+.flag-label:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+.flag-label input:checked + span {
+    color: var(--primary);
+    font-weight: 700;
+}
+
+textarea {
+    width: 100%;
+    min-height: 200px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+    margin-bottom: 20px;
+}
+
+.result-section {
+    margin-top: 20px;
+}
+
+.result-label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+}
+
+#result-preview {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 15px;
+    border-radius: 12px;
+    line-height: 1.8;
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-word;
+}
+
+.match-highlight {
+    background: var(--primary);
+    color: white;
+    padding: 2px 4px;
+    border-radius: 4px;
+    font-weight: 600;
+}
+
+.match-info {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(var(--primary-rgb), 0.1);
+    border-radius: 10px;
+    border-left: 3px solid var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔍 RegEx Test Aracı</span>
+        <span class="lang-en">🔍 RegEx Tester</span>
+    </h1>
+    
+    <div class="regex-input-group">
+        <div class="pattern-wrapper">
+            <span class="delimiter">/</span>
+            <input type="text" id="regex-pattern" placeholder="RegEx deseni..." oninput="testRegex()">
+            <span class="delimiter">/</span>
+        </div>
+        <div class="flags-group">
+            <label class="flag-label">
+                <input type="checkbox" id="flag-i" onchange="testRegex()">
+                <span>i</span>
+            </label>
+            <label class="flag-label">
+                <input type="checkbox" id="flag-g" onchange="testRegex()">
+                <span>g</span>
+            </label>
+            <label class="flag-label">
+                <input type="checkbox" id="flag-m" onchange="testRegex()">
+                <span>m</span>
+            </label>
+        </div>
+    </div>
+
+    <textarea id="test-text" placeholder="Test edilecek metni buraya yazın..." oninput="testRegex()"></textarea>
+
+    <div class="result-section">
+        <div class="result-label">
+            <span class="lang-tr">Eşleşme Önizleme:</span>
+            <span class="lang-en">Match Preview:</span>
+        </div>
+        <div id="result-preview">
+            <span class="lang-tr">Sonuç burada görünecek...</span>
+            <span class="lang-en">Results will appear here...</span>
+        </div>
+        <div id="match-info" style="display: none;" class="match-info"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function escapeHtml(text) {
+    const div = document.createElement('div');
+    div.textContent = text;
+    return div.innerHTML;
+}
+
+function testRegex() {
+    const pattern = document.getElementById('regex-pattern').value;
+    const text = document.getElementById('test-text').value;
+    const flags = (document.getElementById('flag-i').checked ? 'i' : '') +
+                  (document.getElementById('flag-g').checked ? 'g' : '') +
+                  (document.getElementById('flag-m').checked ? 'm' : '');
+    const preview = document.getElementById('result-preview');
+    const info = document.getElementById('match-info');
+
+    if (!pattern || !text) {
+        preview.innerHTML = escapeHtml(text) || '<span class="lang-tr">Sonuç burada görünecek...</span><span class="lang-en">Results will appear here...</span>';
+        info.style.display = 'none';
+        return;
+    }
+
+    try {
+        const regex = new RegExp(pattern, flags);
+        let html = escapeHtml(text);
+        let matches = [];
+        
+        if (flags.includes('g')) {
+            let match;
+            while ((match = regex.exec(text)) !== null) {
+                matches.push(match);
+            }
+        } else {
+            const match = regex.exec(text);
+            if (match) matches.push(match);
+        }
+
+        if (matches.length > 0) {
+            let offset = 0;
+            matches.forEach((match, index) => {
+                const start = match.index + offset;
+                const end = start + match[0].length;
+                const before = html.substring(0, start);
+                const after = html.substring(end);
+                const matched = escapeHtml(match[0]);
+                html = before + `<span class="match-highlight">${matched}</span>` + after;
+                offset += (`<span class="match-highlight">${matched}</span>`).length - match[0].length;
+            });
+
+            preview.innerHTML = html;
+            info.style.display = 'block';
+            info.innerHTML = `
+                <strong><span class="lang-tr">Eşleşme sayısı:</span><span class="lang-en">Match count:</span></strong> ${matches.length}<br>
+                <strong><span class="lang-tr">Desen:</span><span class="lang-en">Pattern:</span></strong> /${pattern}/${flags}
+            `;
+        } else {
+            preview.innerHTML = escapeHtml(text);
+            info.style.display = 'block';
+            info.innerHTML = `<span class="lang-tr">Eşleşme bulunamadı.</span><span class="lang-en">No match found.</span>`;
+        }
+    } catch (e) {
+        preview.innerHTML = escapeHtml(text);
+        info.style.display = 'block';
+        info.innerHTML = `<strong style="color: #ff4d4d;"><span class="lang-tr">Hata:</span><span class="lang-en">Error:</span></strong> ${e.message}`;
+    }
+}
+</script>
+{% endblock %}

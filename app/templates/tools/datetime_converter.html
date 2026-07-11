@@ -1,0 +1,194 @@
+{% extends "base/base.html" %}
+
+{% block title %}Tarih/Saat Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.datetime-section {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.datetime-input {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+}
+
+input[type="datetime-local"], input[type="number"] {
+    flex: 1;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.result-grid {
+    display: grid;
+    gap: 15px;
+}
+
+.result-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.result-label {
+    font-weight: 600;
+    color: var(--text-dim);
+}
+
+.result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-left: 10px;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">⏰ Tarih/Saat Dönüştürücü</span>
+        <span class="lang-en">⏰ Date/Time Converter</span>
+    </h1>
+    
+    <div class="datetime-section">
+        <div class="datetime-input">
+            <input type="datetime-local" id="datetime-input">
+            <button class="btn" onclick="setNow()">
+                <span class="lang-tr">Şimdi</span>
+                <span class="lang-en">Now</span>
+            </button>
+        </div>
+        <div class="datetime-input">
+            <input type="number" id="timestamp-input" placeholder="Timestamp (saniye)">
+            <button class="btn" onclick="fromTimestamp()">
+                <span class="lang-tr">Timestamp'ten</span>
+                <span class="lang-en">From Timestamp</span>
+            </button>
+        </div>
+    </div>
+
+    <div class="result-grid" id="results"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setNow() {
+    const now = new Date();
+    const localStr = now.getFullYear() + '-' +
+        String(now.getMonth() + 1).padStart(2, '0') + '-' +
+        String(now.getDate()).padStart(2, '0') + 'T' +
+        String(now.getHours()).padStart(2, '0') + ':' +
+        String(now.getMinutes()).padStart(2, '0');
+    document.getElementById('datetime-input').value = localStr;
+    updateResults(now);
+}
+
+function fromTimestamp() {
+    const ts = parseInt(document.getElementById('timestamp-input').value);
+    if (isNaN(ts)) {
+        showToast("Geçersiz timestamp!", "error");
+        return;
+    }
+    const date = new Date(ts * 1000);
+    updateResults(date);
+}
+
+function updateResults(date) {
+    const resultsDiv = document.getElementById('results');
+    const tz = Intl.DateTimeFormat().resolvedOptions().timeZone;
+    
+    const results = [
+        { label: 'ISO 8601', value: date.toISOString() },
+        { label: 'Timestamp (s)', value: Math.floor(date.getTime() / 1000) },
+        { label: 'Timestamp (ms)', value: date.getTime() },
+        { label: 'Locale String', value: date.toLocaleString() },
+        { label: 'UTC String', value: date.toUTCString() },
+        { label: 'Date String', value: date.toDateString() },
+        { label: 'Time Zone', value: tz },
+    ];
+    
+    resultsDiv.innerHTML = results.map(r => `
+        <div class="result-item">
+            <div>
+                <span class="result-label">${r.label}</span>
+            </div>
+            <div style="display: flex; align-items: center;">
+                <span class="result-value">${r.value}</span>
+                <button class="copy-btn" onclick="copyText('${r.value}')">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+        </div>
+    `).join('');
+}
+
+function copyText(text) {
+    navigator.clipboard.writeText(text).then(() => {
+        showToast("Kopyalandı!", "success");
+    });
+}
+
+document.getElementById('datetime-input').addEventListener('change', function() {
+    if (this.value) {
+        updateResults(new Date(this.value));
+    }
+});
+
+document.addEventListener('DOMContentLoaded', setNow);
+</script>
+{% endblock %}

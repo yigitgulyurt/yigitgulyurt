@@ -1,0 +1,202 @@
+{% extends "base/base.html" %}
+
+{% block title %}JSON/YAML Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 900px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.converter-wrapper {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .converter-wrapper {
+        grid-template-columns: 1fr;
+    }
+}
+
+textarea {
+    width: 100%;
+    min-height: 300px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.btn-secondary {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+
+.label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+    font-weight: 600;
+    color: var(--text-dim);
+}
+</style>
+<script src="https://cdn.jsdelivr.net/npm/js-yaml@4.1.0/dist/js-yaml.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔄 JSON/YAML Dönüştürücü</span>
+        <span class="lang-en">🔄 JSON/YAML Converter</span>
+    </h1>
+    
+    <div class="converter-wrapper">
+        <div>
+            <div class="label">
+                <span>JSON</span>
+                <button class="copy-btn" onclick="copyJson()">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+            <textarea id="json-input" placeholder="JSON girin..." oninput="autoConvert()"></textarea>
+        </div>
+        <div>
+            <div class="label">
+                <span>YAML</span>
+                <button class="copy-btn" onclick="copyYaml()">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+            <textarea id="yaml-input" placeholder="YAML girin..." oninput="autoConvert()"></textarea>
+        </div>
+    </div>
+
+    <div class="btn-group">
+        <button class="btn" onclick="jsonToYaml()">
+            <span class="lang-tr">JSON → YAML</span>
+            <span class="lang-en">JSON → YAML</span>
+        </button>
+        <button class="btn btn-secondary" onclick="yamlToJson()">
+            <span class="lang-tr">YAML → JSON</span>
+            <span class="lang-en">YAML → JSON</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let lastEdited = null;
+
+function autoConvert() {
+    const jsonEl = document.getElementById('json-input');
+    const yamlEl = document.getElementById('yaml-input');
+    
+    if (document.activeElement === jsonEl) {
+        lastEdited = 'json';
+    } else if (document.activeElement === yamlEl) {
+        lastEdited = 'yaml';
+    }
+}
+
+function jsonToYaml() {
+    const json = document.getElementById('json-input').value;
+    if (!json) return;
+    
+    try {
+        const obj = JSON.parse(json);
+        const yaml = jsyaml.dump(obj, { indent: 2 });
+        document.getElementById('yaml-input').value = yaml;
+        showToast("Dönüştürüldü!", "success");
+    } catch (e) {
+        showToast("JSON hatası: " + e.message, "error");
+    }
+}
+
+function yamlToJson() {
+    const yaml = document.getElementById('yaml-input').value;
+    if (!yaml) return;
+    
+    try {
+        const obj = jsyaml.load(yaml);
+        const json = JSON.stringify(obj, null, 2);
+        document.getElementById('json-input').value = json;
+        showToast("Dönüştürüldü!", "success");
+    } catch (e) {
+        showToast("YAML hatası: " + e.message, "error");
+    }
+}
+
+function copyJson() {
+    const json = document.getElementById('json-input').value;
+    if (!json) return;
+    
+    navigator.clipboard.writeText(json).then(() => {
+        showToast("JSON kopyalandı!", "success");
+    });
+}
+
+function copyYaml() {
+    const yaml = document.getElementById('yaml-input').value;
+    if (!yaml) return;
+    
+    navigator.clipboard.writeText(yaml).then(() => {
+        showToast("YAML kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}

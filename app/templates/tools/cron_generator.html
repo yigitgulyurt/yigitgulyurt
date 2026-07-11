@@ -1,0 +1,233 @@
+{% extends "base/base.html" %}
+
+{% block title %}CRON İfadesi Oluşturucu{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.cron-inputs {
+    display: grid;
+    grid-template-columns: repeat(5, 1fr);
+    gap: 15px;
+    margin-bottom: 20px;
+}
+
+@media (max-width: 768px) {
+    .cron-inputs {
+        grid-template-columns: repeat(2, 1fr);
+    }
+}
+
+.cron-field {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.cron-field label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-weight: 600;
+}
+
+.cron-field input {
+    padding: 10px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.95rem;
+}
+
+.result-box {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 20px;
+    border: 1px solid var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+    text-align: center;
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.presets {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    margin-bottom: 25px;
+}
+
+.preset-btn {
+    padding: 12px;
+    background: rgba(var(--primary-rgb), 0.1);
+    color: var(--primary);
+    border: 1px solid rgba(var(--primary-rgb), 0.2);
+    border-radius: 8px;
+    cursor: pointer;
+    transition: all 0.2s;
+    font-weight: 500;
+}
+
+.preset-btn:hover {
+    background: rgba(var(--primary-rgb), 0.2);
+}
+
+.description {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    line-height: 1.6;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">⏰ CRON İfadesi Oluşturucu</span>
+        <span class="lang-en">⏰ CRON Expression Generator</span>
+    </h1>
+    
+    <div class="description">
+        <span class="lang-tr">
+            <strong>Format:</strong> Dakika(0-59) Saat(0-23) Gün(1-31) Ay(1-12) Haftanın Günü(0-6)
+        </span>
+        <span class="lang-en">
+            <strong>Format:</strong> Minute(0-59) Hour(0-23) Day(1-31) Month(1-12) Weekday(0-6)
+        </span>
+    </div>
+
+    <div class="presets" style="margin-top: 20px;">
+        <button class="preset-btn" onclick="setPreset('0 0 * * *')">
+            <span class="lang-tr">Her gün gece 12:00</span>
+            <span class="lang-en">Every day at midnight</span>
+        </button>
+        <button class="preset-btn" onclick="setPreset('0 9 * * 1-5')">
+            <span class="lang-tr">Haftaiçi sabah 9:00</span>
+            <span class="lang-en">Weekdays at 9am</span>
+        </button>
+        <button class="preset-btn" onclick="setPreset('0 0 * * 0')">
+            <span class="lang-tr">Her pazar gece 12:00</span>
+            <span class="lang-en">Every Sunday at midnight</span>
+        </button>
+        <button class="preset-btn" onclick="setPreset('0 0 1 * *')">
+            <span class="lang-tr">Her ay 1'i</span>
+            <span class="lang-en">1st of every month</span>
+        </button>
+        <button class="preset-btn" onclick="setPreset('*/15 * * * *')">
+            <span class="lang-tr">Her 15 dakikada</span>
+            <span class="lang-en">Every 15 minutes</span>
+        </button>
+        <button class="preset-btn" onclick="setPreset('0 */6 * * *')">
+            <span class="lang-tr">Her 6 saatte</span>
+            <span class="lang-en">Every 6 hours</span>
+        </button>
+    </div>
+
+    <div class="cron-inputs">
+        <div class="cron-field">
+            <label>
+                <span class="lang-tr">Dakika</span>
+                <span class="lang-en">Minute</span>
+            </label>
+            <input type="text" id="cron-min" value="0" oninput="updateCron()">
+        </div>
+        <div class="cron-field">
+            <label>
+                <span class="lang-tr">Saat</span>
+                <span class="lang-en">Hour</span>
+            </label>
+            <input type="text" id="cron-hour" value="0" oninput="updateCron()">
+        </div>
+        <div class="cron-field">
+            <label>
+                <span class="lang-tr">Gün</span>
+                <span class="lang-en">Day</span>
+            </label>
+            <input type="text" id="cron-day" value="*" oninput="updateCron()">
+        </div>
+        <div class="cron-field">
+            <label>
+                <span class="lang-tr">Ay</span>
+                <span class="lang-en">Month</span>
+            </label>
+            <input type="text" id="cron-month" value="*" oninput="updateCron()">
+        </div>
+        <div class="cron-field">
+            <label>
+                <span class="lang-tr">Haftanın Günü</span>
+                <span class="lang-en">Weekday</span>
+            </label>
+            <input type="text" id="cron-weekday" value="*" oninput="updateCron()">
+        </div>
+    </div>
+
+    <div class="result-box">
+        <span id="cron-result">0 0 * * *</span>
+        <button class="btn" onclick="copyCron()">
+            <span class="lang-tr">Kopyala</span>
+            <span class="lang-en">Copy</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateCron() {
+    const min = document.getElementById('cron-min').value || '*';
+    const hour = document.getElementById('cron-hour').value || '*';
+    const day = document.getElementById('cron-day').value || '*';
+    const month = document.getElementById('cron-month').value || '*';
+    const weekday = document.getElementById('cron-weekday').value || '*';
+    document.getElementById('cron-result').textContent = `${min} ${hour} ${day} ${month} ${weekday}`;
+}
+
+function setPreset(cron) {
+    const parts = cron.split(' ');
+    document.getElementById('cron-min').value = parts[0];
+    document.getElementById('cron-hour').value = parts[1];
+    document.getElementById('cron-day').value = parts[2];
+    document.getElementById('cron-month').value = parts[3];
+    document.getElementById('cron-weekday').value = parts[4];
+    updateCron();
+}
+
+function copyCron() {
+    const cron = document.getElementById('cron-result').textContent;
+    navigator.clipboard.writeText(cron).then(() => {
+        showToast("CRON kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}

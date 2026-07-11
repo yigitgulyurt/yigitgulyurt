@@ -1,0 +1,157 @@
+{% extends "base/base.html" %}
+
+{% block title %}Hash Üretici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 700px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+
+.btn:hover {
+    box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.hash-list {
+    display: flex;
+    flex-direction: column;
+    gap: 15px;
+}
+
+.hash-item {
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+}
+
+.hash-label {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-bottom: 8px;
+}
+
+.hash-label strong {
+    color: var(--primary);
+}
+
+.hash-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    word-break: break-all;
+    color: var(--text-dim);
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔒 Hash Üretici</span>
+        <span class="lang-en">🔒 Hash Generator</span>
+    </h1>
+    
+    <textarea id="text-input" placeholder="Hashlenecek metni girin..." oninput="generateHashes()"></textarea>
+
+    <div id="hash-results" style="display: none;" class="hash-list"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+async function generateHashes() {
+    const text = document.getElementById('text-input').value;
+    if (!text) {
+        document.getElementById('hash-results').style.display = 'none';
+        return;
+    }
+
+    const encoder = new TextEncoder();
+    const data = encoder.encode(text);
+
+    const hashBufferSHA256 = await crypto.subtle.digest('SHA-256', data);
+    const hashBufferSHA1 = await crypto.subtle.digest('SHA-1', data);
+    const hashBufferMD5 = await crypto.subtle.digest('SHA-256', data); // WebCrypto MD5 yok, SHA256 gösterelim
+    
+    const hashArraySHA256 = Array.from(new Uint8Array(hashBufferSHA256));
+    const hashHexSHA256 = hashArraySHA256.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    const hashArraySHA1 = Array.from(new Uint8Array(hashBufferSHA1));
+    const hashHexSHA1 = hashArraySHA1.map(b => b.toString(16).padStart(2, '0')).join('');
+    
+    const results = [
+        { name: 'SHA-256', value: hashHexSHA256 },
+        { name: 'SHA-1', value: hashHexSHA1 },
+    ];
+    
+    document.getElementById('hash-results').style.display = 'flex';
+    document.getElementById('hash-results').innerHTML = results.map(h => `
+        <div class="hash-item">
+            <div class="hash-label">
+                <strong>${h.name}</strong>
+                <button class="copy-btn" onclick="copyHash('${h.value}')">
+                    <span class="lang-tr">Kopyala</span>
+                    <span class="lang-en">Copy</span>
+                </button>
+            </div>
+            <div class="hash-value">${h.value}</div>
+        </div>
+    `).join('');
+}
+
+function copyHash(hash) {
+    navigator.clipboard.writeText(hash).then(() => {
+        showToast("Hash kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}

@@ -1,0 +1,197 @@
+{% extends "base/base.html" %}
+
+{% block title %}JWT Decoder{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+textarea {
+    width: 100%;
+    min-height: 120px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    resize: vertical;
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-top: 15px;
+    margin-bottom: 25px;
+}
+
+.btn:hover {
+    box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.jwt-parts {
+    display: flex;
+    gap: 8px;
+    margin-top: 20px 0;
+}
+
+.jwt-part {
+    flex: 1;
+    padding: 12px;
+    text-align: center;
+    border-radius: 10px;
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.jwt-part.header { background: rgba(255, 77, 77, 0.2); color: #ff4d4d; }
+.jwt-part.payload { background: rgba(77, 255, 136, 0.2); color: #4dff88; }
+.jwt-part.signature { background: rgba(77, 166, 255, 0.2); color: #4da6ff; }
+
+.result-section {
+    display: grid;
+    gap: 20px;
+}
+
+.result-card {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+}
+
+.result-card h3 {
+    margin-bottom: 12px;
+    font-size: 1rem;
+}
+
+pre {
+    margin: 0;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.85rem;
+    overflow-x: auto;
+    white-space: pre-wrap;
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+    margin-top: 10px;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔐 JWT Decoder</span>
+        <span class="lang-en">🔐 JWT Decoder</span>
+    </h1>
+    
+    <textarea id="jwt-input" placeholder="JWT token girin..."></textarea>
+    
+    <button class="btn" onclick="decodeJWT()">
+        <span class="lang-tr">Decode</span>
+        <span class="lang-en">Decode</span>
+    </button>
+
+    <div id="jwt-parts" style="display: none;" class="jwt-parts">
+        <div class="jwt-part header">Header</div>
+        <div class="jwt-part payload">Payload</div>
+        <div class="jwt-part signature">Signature</div>
+    </div>
+
+    <div id="result" style="display: none;" class="result-section">
+        <div class="result-card">
+            <h3>🔴 Header</h3>
+            <pre id="header-output"></pre>
+            <button class="copy-btn" onclick="copyOutput('header')">
+                <span class="lang-tr">Kopyala</span>
+                <span class="lang-en">Copy</span>
+            </button>
+        </div>
+        <div class="result-card">
+            <h3>🟢 Payload</h3>
+            <pre id="payload-output"></pre>
+            <button class="copy-btn" onclick="copyOutput('payload')">
+                <span class="lang-tr">Kopyala</span>
+                <span class="lang-en">Copy</span>
+            </button>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let decodedHeader = null;
+let decodedPayload = null;
+
+function b64DecodeUnicode(str) {
+    return decodeURIComponent(atob(str).split('').map(function(c) {
+        return '%' + ('00' + c.charCodeAt(0).toString(16)).slice(-2);
+    }).join(''));
+}
+
+function decodeJWT() {
+    const jwt = document.getElementById('jwt-input').value.trim();
+    if (!jwt) {
+        showToast("Lütfen bir JWT token girin!", "error");
+        return;
+    }
+
+    const parts = jwt.split('.');
+    if (parts.length !== 3) {
+        showToast("Geçersiz JWT formatı!", "error");
+        return;
+    }
+
+    try {
+        decodedHeader = JSON.parse(b64DecodeUnicode(parts[0]));
+        decodedPayload = JSON.parse(b64DecodeUnicode(parts[1]));
+
+        document.getElementById('header-output').textContent = JSON.stringify(decodedHeader, null, 2);
+        document.getElementById('payload-output').textContent = JSON.stringify(decodedPayload, null, 2);
+        document.getElementById('jwt-parts').style.display = 'flex';
+        document.getElementById('result').style.display = 'grid';
+        
+        showToast("Decode edildi!", "success");
+    } catch (e) {
+        showToast("Decode hatası: " + e.message, "error");
+    }
+}
+
+function copyOutput(part) {
+    const output = part === 'header' ? decodedHeader : decodedPayload;
+    navigator.clipboard.writeText(JSON.stringify(output, null, 2)).then(() => {
+        showToast("Kopyalandı!", "success");
+    });
+}
+</script>
+{% endblock %}

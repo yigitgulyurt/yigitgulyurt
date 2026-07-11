@@ -1,0 +1,144 @@
+{% extends "base/base.html" %}
+
+{% block title %}HTTP Header Kontrolcüsü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-group {
+    display: flex;
+    gap: 12px;
+    margin-bottom: 20px;
+}
+
+input[type="url"] {
+    flex: 1;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+}
+
+.btn {
+    padding: 15px 25px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    opacity: 0.9;
+    transform: translateY(-2px);
+}
+
+.result-section {
+    margin-top: 25px;
+}
+
+.status-line {
+    display: flex;
+    gap: 12px;
+    align-items: center;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-bottom: 15px;
+}
+
+.status-dot {
+    width: 12px;
+    height: 12px;
+    border-radius: 50%;
+}
+
+.status-dot.success { background: #4dff88; }
+.status-dot.error { background: #ff4d4d; }
+
+.headers-table {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.headers-table td, .headers-table th {
+    padding: 12px 15px;
+    text-align: left;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.headers-table th {
+    color: var(--text-dim);
+    font-weight: 600;
+    font-size: 0.85rem;
+}
+
+.headers-table td:first-child {
+    width: 30%;
+    font-family: 'JetBrains Mono', monospace;
+    color: var(--primary);
+    font-weight: 600;
+}
+
+.note {
+    margin-top: 15px;
+    padding: 15px;
+    background: rgba(255, 166, 77, 0.1);
+    border-left: 3px solid #ffa64d;
+    border-radius: 10px;
+    color: var(--text-dim);
+    font-size: 0.85rem;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🌐 HTTP Header Kontrolcüsü</span>
+        <span class="lang-en">🌐 HTTP Header Checker</span>
+    </h1>
+    
+    <div class="input-group">
+        <input type="url" id="url-input" placeholder="https://example.com">
+        <button class="btn" onclick="checkHeaders()">
+            <span class="lang-tr">Kontrol Et</span>
+            <span class="lang-en">Check</span>
+        </button>
+    </div>
+
+    <div class="note">
+        <span class="lang-tr">💡 Not: Tarayıcı güvenlik kısıtlamaları nedeniyle bu araç şu anda sadece basit bir demo olarak çalışmaktadır. Gerçek header kontrolü için sunucu tarafı bir API gerekmektedir.</span>
+        <span class="lang-en">💡 Note: Due to browser security restrictions, this tool is a demo. Real header checking requires a server-side API.</span>
+    </div>
+
+    <div id="result" style="display: none;" class="result-section"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function checkHeaders() {
+    const url = document.getElementById('url-input').value;
+    if (!url) {
+        showToast("Lütfen bir URL girin!", "error");
+        return;
+    }
+
+    showToast("Tarayıcı güvenlik kısıtlamaları nedeniyle bu özellik şu anda sınırlıdır.", "info");
+}
+</script>
+{% endblock %}

@@ -1,0 +1,192 @@
+{% extends "base/base.html" %}
+
+{% block title %}UUID Üretici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.result-box {
+    background: rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    border-radius: 12px;
+    margin-bottom: 25px;
+    border: 1px solid var(--primary);
+    font-family: 'JetBrains Mono', monospace;
+    word-break: break-all;
+}
+
+.uuid-list {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+}
+
+.uuid-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.15);
+    border-radius: 8px;
+}
+
+.options-grid {
+    display: grid;
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+.option-item {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+select {
+    padding: 8px 12px;
+    background: rgba(0, 0, 0, 0.2);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.btn {
+    width: 100%;
+    padding: 14px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: 700;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    box-shadow: 0 5px 15px rgba(var(--primary-rgb), 0.3);
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 6px 12px;
+    border-radius: 6px;
+    cursor: pointer;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+
+.copy-btn:hover {
+    background: var(--primary);
+    color: white;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🔑 UUID Üretici</span>
+        <span class="lang-en">🔑 UUID Generator</span>
+    </h1>
+    
+    <div class="options-grid">
+        <div class="option-item">
+            <span class="option-label">
+                <span class="lang-tr">UUID Versiyonu:</span>
+                <span class="lang-en">UUID Version:</span>
+            </span>
+            <select id="uuid-version">
+                <option value="v4">v4 (Rastgele)</option>
+                <option value="v1">v1 (Zaman + MAC)</option>
+            </select>
+        </div>
+        <div class="option-item">
+            <span class="option-label">
+                <span class="lang-tr">Üretilecek Adet:</span>
+                <span class="lang-en">Count:</span>
+            </span>
+            <select id="uuid-count">
+                <option value="1">1</option>
+                <option value="5">5</option>
+                <option value="10">10</option>
+            </select>
+        </div>
+    </div>
+
+    <button class="btn" onclick="generateUUIDs()">
+        <span class="lang-tr">UUID Üret</span>
+        <span class="lang-en">Generate UUIDs</span>
+    </button>
+
+    <div id="result-container" style="margin-top: 25px; display: none;">
+        <div class="uuid-list" id="uuid-list"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generateUUIDv4() {
+    return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = Math.random() * 16 | 0;
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function generateUUIDv1() {
+    let d = new Date().getTime();
+    if (typeof performance !== 'undefined' && typeof performance.now === 'function') {
+        d += performance.now();
+    }
+    return 'xxxxxxxx-xxxx-1xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, function(c) {
+        const r = (d + Math.random() * 16) % 16 | 0;
+        d = Math.floor(d / 16);
+        const v = c === 'x' ? r : (r & 0x3 | 0x8);
+        return v.toString(16);
+    });
+}
+
+function generateUUIDs() {
+    const version = document.getElementById('uuid-version').value;
+    const count = parseInt(document.getElementById('uuid-count').value);
+    const list = document.getElementById('uuid-list');
+    list.innerHTML = '';
+    
+    for (let i = 0; i < count; i++) {
+        const uuid = version === 'v4' ? generateUUIDv4() : generateUUIDv1();
+        const item = document.createElement('div');
+        item.className = 'uuid-item';
+        item.innerHTML = `
+            <span style="font-family: 'JetBrains Mono', monospace;">${uuid}</span>
+            <button class="copy-btn" onclick="copyUUID('${uuid}')">
+                <span class="lang-tr">Kopyala</span>
+                <span class="lang-en">Copy</span>
+            </button>
+        `;
+        list.appendChild(item);
+    }
+    
+    document.getElementById('result-container').style.display = 'block';
+}
+
+function copyUUID(uuid) {
+    navigator.clipboard.writeText(uuid).then(() => {
+        showToast("UUID kopyalandı!", "success");
+    });
+}
+
+document.addEventListener('DOMContentLoaded', generateUUIDs);
+</script>
+{% endblock %}
