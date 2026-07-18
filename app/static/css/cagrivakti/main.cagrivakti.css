@@ -957,7 +957,7 @@ to {
 
 /* Footer Styles */
 .landing-footer {
-    padding: 60px 20px;
+    padding: 80px 20px 60px;
     background-color: var(--dark);
     text-align: center;
     border-top: 1px solid rgba(255, 255, 255, 0.05);
@@ -971,7 +971,7 @@ to {
     display: flex;
     flex-direction: column;
     align-items: center;
-    gap: 40px;
+    gap: 48px;
 }
 
 .footer-brand {
@@ -985,103 +985,26 @@ to {
     margin-bottom: 10px;
 }
 
-/* Grid Layout for Links */
-.footer-links-grid {
-    display: grid;
-    grid-template-columns: repeat(4, 1fr);
-    gap: 40px;
-    width: 100%;
-    text-align: left;
-    margin-bottom: 20px;
-}
-
-.footer-column {
-    display: flex;
-    flex-direction: column;
-    gap: 12px;
-}
-
-.footer-column h4 {
-    color: var(--text);
-    font-size: 1.1rem;
-    margin-bottom: 8px;
-    font-weight: 600;
-    padding-bottom: 8px;
-    border-bottom: 1px solid rgba(255, 255, 255, 0.05);
-}
-
-.footer-column a {
-    font-size: 0.9rem;
-    color: rgba(255, 255, 255, 0.7);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    padding: 6px 0;
-    display: flex;
-    align-items: center;
-    gap: 8px;
-}
-
-.footer-column a:hover {
-    color: var(--primary);
-    transform: translateX(4px);
-}
-
-.footer-column a svg.icon {
-    width: 16px;
-    height: 16px;
-    color: var(--primary);
-}
-
-.footer-links {
-    display: flex;
-    flex-wrap: wrap;
-    gap: 12px 20px;
-    justify-content: center;
-    padding: 20px 0;
-    border-top: 1px solid rgba(255,255,255,0.05);
-    border-bottom: 1px solid rgba(255,255,255,0.05);
-}
-
-.footer-links a {
-    font-size: 0.85rem;
-    color: rgba(255,255,255,0.7);
-    text-decoration: none;
-    transition: all 0.2s ease;
-    padding: 4px 8px;
-    border-radius: 4px;
-    font-weight: 500;
-}
-
-.footer-links a:hover {
-    color: var(--primary);
-    background: rgba(255,255,255,0.05);
-    transform: translateY(-1px);
-}
-
-.footer-links a.footer-link-ataturk {
-    color: #ff5252 !important;
-}
-
-.footer-links a.footer-link-ataturk:hover {
-    background: rgba(255,82,82,0.1);
-}
-
+/* Popular Cities */
 .footer-popular-cities {
     display: flex;
     flex-wrap: wrap;
     gap: 12px;
     justify-content: center;
-    margin: 16px 0;
-    padding: 12px 0;
+    margin: 0;
+    padding: 16px 0;
+    border-top: 1px solid rgba(255,255,255,0.05);
+    border-bottom: 1px solid rgba(255,255,255,0.05);
+    width: 100%;
 }
 
 .footer-popular-cities a {
-    font-size: 0.8rem;
-    color: rgba(255,255,255,0.6);
+    font-size: 0.85rem;
+    color: rgba(255,255,255,0.65);
     text-decoration: none;
     transition: all 0.2s ease;
-    padding: 4px 10px;
-    border-radius: 4px;
+    padding: 6px 14px;
+    border-radius: 20px;
     font-weight: 500;
     display: flex;
     align-items: center;
@@ -1090,8 +1013,8 @@ to {
 
 .footer-popular-cities a:hover {
     color: var(--primary);
-    background: rgba(255,255,255,0.05);
-    transform: translateY(-1px);
+    background: rgba(255,193,7,0.08);
+    transform: translateY(-2px);
 }
 
 .footer-popular-cities a svg.icon {
@@ -1100,57 +1023,110 @@ to {
     color: var(--primary);
 }
 
+/* Grid Layout for Links */
+.footer-links-grid {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 48px;
+    width: 100%;
+    text-align: left;
+    margin: 0;
+}
+
+.footer-column {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+}
+
+.footer-column h4 {
+    color: var(--text);
+    font-size: 1.15rem;
+    margin-bottom: 12px;
+    font-weight: 700;
+    padding-bottom: 12px;
+    border-bottom: 2px solid rgba(255, 193, 7, 0.2);
+    letter-spacing: 0.5px;
+}
+
+.footer-column a {
+    font-size: 0.92rem;
+    color: rgba(255, 255, 255, 0.7);
+    text-decoration: none;
+    transition: all 0.2s ease;
+    padding: 8px 0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+}
+
+.footer-column a:hover {
+    color: var(--primary);
+    transform: translateX(6px);
+}
+
+.footer-column a svg.icon {
+    width: 16px;
+    height: 16px;
+    color: var(--primary);
+}
+
+/* Creator & Identity */
 .footer-creator {
-    margin: 20px 0;
+    margin: 0;
 }
 
 .footer-creator a {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: rgba(255,255,255,0.7);
     text-decoration: none;
-    font-weight: 700;
-    letter-spacing: 1px;
+    font-weight: 800;
+    letter-spacing: 2px;
     text-transform: uppercase;
-    transition: color 0.2s ease;
+    transition: all 0.2s ease;
+    font-family: 'Cinzel', sans-serif;
 }
 
 .footer-creator a:hover {
     color: var(--primary);
+    text-shadow: 0 0 15px rgba(255, 193, 7, 0.3);
 }
 
 .national-identity {
-    margin: 20px 0;
+    margin: 0;
     display: flex;
     align-items: center;
     justify-content: center;
-    gap: 12px;
+    gap: 16px;
+    padding: 12px 0;
 }
 
 .national-identity svg.icon {
-    width: 24px;
-    height: 24px;
+    width: 28px;
+    height: 28px;
     color: #ff5252;
 }
 
 .national-identity .text {
-    font-size: 1rem;
-    font-weight: 800;
+    font-size: 1.1rem;
+    font-weight: 900;
     color: #ff5252;
     text-decoration: none;
-    letter-spacing: 1px;
+    letter-spacing: 2px;
     transition: all 0.2s ease;
 }
 
 .national-identity .text:hover {
     transform: scale(1.05);
-    text-shadow: 0 0 20px rgba(255, 82, 82, 0.4);
+    text-shadow: 0 0 20px rgba(255, 82, 82, 0.5);
 }
 
 .footer-brand a {
-    font-size: 0.85rem;
+    font-size: 0.9rem;
     color: rgba(255,255,255,0.5);
     text-decoration: none;
     transition: color 0.2s ease;
+    font-weight: 600;
 }
 
 .footer-brand a:hover {
@@ -1159,19 +1135,38 @@ to {
 
 .footer-copy {
     font-size: 0.9rem;
-    opacity: 0.8;
+    opacity: 0.85;
+    margin-top: 8px;
 }
 
 @media (max-width: 992px) {
+    .landing-footer {
+        padding: 60px 20px 40px;
+    }
+
+    .footer-content {
+        gap: 36px;
+    }
+
     .footer-links-grid {
         grid-template-columns: repeat(2, 1fr);
+        gap: 36px;
     }
 }
 
 @media (max-width: 576px) {
+    .landing-footer {
+        padding: 48px 16px 32px;
+    }
+
+    .footer-content {
+        gap: 32px;
+    }
+
     .footer-links-grid {
         grid-template-columns: 1fr;
         text-align: center;
+        gap: 28px;
     }
     
     .footer-column {
@@ -1185,5 +1180,15 @@ to {
     
     .footer-column a {
         justify-content: center;
+    }
+
+    .footer-popular-cities {
+        gap: 8px;
+        padding: 12px 0;
+    }
+
+    .footer-popular-cities a {
+        font-size: 0.8rem;
+        padding: 5px 12px;
     }
 }
