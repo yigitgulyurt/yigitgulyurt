@@ -1,0 +1,152 @@
+{% extends "base/base.html" %}
+
+{% block title %}Kronometre{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.stopwatch-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 3.5rem;
+    color: var(--text);
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-bottom: 20px;
+}
+
+.stopwatch-buttons {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.btn-stopwatch {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-start { background: #4ade80; color: #000; }
+.btn-stop { background: #f87171; color: #000; }
+.btn-reset { background: rgba(var(--primary-rgb), 0.2); color: var(--primary); }
+.btn-lap { background: #facc15; color: #000; }
+
+.laps {
+    margin-top: 25px;
+    max-height: 300px;
+    overflow-y: auto;
+}
+
+.lap-item {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 15px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 8px;
+    margin-bottom: 8px;
+    font-family: 'JetBrains Mono', monospace;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">⏱️ Kronometre</span>
+        <span class="lang-en">⏱️ Stopwatch</span>
+    </h1>
+    
+    <div class="stopwatch-display" id="stopwatch-display">00:00:00.000</div>
+    
+    <div class="stopwatch-buttons">
+        <button class="btn-stopwatch btn-start" id="start-btn" onclick="startStopwatch()">
+            <span class="lang-tr">Başlat</span>
+            <span class="lang-en">Start</span>
+        </button>
+        <button class="btn-stopwatch btn-stop" id="stop-btn" onclick="stopStopwatch()" style="display:none;">
+            <span class="lang-tr">Durdur</span>
+            <span class="lang-en">Stop</span>
+        </button>
+        <button class="btn-stopwatch btn-lap" id="lap-btn" onclick="addLap()">
+            <span class="lang-tr">Tur</span>
+            <span class="lang-en">Lap</span>
+        </button>
+        <button class="btn-stopwatch btn-reset" onclick="resetStopwatch()">
+            <span class="lang-tr">Sıfırla</span>
+            <span class="lang-en">Reset</span>
+        </button>
+    </div>
+    
+    <div class="laps" id="laps"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let startTime = 0;
+let elapsedTime = 0;
+let timerInterval = null;
+let lapCount = 0;
+
+function formatTime(ms) {
+    let milliseconds = ms % 1000;
+    let seconds = Math.floor((ms / 1000) % 60);
+    let minutes = Math.floor((ms / (1000 * 60)) % 60);
+    let hours = Math.floor((ms / (1000 * 60 * 60)) % 24);
+    
+    return `${hours.toString().padStart(2, '0')}:${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(3, '0')}`;
+}
+
+function updateDisplay() {
+    elapsedTime = Date.now() - startTime;
+    document.getElementById('stopwatch-display').textContent = formatTime(elapsedTime);
+}
+
+function startStopwatch() {
+    startTime = Date.now() - elapsedTime;
+    timerInterval = setInterval(updateDisplay, 10);
+    document.getElementById('start-btn').style.display = 'none';
+    document.getElementById('stop-btn').style.display = 'inline-block';
+}
+
+function stopStopwatch() {
+    clearInterval(timerInterval);
+    document.getElementById('start-btn').style.display = 'inline-block';
+    document.getElementById('stop-btn').style.display = 'none';
+}
+
+function resetStopwatch() {
+    clearInterval(timerInterval);
+    elapsedTime = 0;
+    lapCount = 0;
+    document.getElementById('stopwatch-display').textContent = '00:00:00.000';
+    document.getElementById('laps').innerHTML = '';
+    document.getElementById('start-btn').style.display = 'inline-block';
+    document.getElementById('stop-btn').style.display = 'none';
+}
+
+function addLap() {
+    if (timerInterval || elapsedTime > 0) {
+        lapCount++;
+        const lapDiv = document.createElement('div');
+        lapDiv.className = 'lap-item';
+        lapDiv.innerHTML = `<span><span class="lang-tr">Tur</span><span class="lang-en">Lap</span> ${lapCount}</span><span>${formatTime(elapsedTime)}</span>`;
+        document.getElementById('laps').prepend(lapDiv);
+    }
+}
+</script>
+{% endblock %}

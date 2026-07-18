@@ -925,6 +925,50 @@ def dns_lookup():
 def ip_subnet_calculator():
     return render_template('tools/ip_subnet_calculator.html')
 
+@tools_bp.route('/analog-saat')
+def analog_clock():
+    return render_template('tools/analog_clock.html')
+
+@tools_bp.route('/digital-saat')
+def digital_clock():
+    return render_template('tools/digital_clock.html')
+
+@tools_bp.route('/kronometre')
+def stopwatch():
+    return render_template('tools/stopwatch.html')
+
+@tools_bp.route('/geri-sayim')
+def countdown_timer():
+    return render_template('tools/countdown_timer.html')
+
+@tools_bp.route('/qr-kod-uretici')
+def qr_code_generator():
+    return render_template('tools/qr_code_generator.html')
+
+@tools_bp.route('/lorem-ipsum')
+def lorem_ipsum():
+    return render_template('tools/lorem_ipsum.html')
+
+@tools_bp.route('/rastgele-sayi')
+def random_number():
+    return render_template('tools/random_number.html')
+
+@tools_bp.route('/sifre-guclugu')
+def password_strength():
+    return render_template('tools/password_strength.html')
+
+@tools_bp.route('/roma-rakamlari')
+def roman_numerals():
+    return render_template('tools/roman_numerals.html')
+
+@tools_bp.route('/sicaklik-donusturucu')
+def temperature_converter():
+    return render_template('tools/temperature_converter.html')
+
+@tools_bp.route('/bahsis-hesaplayici')
+def tip_calculator():
+    return render_template('tools/tip_calculator.html')
+
 # GitHub-style color palette
 GITHUB_COLORS = [
     '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',

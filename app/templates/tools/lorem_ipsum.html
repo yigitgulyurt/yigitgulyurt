@@ -1,0 +1,169 @@
+{% extends "base/base.html" %}
+
+{% block title %}Lorem Ipsum Üretici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 800px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.settings {
+    display: flex;
+    gap: 20px;
+    flex-wrap: wrap;
+    margin-bottom: 20px;
+}
+
+.setting-group {
+    display: flex;
+    flex-direction: column;
+}
+
+.setting-group label {
+    color: var(--text-dim);
+    margin-bottom: 5px;
+}
+
+.setting-group input, .setting-group select {
+    padding: 10px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 8px;
+    color: var(--text);
+}
+
+.btn {
+    padding: 12px 24px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 20px;
+}
+
+.output {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 12px;
+    line-height: 1.8;
+}
+
+.copy-btn {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    padding: 8px 16px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-weight: bold;
+    margin-top: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📝 Lorem Ipsum Üretici</span>
+        <span class="lang-en">📝 Lorem Ipsum Generator</span>
+    </h1>
+    
+    <div class="settings">
+        <div class="setting-group">
+            <label><span class="lang-tr">Üretim Türü</span><span class="lang-en">Generate</span></label>
+            <select id="type">
+                <option value="paragraphs">Paragraflar</option>
+                <option value="words">Kelime</option>
+                <option value="bytes">Bayt</option>
+            </select>
+        </div>
+        <div class="setting-group">
+            <label><span class="lang-tr">Miktar</span><span class="lang-en">Amount</span></label>
+            <input type="number" id="amount" value="5" min="1">
+        </div>
+    </div>
+    
+    <button class="btn" onclick="generateLoremIpsum()">
+        <span class="lang-tr">Üret</span>
+        <span class="lang-en">Generate</span>
+    </button>
+    
+    <div id="output" class="output"></div>
+    <button class="copy-btn" onclick="copyOutput()">
+        <span class="lang-tr">Kopyala</span>
+        <span class="lang-en">Copy</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const lorem = "Lorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua. Ut enim ad minim veniam, quis nostrud exercitation ullamco laboris nisi ut aliquip ex ea commodo consequat. Duis aute irure dolor in reprehenderit in voluptate velit esse cillum dolore eu fugiat nulla pariatur. Excepteur sint occaecat cupidatat non proident, sunt in culpa qui officia deserunt mollit anim id est laborum.";
+const words = lorem.split(' ');
+
+function generateLoremIpsum() {
+    const type = document.getElementById('type').value;
+    const amount = parseInt(document.getElementById('amount').value);
+    let output = '';
+    
+    if (type === 'paragraphs') {
+        for (let i = 0; i < amount; i++) {
+            output += generateParagraph() + '\n\n';
+        }
+    } else if (type === 'words') {
+        output = generateWords(amount).join(' ');
+    } else if (type === 'bytes') {
+        output = generateBytes(amount);
+    }
+    
+    document.getElementById('output').innerHTML = output.replace(/\n/g, '<br>');
+}
+
+function generateParagraph() {
+    const sentenceCount = Math.floor(Math.random() * 5) + 3;
+    let paragraph = '';
+    for (let i = 0; i < sentenceCount; i++) {
+        paragraph += generateSentence() + ' ';
+    }
+    return paragraph.trim();
+}
+
+function generateSentence() {
+    const wordCount = Math.floor(Math.random() * 10) + 5;
+    let sentence = generateWords(wordCount).join(' ');
+    return sentence.charAt(0).toUpperCase() + sentence.slice(1) + '.';
+}
+
+function generateWords(count) {
+    const result = [];
+    for (let i = 0; i < count; i++) {
+        result.push(words[Math.floor(Math.random() * words.length)]);
+    }
+    return result;
+}
+
+function generateBytes(count) {
+    let text = '';
+    while (text.length < count) {
+        text += lorem + ' ';
+    }
+    return text.slice(0, count);
+}
+
+function copyOutput() {
+    const output = document.getElementById('output').innerText;
+    navigator.clipboard.writeText(output).then(() => showToast('Kopyalandı!', 'success'));
+}
+
+document.addEventListener('DOMContentLoaded', generateLoremIpsum);
+</script>
+{% endblock %}

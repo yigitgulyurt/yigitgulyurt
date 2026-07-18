@@ -1,0 +1,112 @@
+{% extends "base/base.html" %}
+
+{% block title %}Rastgele Sayı Üretici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.input-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    margin-bottom: 20px;
+}
+
+.input-box {
+    display: flex;
+    flex-direction: column;
+    gap: 5px;
+}
+
+.input-box label {
+    color: var(--text-dim);
+}
+
+.input-box input {
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    width: 120px;
+}
+
+.result {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 4rem;
+    color: var(--primary);
+    margin: 25px 0;
+}
+
+.btn {
+    padding: 14px 30px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 12px;
+    font-size: 1.1rem;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 10px 20px rgba(var(--primary-rgb), 0.3);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🎲 Rastgele Sayı Üretici</span>
+        <span class="lang-en">🎲 Random Number Generator</span>
+    </h1>
+    
+    <div class="input-group">
+        <div class="input-box">
+            <label><span class="lang-tr">Min</span></label>
+            <input type="number" id="min" value="1">
+        </div>
+        <div class="input-box">
+            <label><span class="lang-tr">Max</span></label>
+            <input type="number" id="max" value="100">
+        </div>
+    </div>
+    
+    <div class="result" id="result">42</div>
+    
+    <button class="btn" onclick="generateRandom()">
+        <span class="lang-tr">Üret!</span>
+        <span class="lang-en">Generate!</span>
+    </button>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function generateRandom() {
+    const min = parseInt(document.getElementById('min').value) || 0;
+    const max = parseInt(document.getElementById('max').value) || 100;
+    
+    if (min > max) {
+        showToast('Min değer Max değerinden büyük olamaz!', 'error');
+        return;
+    }
+    
+    const num = Math.floor(Math.random() * (max - min + 1)) + min;
+    document.getElementById('result').textContent = num;
+}
+</script>
+{% endblock %}

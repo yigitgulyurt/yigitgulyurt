@@ -1,0 +1,153 @@
+{% extends "base/base.html" %}
+
+{% block title %}Bahşiş Hesaplayıcı{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.input-group {
+    margin-bottom: 20px;
+}
+
+.input-group label {
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    display: block;
+}
+
+.input-group input {
+    width: 100%;
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.1rem;
+}
+
+.percent-buttons {
+    display: flex;
+    gap: 10px;
+    margin-top: 10px;
+}
+
+.percent-btn {
+    padding: 8px 16px;
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+    border: none;
+    border-radius: 8px;
+    font-weight: bold;
+    cursor: pointer;
+}
+
+.result {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px;
+    border-radius: 12px;
+    margin-top: 20px;
+}
+
+.result-row {
+    display: flex;
+    justify-content: space-between;
+    padding: 10px 0;
+    border-bottom: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.result-row:last-child {
+    border: none;
+}
+
+.result-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    color: var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">💵 Bahşiş Hesaplayıcı</span>
+        <span class="lang-en">💵 Tip Calculator</span>
+    </h1>
+    
+    <div class="input-group">
+        <label><span class="lang-tr">Hesap Tutarı</span><span class="lang-en">Bill Amount</span></label>
+        <input type="number" id="bill" placeholder="100.00" oninput="calculateTip()">
+    </div>
+    
+    <div class="input-group">
+        <label><span class="lang-tr">Bahşiş Yüzdesi</span><span class="lang-en">Tip Percentage</span></label>
+        <input type="number" id="tip-percent" placeholder="15" value="15" oninput="calculateTip()">
+        <div class="percent-buttons">
+            <button class="percent-btn" onclick="setTip(10)">10%</button>
+            <button class="percent-btn" onclick="setTip(15)">15%</button>
+            <button class="percent-btn" onclick="setTip(18)">18%</button>
+            <button class="percent-btn" onclick="setTip(20)">20%</button>
+            <button class="percent-btn" onclick="setTip(25)">25%</button>
+        </div>
+    </div>
+    
+    <div class="input-group">
+        <label><span class="lang-tr">Kişi Sayısı</span><span class="lang-en">Number of People</span></label>
+        <input type="number" id="people" placeholder="1" value="1" min="1" oninput="calculateTip()">
+    </div>
+    
+    <div class="result">
+        <div class="result-row">
+            <span><span class="lang-tr">Bahşiş</span><span class="lang-en">Tip</span></span>
+            <span class="result-value" id="tip-amount">₺0.00</span>
+        </div>
+        <div class="result-row">
+            <span><span class="lang-tr">Toplam</span><span class="lang-en">Total</span></span>
+            <span class="result-value" id="total">₺0.00</span>
+        </div>
+        <div class="result-row">
+            <span><span class="lang-tr">Kişi Başına</span><span class="lang-en">Per Person</span></span>
+            <span class="result-value" id="per-person">₺0.00</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function setTip(percent) {
+    document.getElementById('tip-percent').value = percent;
+    calculateTip();
+}
+
+function calculateTip() {
+    const bill = parseFloat(document.getElementById('bill').value) || 0;
+    const tipPercent = parseFloat(document.getElementById('tip-percent').value) || 0;
+    const people = parseInt(document.getElementById('people').value) || 1;
+    
+    const tipAmount = bill * (tipPercent / 100);
+    const total = bill + tipAmount;
+    const perPerson = total / people;
+    
+    document.getElementById('tip-amount').textContent = formatCurrency(tipAmount);
+    document.getElementById('total').textContent = formatCurrency(total);
+    document.getElementById('per-person').textContent = formatCurrency(perPerson);
+}
+
+function formatCurrency(amount) {
+    return new Intl.NumberFormat('tr-TR', {
+        style: 'currency',
+        currency: 'TRY'
+    }).format(amount);
+}
+</script>
+{% endblock %}

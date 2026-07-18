@@ -1,0 +1,206 @@
+{% extends "base/base.html" %}
+
+{% block title %}Geri Sayım Zamanlayıcı{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.input-group {
+    display: flex;
+    gap: 15px;
+    justify-content: center;
+    flex-wrap: wrap;
+    margin-bottom: 25px;
+}
+
+.time-input {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+}
+
+.time-input label {
+    color: var(--text-dim);
+    font-size: 0.9rem;
+    margin-bottom: 5px;
+}
+
+.time-input input {
+    width: 80px;
+    padding: 12px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    text-align: center;
+}
+
+.countdown-display {
+    display: flex;
+    gap: 20px;
+    justify-content: center;
+    margin: 25px 0;
+}
+
+.time-box {
+    background: rgba(0, 0, 0, 0.3);
+    padding: 20px 25px;
+    border-radius: 12px;
+    border: 1px solid var(--primary);
+}
+
+.time-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 2.5rem;
+    color: var(--primary);
+    font-weight: bold;
+}
+
+.time-label {
+    font-size: 0.9rem;
+    color: var(--text-dim);
+    margin-top: 5px;
+}
+
+.btn-group {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+}
+
+.btn {
+    padding: 12px 24px;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.btn-primary {
+    background: var(--primary);
+    color: white;
+}
+
+.btn-secondary {
+    background: rgba(var(--primary-rgb), 0.2);
+    color: var(--primary);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">⏳ Geri Sayım Zamanlayıcı</span>
+        <span class="lang-en">⏳ Countdown Timer</span>
+    </h1>
+    
+    <div class="input-group">
+        <div class="time-input">
+            <label><span class="lang-tr">Saat</span><span class="lang-en">Hours</span></label>
+            <input type="number" id="hours" min="0" max="99" value="0">
+        </div>
+        <div class="time-input">
+            <label><span class="lang-tr">Dakika</span><span class="lang-en">Minutes</span></label>
+            <input type="number" id="minutes" min="0" max="59" value="5">
+        </div>
+        <div class="time-input">
+            <label><span class="lang-tr">Saniye</span><span class="lang-en">Seconds</span></label>
+            <input type="number" id="seconds" min="0" max="59" value="0">
+        </div>
+    </div>
+    
+    <div class="countdown-display">
+        <div class="time-box">
+            <div class="time-value" id="disp-hours">00</div>
+            <div class="time-label"><span class="lang-tr">SAAT</span><span class="lang-en">HRS</span></div>
+        </div>
+        <div class="time-box">
+            <div class="time-value" id="disp-minutes">05</div>
+            <div class="time-label"><span class="lang-tr">DAKİKA</span><span class="lang-en">MIN</span></div>
+        </div>
+        <div class="time-box">
+            <div class="time-value" id="disp-seconds">00</div>
+            <div class="time-label"><span class="lang-tr">SANİYE</span><span class="lang-en">SEC</span></div>
+        </div>
+    </div>
+    
+    <div class="btn-group">
+        <button class="btn btn-primary" id="start-countdown" onclick="startCountdown()">
+            <span class="lang-tr">Başlat</span><span class="lang-en">Start</span>
+        </button>
+        <button class="btn btn-secondary" onclick="resetCountdown()">
+            <span class="lang-tr">Sıfırla</span><span class="lang-en">Reset</span>
+        </button>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let countdownInterval = null;
+let totalSeconds = 0;
+
+function startCountdown() {
+    if (countdownInterval) {
+        clearInterval(countdownInterval);
+    }
+    
+    const hours = parseInt(document.getElementById('hours').value) || 0;
+    const minutes = parseInt(document.getElementById('minutes').value) || 0;
+    const seconds = parseInt(document.getElementById('seconds').value) || 0;
+    totalSeconds = hours * 3600 + minutes * 60 + seconds;
+    
+    if (totalSeconds <= 0) {
+        showToast('Lütfen geçerli bir süre girin!', 'error');
+        return;
+    }
+    
+    updateDisplay();
+    countdownInterval = setInterval(() => {
+        totalSeconds--;
+        if (totalSeconds <= 0) {
+            clearInterval(countdownInterval);
+            totalSeconds = 0;
+            showToast('Süre doldu!', 'success');
+        }
+        updateDisplay();
+    }, 1000);
+}
+
+function resetCountdown() {
+    clearInterval(countdownInterval);
+    document.getElementById('hours').value = 0;
+    document.getElementById('minutes').value = 5;
+    document.getElementById('seconds').value = 0;
+    totalSeconds = 0;
+    updateDisplay();
+}
+
+function updateDisplay() {
+    const hours = Math.floor(totalSeconds / 3600);
+    const minutes = Math.floor((totalSeconds % 3600) / 60);
+    const seconds = totalSeconds % 60;
+    document.getElementById('disp-hours').textContent = String(hours).padStart(2, '0');
+    document.getElementById('disp-minutes').textContent = String(minutes).padStart(2, '0');
+    document.getElementById('disp-seconds').textContent = String(seconds).padStart(2, '0');
+}
+
+// Initialize display
+document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('disp-minutes').textContent = '05';
+});
+</script>
+{% endblock %}

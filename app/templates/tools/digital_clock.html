@@ -1,0 +1,71 @@
+{% extends "base/base.html" %}
+
+{% block title %}Digital Saat{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+.digital-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 4rem;
+    color: var(--primary);
+    padding: 30px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin: 20px 0;
+    text-shadow: 0 0 20px rgba(var(--primary-rgb), 0.5);
+}
+
+.date-display {
+    font-size: 1.5rem;
+    color: var(--text-dim);
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">⏰ Digital Saat</span>
+        <span class="lang-en">⏰ Digital Clock</span>
+    </h1>
+    
+    <div class="digital-display" id="time-display"></div>
+    <div class="date-display" id="date-display"></div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+function updateClock() {
+    const now = new Date();
+    const hours = String(now.getHours()).padStart(2, '0');
+    const minutes = String(now.getMinutes()).padStart(2, '0');
+    const seconds = String(now.getSeconds()).padStart(2, '0');
+    const timeStr = `${hours}:${minutes}:${seconds}`;
+    
+    const days = ['Pazar', 'Pazartesi', 'Salı', 'Çarşamba', 'Perşembe', 'Cuma', 'Cumartesi'];
+    const months = ['Oca', 'Şub', 'Mar', 'Nis', 'May', 'Haz', 'Tem', 'Ağu', 'Eyl', 'Eki', 'Kas', 'Ara'];
+    const dayName = days[now.getDay()];
+    const day = now.getDate();
+    const month = months[now.getMonth()];
+    const year = now.getFullYear();
+    const dateStr = `${dayName}, ${day} ${month} ${year}`;
+    
+    document.getElementById('time-display').textContent = timeStr;
+    document.getElementById('date-display').textContent = dateStr;
+}
+
+updateClock();
+setInterval(updateClock, 1000);
+</script>
+{% endblock %}

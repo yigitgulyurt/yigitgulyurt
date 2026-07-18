@@ -1,0 +1,96 @@
+{% extends "base/base.html" %}
+
+{% block title %}QR Kod Üretici{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    text-align: center;
+}
+
+textarea {
+    width: 100%;
+    min-height: 100px;
+    padding: 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 12px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 0.9rem;
+    resize: vertical;
+    margin-bottom: 20px;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 25px;
+}
+
+.qr-container {
+    background: white;
+    padding: 20px;
+    border-radius: 12px;
+    display: inline-block;
+}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/qrcodejs/1.0.0/qrcode.min.js"></script>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">📱 QR Kod Üretici</span>
+        <span class="lang-en">📱 QR Code Generator</span>
+    </h1>
+    
+    <textarea id="qr-text" placeholder="QR kodunda görünmesini istediğiniz metni girin (URL, metin vb.)"></textarea>
+    
+    <button class="btn" onclick="generateQR()">
+        <span class="lang-tr">QR Kod Üret</span>
+        <span class="lang-en">Generate QR Code</span>
+    </button>
+    
+    <div class="qr-container" id="qr-container">
+        <div id="qrcode"></div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let qrCode = null;
+
+function generateQR() {
+    const text = document.getElementById('qr-text').value.trim();
+    if (!text) {
+        showToast('Lütfen bir metin girin!', 'error');
+        return;
+    }
+    
+    document.getElementById('qrcode').innerHTML = '';
+    qrCode = new QRCode(document.getElementById('qrcode'), {
+        text: text,
+        width: 256,
+        height: 256,
+        colorDark: '#000000',
+        colorLight: '#ffffff',
+        correctLevel: QRCode.CorrectLevel.H
+    });
+}
+</script>
+{% endblock %}

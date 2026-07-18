@@ -1,0 +1,138 @@
+{% extends "base/base.html" %}
+
+{% block title %}Roma Rakamları Dönüştürücü{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 600px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.converter-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 20px;
+    margin-bottom: 20px;
+}
+
+.converter-input {
+    display: flex;
+    flex-direction: column;
+}
+
+.converter-input label {
+    color: var(--text-dim);
+    margin-bottom: 8px;
+}
+
+.converter-input input {
+    padding: 14px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+}
+
+.btn {
+    width: 100%;
+    padding: 12px;
+    background: var(--primary);
+    color: white;
+    border: none;
+    border-radius: 10px;
+    font-weight: bold;
+    cursor: pointer;
+    transition: all 0.3s;
+    margin-bottom: 10px;
+}
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">🏛️ Roma Rakamları Dönüştürücü</span>
+        <span class="lang-en">🏛️ Roman Numerals Converter</span>
+    </h1>
+    
+    <div class="converter-grid">
+        <div class="converter-input">
+            <label><span class="lang-tr">Sayı (1-3999)</span><span class="lang-en">Number (1-3999)</span></label>
+            <input type="number" id="number" min="1" max="3999" placeholder="1999" oninput="convertToRoman()">
+        </div>
+        <div class="converter-input">
+            <label><span class="lang-tr">Roma Rakamı</span><span class="lang-en">Roman Numeral</span></label>
+            <input type="text" id="roman" placeholder="MCMXCIX" oninput="convertToNumber()">
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+const romanNumerals = [
+    { value: 1000, symbol: 'M' },
+    { value: 900, symbol: 'CM' },
+    { value: 500, symbol: 'D' },
+    { value: 400, symbol: 'CD' },
+    { value: 100, symbol: 'C' },
+    { value: 90, symbol: 'XC' },
+    { value: 50, symbol: 'L' },
+    { value: 40, symbol: 'XL' },
+    { value: 10, symbol: 'X' },
+    { value: 9, symbol: 'IX' },
+    { value: 5, symbol: 'V' },
+    { value: 4, symbol: 'IV' },
+    { value: 1, symbol: 'I' }
+];
+
+function convertToRoman() {
+    const num = parseInt(document.getElementById('number').value);
+    if (!num || num < 1 || num > 3999) {
+        document.getElementById('roman').value = '';
+        return;
+    }
+    
+    let result = '';
+    let remaining = num;
+    for (const pair of romanNumerals) {
+        while (remaining >= pair.value) {
+            result += pair.symbol;
+            remaining -= pair.value;
+        }
+    }
+    document.getElementById('roman').value = result;
+}
+
+function convertToNumber() {
+    const roman = document.getElementById('roman').value.toUpperCase().trim();
+    if (!roman) {
+        document.getElementById('number').value = '';
+        return;
+    }
+    
+    const symbolMap = {
+        'I': 1, 'V':5, 'X':10, 'L':50,
+        'C':100, 'D':500, 'M':1000
+    };
+    
+    let result = 0;
+    let prev = 0;
+    
+    for (let i = roman.length - 1; i >=0; i--) {
+        const curr = symbolMap[roman[i]] || 0;
+        result += curr < prev ? -curr : curr;
+        prev = curr;
+    }
+    
+    document.getElementById('number').value = result > 0 && result <= 3999 ? result : '';
+}
+</script>
+{% endblock %}
