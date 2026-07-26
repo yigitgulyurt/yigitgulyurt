@@ -193,6 +193,7 @@
     opts.headers = opts.headers || {};
     opts.headers['X-CSRF-Token'] = CSRF_TOKEN;
     opts.headers['X-CSRFToken']  = CSRF_TOKEN;
+    opts.headers['X-Requested-With'] = 'XMLHttpRequest';
     // JSON body ise csrf_token ekle
     if (opts.body && typeof opts.body === 'string') {
       try {
@@ -213,6 +214,30 @@
       }
     }
     return fetch(url, opts);
+  }
+
+  async function safeJson(res) {
+    try {
+      if (!res.ok) {
+        let txt = '';
+        try { txt = await res.text(); } catch(_){}
+        let msg = null;
+        if (txt) {
+          try {
+            const j = JSON.parse(txt);
+            if (j && j.message) msg = j.message;
+          } catch(_) {
+            const m = txt.match(/<p>(.+?)<\/p>/is) || txt.match(/description[\"']?\s*[:=]\s*[\"']([^\"']+)[\"']/) || txt.match(/Geçersiz CSRF|Bad Request|4\d\d|5\d\d/);
+            msg = (m && m[1]) || (txt.length < 220 ? txt.trim().replace(/<[^>]+>/g,' ').replace(/\s+/g,' ').slice(0,200) : `HTTP ${res.status}`);
+          }
+        }
+        throw new Error(msg || `HTTP ${res.status}: ${res.statusText || 'Hata'}`);
+      }
+      const ct = res.headers.get('Content-Type') || '';
+      if (ct.includes('application/json')) return await res.json();
+      const txt = await res.text();
+      try { return JSON.parse(txt); } catch(e) { throw new Error(`Sunucu JSON dönmedi: ${(txt||'').slice(0,120)}`); }
+    } catch(e) { throw e; }
   }
 
   function humanSize(n) {
@@ -296,7 +321,7 @@
         headers: {'Content-Type':'application/json'},
         body: JSON.stringify({filename: file.name, file_size: file.size, last_modified: state.lastModified})
       });
-      const sdata = await sr.json();
+      const sdata = await safeJson(sr);
       if (sdata.status !== 'ok') throw new Error(sdata.message || 'durum sorgulanamadı');
       state.fileId = sdata.file_id;
       state.uploadedBytes = sdata.uploaded_bytes || 0;
@@ -372,7 +397,7 @@
     const t0 = Date.now();
     try {
       const r = await csrfFetch(ENDPOINTS.chunk, {method: 'POST', body: fd});
-      const d = await r.json();
+      const d = await safeJson(r);
       if (d.status !== 'ok') throw new Error(d.message || `chunk ${idx} başarısız`);
       s.completedChunks.add(idx);
       s.uploadedBytes += (d.chunk_size || (end - start));
@@ -414,7 +439,7 @@
           chunk_total: s.chunkTotal, path: CURRENT_PATH || ''
         })
       });
-      const d = await r.json();
+      const d = await safeJson(r);
       if (d.status !== 'ok') throw new Error(d.message || 'birleştirme başarısız');
       s.el.querySelector('.progress-bar').style.width = '100%';
       s.el.querySelector('.progress-bar').style.background = 'linear-gradient(90deg, var(--color-success), #4ade80)';
@@ -475,7 +500,7 @@
     shareExisting.style.display = 'none'; shareExistingList.innerHTML = '';
     try {
       const r = await csrfFetch(ENDPOINTS.shareList + '?filepath=' + encodeURIComponent(filepath));
-      const d = await r.json();
+      const d = await safeJson(r);
       if (d.status === 'ok' && d.shares && d.shares.length) {
         shareExisting.style.display = 'block';
         d.shares.forEach(sh => {
@@ -519,7 +544,7 @@
         max_downloads: shareMaxd.value || null,
       };
       const r = await csrfFetch(ENDPOINTS.share, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
-      const d = await r.json();
+      const d = await safeJson(r);
       if (d.status !== 'ok') throw new Error(d.message || ' oluşturulamadı');
       shareResult.style.display = 'block';
       shareUrlInput.value = d.share.url;

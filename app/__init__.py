@@ -85,7 +85,9 @@ def vip_request_filter():
 def csrf_protect():
     if request.method in ('POST', 'PUT', 'DELETE', 'PATCH'):
         path = request.path
-        exempt_prefixes = ['/tools/ip-log', '/api/', '/canli/', '/obsidian/']
+        exempt_prefixes = ['/tools/ip-log', '/api/', '/canli/', '/obsidian/',
+                          '/admin/dosyalar/yukle-', '/admin/dosyalar/paylas',
+                          '/admin/dosyalar/paylasimlar']
         if any(path.startswith(p) for p in exempt_prefixes):
             return
         if not current_user.is_authenticated:
