@@ -53,6 +53,9 @@ server {
         include proxy_params;
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
+	
+	location /pubg {
+	alias /home/yigitgulyurt/pubg/
 }
 
 server {
@@ -316,3 +319,4 @@ server {
  #     server_name font.yigitgulyurt.net.tr;
  #     return 301 https://$host$request_uri;
  # }
+ 
