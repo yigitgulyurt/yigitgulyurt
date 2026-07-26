@@ -90,7 +90,17 @@ def csrf_protect():
             return
         if not current_user.is_authenticated:
             return
-        token = request.form.get('csrf_token') or request.headers.get('X-CSRF-Token')
+        token = None
+        try:
+            token = request.form.get('csrf_token')
+        except Exception:
+            token = None
+        if not token:
+            token = request.headers.get('X-CSRF-Token') or request.headers.get('X-CSRFToken')
+        if not token:
+            data = request.get_json(silent=True)
+            if isinstance(data, dict):
+                token = data.get('csrf_token')
         if not validate_csrf_token(token):
             abort(400, description='Geçersiz CSRF belirteci.')
 

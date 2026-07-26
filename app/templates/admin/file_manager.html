@@ -181,8 +181,9 @@
     cancel:  '{{ url_for("admin.file_upload_cancel") }}',
     share:   '{{ url_for("admin.file_share_create") }}',
     shareList:'{{ url_for("admin.file_share_list") }}',
-    shareDel:'/admin/dosyalar/paylasim/__ID__/sil',
+    shareDelTpl: {{ url_for('admin.file_share_delete', share_id=999999)|tojson }},  // 999999 replace edilecek
   };
+  ENDPOINTS.shareDel = ENDPOINTS.shareDelTpl.replace('999999', '__ID__');
 
   const queueEl = document.getElementById('upload-queue');
   const uploads = new Map();
@@ -190,7 +191,27 @@
 
   function csrfFetch(url, opts={}) {
     opts.headers = opts.headers || {};
-    if (!opts.headers['X-CSRF-Token']) opts.headers['X-CSRF-Token'] = CSRF_TOKEN;
+    opts.headers['X-CSRF-Token'] = CSRF_TOKEN;
+    opts.headers['X-CSRFToken']  = CSRF_TOKEN;
+    // JSON body ise csrf_token ekle
+    if (opts.body && typeof opts.body === 'string') {
+      try {
+        const contentType = (opts.headers['Content-Type'] || opts.headers['content-type'] || '');
+        if (contentType.includes('application/json')) {
+          const obj = JSON.parse(opts.body);
+          if (obj && typeof obj === 'object' && !('csrf_token' in obj)) {
+            obj.csrf_token = CSRF_TOKEN;
+            opts.body = JSON.stringify(obj);
+          }
+        }
+      } catch(_) {}
+    }
+    // FormData ise csrf_token field ekle
+    if (opts.body && (typeof FormData !== 'undefined') && opts.body instanceof FormData) {
+      if (!opts.body.has('csrf_token')) {
+        opts.body.append('csrf_token', CSRF_TOKEN);
+      }
+    }
     return fetch(url, opts);
   }
 
