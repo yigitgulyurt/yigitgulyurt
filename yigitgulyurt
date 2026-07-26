@@ -53,10 +53,10 @@ server {
         include proxy_params;
         proxy_pass http://unix:/var/www/yigitgulyurt/yigitgulyurt.sock;
     }
-	
+
 	location /pubg {
 	alias /home/yigitgulyurt/pubg/
-}
+	}
 
 server {
     listen 80;
