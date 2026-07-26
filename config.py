@@ -33,18 +33,30 @@ class Config:
     WTF_CSRF_TIME_LIMIT    = 3600  # 1 saat
     WTF_CSRF_SSL_STRICT    = (os.environ.get('FLASK_ENV') == 'production')
 
-    # İzin verilen dosya yükleme uzantıları (kişisel dosyalar için
+    # İzin verilen dosya yükleme uzantıları (kişisel dosyalar için — kişisel depo olduğundan geniş tutuldu)
     ALLOWED_EXTENSIONS = {
         # Belgeler
-        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js',
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'markdown', 'csv', 'json', 'xml',
+        'html', 'htm', 'css', 'js', 'ts', 'tsx', 'jsx', 'svelte', 'vue', 'rtf', 'odt', 'ods', 'odp',
         # Görseller
-        'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico',
+        'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico', 'avif', 'tiff', 'tif', 'heic', 'heif', 'raw', 'cr2', 'nef', 'arw',
+        # Videolar
+        'mp4', 'webm', 'mov', 'avi', 'mkv', 'mpg', 'mpeg', 'm4v', 'flv', 'wmv', '3gp', 'ogv', 'h264', 'hevc',
+        # Sesler
+        'mp3', 'wav', 'flac', 'ogg', 'oga', 'm4a', 'aac', 'opus', 'wma', 'aiff', 'aif', 'amr', 'mid', 'midi',
         # Arşivler
-        'zip', 'rar', '7z', 'tar', 'gz',
+        'zip', 'rar', '7z', 'tar', 'gz', 'tgz', 'bz2', 'xz', 'zst', 'lz', 'lzma', 'cab', 'iso',
         # Fontlar
-        'ttf', 'otf', 'woff', 'woff2',
+        'ttf', 'otf', 'woff', 'woff2', 'eot',
+        # Kod ve metin tabanlı
+        'sql', 'log', 'yml', 'yaml', 'toml', 'cfg', 'ini', 'env', 'sh', 'bash', 'zsh',
+        'bat', 'cmd', 'ps1', 'psm1', 'c', 'h', 'cpp', 'hpp', 'cs', 'java', 'kt', 'kts', 'go', 'rs',
+        'rb', 'php', 'pl', 'lua', 'vim', 'conf', 'nginx', 'dockerfile', 'makefile', 'swift', 'dart',
+        'scala', 'r', 'm', 'mm', 'gradle', 'exs', 'ex', 'hs', 'ml', 'clj', 'fs', 'fsx',
         # Diğer
-        'epub', 'pdf', 'sql', 'log', 'yml', 'yaml', 'toml', 'cfg', 'ini', 'env',
+        'epub', 'mobi', 'azw', 'azw3', 'cbz', 'cbr',
+        'ics', 'vcf', 'pem', 'cer', 'crt', 'key', 'pub', 'asc', 'gpg',
+        'torrent', 'srt', 'ass', 'sub', 'vtt',
     }
     MAX_UPLOAD_SIZE = None  # Sınırsız (chunked upload ile çok büyük dosyalar)
     PERSONAL_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'instance', 'personal_uploads')
