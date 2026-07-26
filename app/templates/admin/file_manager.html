@@ -256,9 +256,9 @@
     chunk:   '{{ url_for("admin.file_upload_chunk") }}',
     finalize:'{{ url_for("admin.file_upload_finalize") }}',
     cancel:  '{{ url_for("admin.file_upload_cancel") }}',
-    share:   '{{ url_for("admin.file_share_create") }}',
-    shareList:'{{ url_for("admin.file_share_list") }}',
-    shareDelTpl: {{ url_for('admin.file_share_delete', share_id=999999)|tojson }},  // 999999 replace edilecek
+    share:   '{{ url_for("share.file_share_create") }}',
+    shareList:'{{ url_for("share.file_share_list") }}',
+    shareDelTpl: {{ url_for('share.file_share_delete', share_id=999999)|tojson }},  // 999999 replace edilecek
   };
   ENDPOINTS.shareDel = ENDPOINTS.shareDelTpl.replace('999999', '__ID__');
 

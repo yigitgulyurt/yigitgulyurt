@@ -26,6 +26,7 @@ contact_bp  = Blueprint('contact', __name__)
 admin_bp    = Blueprint('admin', __name__)
 og_bp       = Blueprint('og', __name__)
 tools_bp    = Blueprint('tools', __name__)
+share_bp    = Blueprint('share', __name__)
 
 # --- Helpers ---
 def send_async_notification(app, name, email, subject, message):
@@ -1141,7 +1142,7 @@ def _generate_share_token():
             # DB hatasıysa çakışma kontrolünü atla, nadir durumda token çakışması olursa IntegrityError döner
             return token
 
-@admin_bp.route('/dosyalar/paylas', methods=['POST'])
+@share_bp.route('/admin/dosyalar/paylas', methods=['POST'])
 @login_required
 @limiter.limit("60 per minute")
 def file_share_create():
@@ -1199,7 +1200,7 @@ def file_share_create():
         db.session.add(share)
         db.session.commit()
 
-        share_url = url_for('admin.file_share_view', token=share.token, _external=True)
+        share_url = url_for('share.file_share_view', token=share.token, _external=True)
 
         return jsonify({
             'status': 'ok',
@@ -1225,7 +1226,7 @@ def file_share_create():
         db.session.rollback()
         return jsonify({'status': 'error', 'message': f'Paylaşım oluşturulamadı: {e}'}), 500
 
-@admin_bp.route('/dosyalar/paylasimlar', methods=['GET'])
+@share_bp.route('/admin/dosyalar/paylasimlar', methods=['GET'])
 @login_required
 @limiter.limit("120 per minute")
 def file_share_list():
@@ -1242,7 +1243,7 @@ def file_share_list():
             result.append({
                 'id': s.id,
                 'token': s.token,
-                'url': url_for('admin.file_share_view', token=s.token, _external=True),
+                'url': url_for('share.file_share_view', token=s.token, _external=True),
                 'file_path': s.file_path,
                 'file_name': s.file_name,
                 'file_size_human': human_readable_size(s.file_size or 0),
@@ -1260,7 +1261,7 @@ def file_share_list():
     except Exception as e:
         return jsonify({'status': 'error', 'message': f'Paylaşımlar listelenemedi: {e}', 'count': 0, 'shares': []}), 500
 
-@admin_bp.route('/dosyalar/paylasim/<int:share_id>/sil', methods=['POST'])
+@share_bp.route('/admin/dosyalar/paylasim/<int:share_id>/sil', methods=['POST'])
 @login_required
 @limiter.limit("60 per minute")
 def file_share_delete(share_id):
@@ -1279,7 +1280,7 @@ def file_share_delete(share_id):
         return jsonify({'status': 'error', 'message': f'Silme başarısız: {e}'}), 500
 
 # Public share endpoints
-@main_bp.route('/p/<token>', methods=['GET', 'POST'])
+@share_bp.route('/p/<token>', methods=['GET', 'POST'])
 def file_share_view(token):
     try:
         share = FileShare.query.filter_by(token=token).first()
@@ -1293,7 +1294,7 @@ def file_share_view(token):
                 error = 'Hatalı şifre'
             else:
                 session['share_unlock_' + token] = True
-                return redirect(url_for('admin.file_share_view', token=token))
+                return redirect(url_for('share.file_share_view', token=token))
 
         needs_password = bool(share.password_hash) and not session.get('share_unlock_' + token)
         if not share.is_active:
@@ -1317,7 +1318,7 @@ def file_share_view(token):
         except Exception:
             abort(503)
 
-@main_bp.route('/p/<token>/indir')
+@share_bp.route('/p/<token>/indir')
 def file_share_download(token):
     try:
         share = FileShare.query.filter_by(token=token).first()
@@ -1326,7 +1327,7 @@ def file_share_download(token):
         if not share.is_active:
             abort(410)
         if share.password_hash and not session.get('share_unlock_' + token):
-            return redirect(url_for('admin.file_share_view', token=token))
+            return redirect(url_for('share.file_share_view', token=token))
 
         base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
         target = os.path.realpath(os.path.join(base_dir, share.file_path))
@@ -1345,7 +1346,7 @@ def file_share_download(token):
         db.session.rollback()
         abort(500)
 
-@main_bp.route('/p/<token>/dosya')
+@share_bp.route('/p/<token>/dosya')
 def file_share_raw(token):
     """Dosyayı doğrudan gönder (resim/video/markdown/kod için önizleme - indirme sayacını arttırmaz)"""
     try:
