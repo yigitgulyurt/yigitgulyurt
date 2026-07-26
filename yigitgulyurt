@@ -55,7 +55,7 @@ server {
     }
 
     location /pubg/ {
-        alias /home/yigitgulyurt/pubg;
+        alias /home/yigitgulyurt/pubg/;
     }
 server {
     listen 80;
