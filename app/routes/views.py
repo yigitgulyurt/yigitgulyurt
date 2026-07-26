@@ -1,9 +1,9 @@
-from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file
+from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
-from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog
+from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog, FileShare
 from app import db, limiter
-from datetime import datetime
+from datetime import datetime, timedelta
 import random
 import string
 import re
@@ -431,20 +431,29 @@ def index():
 
 # --- Admin Routes ---
 @admin_bp.route('/giris', methods=['GET', 'POST'])
+@limiter.limit("10 per minute", methods=['POST'])
+@limiter.limit("50 per hour", methods=['POST'])
 def login():
     if current_user.is_authenticated: return redirect(url_for('admin.index'))
     if request.method == 'POST':
-        user = Admin.query.filter_by(username=request.form['username']).first()
-        if user and user.check_password(request.form['password']):
-            login_user(user)
+        username = bleach.clean(request.form.get('username', '').strip())
+        password = request.form.get('password', '')
+        user = Admin.query.filter_by(username=username).first()
+        if user and user.check_password(password):
+            session.clear()
+            login_user(user, remember=True, fresh=True)
+            session.regenerate = True
+            flash('Hoş geldiniz.', 'success')
             return redirect(url_for('admin.index'))
         flash('Hatalı kullanıcı adı veya şifre.', 'error')
     return render_template('admin/login.html')
 
-@admin_bp.route('/cikis')
+@admin_bp.route('/cikis', methods=['POST'])
 @login_required
 def logout():
     logout_user()
+    session.clear()
+    flash('Güvenli şekilde çıkış yapıldı.', 'success')
     return redirect(url_for('main.index'))
 
 @admin_bp.route('/')
@@ -692,6 +701,634 @@ def yigitgulyurt_og():
 @login_required
 def cagrivakti_og():
     return render_template('admin/showcase/cagrivakti.html')
+
+# --- Personal File Manager ---
+def allowed_file(filename):
+    allowed = current_app.config.get('ALLOWED_EXTENSIONS', set())
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in allowed
+
+def human_readable_size(num_bytes):
+    for unit in ['B', 'KB', 'MB', 'GB', 'TB']:
+        if abs(num_bytes) < 1024.0:
+            return f"{num_bytes:.2f} {unit}"
+        num_bytes /= 1024.0
+    return f"{num_bytes:.2f} PB"
+
+def sanitize_relative_path(user_path):
+    if not user_path:
+        return ''
+    user_path = user_path.replace('\\', '/').lstrip('/')
+    user_path = re.sub(r'\.\.+', '.', user_path)
+    user_path = user_path.lstrip('./')
+    parts = []
+    for p in user_path.split('/'):
+        if not p or p in ('.', '..'):
+            continue
+        parts.append(secure_filename(p) if '.' not in p else p)
+    return '/'.join(parts)
+
+@admin_bp.route('/dosyalar')
+@admin_bp.route('/dosyalar/<path:subpath>')
+@login_required
+@limiter.limit("120 per minute")
+def file_manager(subpath=''):
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    safe_sub = sanitize_relative_path(subpath)
+    current_dir = os.path.join(base_dir, safe_sub) if safe_sub else base_dir
+    current_dir = os.path.realpath(current_dir)
+    base_real = os.path.realpath(base_dir)
+    if not current_dir.startswith(base_real):
+        flash('Geçersiz klasör yolu.', 'error')
+        return redirect(url_for('admin.file_manager'))
+    if not os.path.isdir(current_dir):
+        flash('Klasör bulunamadı.', 'error')
+        return redirect(url_for('admin.file_manager'))
+    files = []
+    dirs = []
+    try:
+        with os.scandir(current_dir) as it:
+            for entry in it:
+                try:
+                    stat = entry.stat()
+                    item = {
+                        'name': entry.name,
+                        'mtime': datetime.fromtimestamp(stat.st_mtime),
+                        'size': stat.st_size,
+                        'size_human': human_readable_size(stat.st_size),
+                        'path': (safe_sub + '/' + entry.name).lstrip('/') if safe_sub else entry.name,
+                    }
+                    if entry.is_dir():
+                        dirs.append(item)
+                    elif entry.is_file():
+                        item['ext'] = entry.name.rsplit('.', 1)[1].lower() if '.' in entry.name else ''
+                        files.append(item)
+                except (OSError, PermissionError):
+                    continue
+    except (OSError, PermissionError) as e:
+        flash(f'Klasör okunamadı: {e}', 'error')
+    dirs.sort(key=lambda x: x['name'].lower())
+    files.sort(key=lambda x: x['name'].lower())
+    breadcrumb = []
+    acc = ''
+    for part in ([p for p in safe_sub.split('/') if p] if safe_sub else []):
+        acc = (acc + '/' + part).lstrip('/')
+        breadcrumb.append({'name': part, 'path': acc})
+    parent = ''
+    if safe_sub:
+        parent_parts = safe_sub.split('/')[:-1]
+        parent = '/'.join(parent_parts)
+    total_size = sum(f['size'] for f in files)
+    return render_template(
+        'admin/file_manager.html',
+        dirs=dirs,
+        files=files,
+        breadcrumb=breadcrumb,
+        current_path=safe_sub,
+        parent_path=parent,
+        total_files=len(files),
+        total_dirs=len(dirs),
+        total_size_human=human_readable_size(total_size),
+    )
+
+@admin_bp.route('/dosyalar/yukle', methods=['POST'])
+@login_required
+@limiter.limit("30 per minute")
+def file_upload():
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target_sub = sanitize_relative_path(request.form.get('path', ''))
+    target_dir = os.path.join(base_dir, target_sub) if target_sub else base_dir
+    target_dir = os.path.realpath(target_dir)
+    base_real = os.path.realpath(base_dir)
+    if not target_dir.startswith(base_real):
+        return jsonify({'status': 'error', 'message': 'Geçersiz hedef klasör.'}), 400
+    os.makedirs(target_dir, exist_ok=True)
+    uploaded_files = request.files.getlist('files')
+    if not uploaded_files or all(not f.filename for f in uploaded_files):
+        flash('Yüklenecek dosya seçilmedi.', 'error')
+        return redirect(url_for('admin.file_manager', subpath=target_sub or None))
+    results = []
+    for f in uploaded_files:
+        if not f or not f.filename:
+            continue
+        original = f.filename
+        filename = secure_filename(original) or 'dosya'
+        if not allowed_file(filename):
+            results.append({'name': original, 'status': 'error', 'message': f'İzin verilmeyen uzantı: {filename.rsplit(".", 1)[1].lower() if "." in filename else "yok"}'})
+            continue
+        target_path = os.path.join(target_dir, filename)
+        counter = 1
+        name, ext = os.path.splitext(filename)
+        while os.path.exists(target_path):
+            filename = f"{name}_{counter}{ext}"
+            target_path = os.path.join(target_dir, filename)
+            counter += 1
+        try:
+            size = 0
+            chunk_size = 8 * 1024 * 1024
+            with open(target_path, 'wb') as out:
+                while True:
+                    chunk = f.stream.read(chunk_size)
+                    if not chunk:
+                        break
+                    size += len(chunk)
+                    out.write(chunk)
+            results.append({'name': original, 'status': 'ok', 'saved_as': filename, 'size_human': human_readable_size(size)})
+        except Exception as e:
+            results.append({'name': original, 'status': 'error', 'message': str(e)})
+    ok_count = sum(1 for r in results if r['status'] == 'ok')
+    err_count = len(results) - ok_count
+    if ok_count:
+        flash(f'{ok_count} dosya başarıyla yüklendi.', 'success')
+    if err_count:
+        flash(f'{err_count} dosya yüklenemedi. Detay: ' + ', '.join(r['message'] for r in results if r['status'] == 'error'), 'error')
+    return redirect(url_for('admin.file_manager', subpath=target_sub or None))
+
+@admin_bp.route('/dosyalar/indir/<path:filepath>')
+@login_required
+@limiter.limit("120 per minute")
+def file_download(filepath):
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    safe = sanitize_relative_path(filepath)
+    target = os.path.realpath(os.path.join(base_dir, safe))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real) or not os.path.isfile(target):
+        abort(404)
+    return send_file(target, as_attachment=True, download_name=os.path.basename(target))
+
+@admin_bp.route('/dosyalar/sil/<path:filepath>', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def file_delete(filepath):
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    safe = sanitize_relative_path(filepath)
+    target = os.path.realpath(os.path.join(base_dir, safe))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real):
+        flash('Geçersiz dosya yolu.', 'error')
+        return redirect(url_for('admin.file_manager'))
+    parent_sub = ''
+    if safe:
+        parts = safe.split('/')
+        parent_sub = '/'.join(parts[:-1])
+    try:
+        if os.path.isfile(target):
+            os.remove(target)
+            flash(f'{os.path.basename(target)} silindi.', 'success')
+        elif os.path.isdir(target):
+            import shutil
+            shutil.rmtree(target)
+            flash(f'Klasör silindi: {os.path.basename(target)}', 'success')
+        else:
+            flash('Hedef bulunamadı.', 'error')
+    except Exception as e:
+        flash(f'Silme başarısız: {e}', 'error')
+    return redirect(url_for('admin.file_manager', subpath=parent_sub or None))
+
+@admin_bp.route('/dosyalar/klasor-olustur', methods=['POST'])
+@login_required
+@limiter.limit("30 per minute")
+def file_mkdir():
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target_sub = sanitize_relative_path(request.form.get('path', ''))
+    folder_name = secure_filename(request.form.get('folder_name', '').strip())
+    if not folder_name:
+        flash('Klasör adı gerekli.', 'error')
+        return redirect(url_for('admin.file_manager', subpath=target_sub or None))
+    target_dir = os.path.join(base_dir, target_sub) if target_sub else base_dir
+    target_dir = os.path.realpath(target_dir)
+    base_real = os.path.realpath(base_dir)
+    if not target_dir.startswith(base_real):
+        flash('Geçersiz hedef klasör.', 'error')
+        return redirect(url_for('admin.file_manager'))
+    new_dir = os.path.join(target_dir, folder_name)
+    try:
+        os.makedirs(new_dir, exist_ok=False)
+        flash(f'"{folder_name}" klasörü oluşturuldu.', 'success')
+    except FileExistsError:
+        flash('Bu isimde bir klasör zaten var.', 'error')
+    except Exception as e:
+        flash(f'Oluşturma başarısız: {e}', 'error')
+    return redirect(url_for('admin.file_manager', subpath=target_sub or None))
+
+
+# --- Resumable (Chunked) Upload Endpoints ---
+
+def _ensure_partial_dir():
+    partial_dir = current_app.config['PERSONAL_UPLOAD_PARTIAL_FOLDER']
+    os.makedirs(partial_dir, exist_ok=True)
+    return partial_dir
+
+def _file_identifier(filename, file_size, last_modified=None):
+    """Dosya için benzersiz bir tanımlayıcı üret (chunk'ları eşleştirmek için)"""
+    import hashlib
+    base_str = f"{filename}|{file_size}|{last_modified or 0}"
+    return hashlib.sha256(base_str.encode('utf-8')).hexdigest()[:32]
+
+def _partial_path(file_id, chunk_index=None):
+    partial_dir = _ensure_partial_dir()
+    if chunk_index is None:
+        return os.path.join(partial_dir, file_id)
+    return os.path.join(partial_dir, f"{file_id}.{chunk_index:010d}")
+
+@admin_bp.route('/dosyalar/yukle-durum', methods=['POST'])
+@login_required
+@limiter.limit("120 per minute")
+def file_upload_status():
+    """Mevcut yükleme durumunu döndür - frontend'in kaldığı yerden devam etmesi için"""
+    data = request.get_json(silent=True) or request.form
+    filename = data.get('filename', '').strip()
+    file_size = int(data.get('file_size', 0) or 0)
+    last_modified = data.get('last_modified')
+
+    if not filename or file_size <= 0:
+        return jsonify({'status': 'error', 'message': 'Eksik parametreler'}), 400
+
+    file_id = _file_identifier(filename, file_size, last_modified)
+    partial_dir = _ensure_partial_dir()
+
+    uploaded_bytes = 0
+    completed_chunks = []
+
+    if os.path.isdir(partial_dir):
+        for entry in os.listdir(partial_dir):
+            if entry.startswith(file_id + '.'):
+                try:
+                    idx = int(entry.split('.')[-1])
+                    chunk_path = os.path.join(partial_dir, entry)
+                    sz = os.path.getsize(chunk_path)
+                    uploaded_bytes += sz
+                    completed_chunks.append(idx)
+                except (ValueError, OSError):
+                    continue
+
+    return jsonify({
+        'status': 'ok',
+        'file_id': file_id,
+        'uploaded_bytes': uploaded_bytes,
+        'file_size': file_size,
+        'completed_chunks': sorted(completed_chunks),
+        'progress_pct': round((uploaded_bytes / file_size) * 100, 2) if file_size else 0,
+    })
+
+@admin_bp.route('/dosyalar/yukle-chunk', methods=['POST'])
+@login_required
+@limiter.limit("600 per minute")
+def file_upload_chunk():
+    """Tek bir chunk'ı .partials klasörüne kaydet"""
+    file_id = request.form.get('file_id', '').strip()
+    chunk_index = int(request.form.get('chunk_index', 0) or 0)
+    chunk_total = int(request.form.get('chunk_total', 1) or 1)
+    filename = request.form.get('filename', '').strip()
+    file_size = int(request.form.get('file_size', 0) or 0)
+
+    chunk_file = request.files.get('chunk')
+    if not chunk_file or not file_id:
+        return jsonify({'status': 'error', 'message': 'Eksik parametreler'}), 400
+
+    if not allowed_file(filename):
+        return jsonify({'status': 'error', 'message': f'İzin verilmeyen uzantı: {filename.rsplit(".", 1)[1].lower() if "." in filename else "yok"}'}), 400
+
+    chunk_path = _partial_path(file_id, chunk_index)
+    try:
+        size = 0
+        with open(chunk_path, 'wb') as out:
+            while True:
+                buf = chunk_file.stream.read(4 * 1024 * 1024)
+                if not buf:
+                    break
+                size += len(buf)
+                out.write(buf)
+        return jsonify({
+            'status': 'ok',
+            'chunk_index': chunk_index,
+            'chunk_size': size,
+        })
+    except Exception as e:
+        try:
+            if os.path.exists(chunk_path):
+                os.remove(chunk_path)
+        except OSError:
+            pass
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@admin_bp.route('/dosyalar/yukle-bitir', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def file_upload_finalize():
+    """Tüm chunk'ları birleştir, hedef klasöre taşı, partial'ları temizle"""
+    data = request.get_json(silent=True) or request.form
+    file_id = data.get('file_id', '').strip()
+    filename = data.get('filename', '').strip()
+    file_size = int(data.get('file_size', 0) or 0)
+    chunk_total = int(data.get('chunk_total', 0) or 0)
+    target_sub = sanitize_relative_path(data.get('path', ''))
+
+    if not file_id or not filename or chunk_total <= 0:
+        return jsonify({'status': 'error', 'message': 'Eksik parametreler'}), 400
+
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target_dir = os.path.join(base_dir, target_sub) if target_sub else base_dir
+    target_dir = os.path.realpath(target_dir)
+    base_real = os.path.realpath(base_dir)
+    if not target_dir.startswith(base_real):
+        return jsonify({'status': 'error', 'message': 'Geçersiz hedef klasör'}), 400
+    os.makedirs(target_dir, exist_ok=True)
+
+    if not allowed_file(filename):
+        return jsonify({'status': 'error', 'message': f'İzin verilmeyen uzantı: {filename.rsplit(".", 1)[1].lower() if "." in filename else "yok"}'}), 400
+
+    chunk_paths = []
+    for i in range(chunk_total):
+        p = _partial_path(file_id, i)
+        if not os.path.isfile(p):
+            return jsonify({'status': 'error', 'message': f'Eksik chunk: {i}'}), 400
+        chunk_paths.append(p)
+
+    secure_name = secure_filename(filename) or 'dosya'
+    name, ext = os.path.splitext(secure_name)
+    counter = 1
+    final_filename = secure_name
+    final_path = os.path.join(target_dir, final_filename)
+    while os.path.exists(final_path):
+        final_filename = f"{name}_{counter}{ext}"
+        final_path = os.path.join(target_dir, final_filename)
+        counter += 1
+
+    try:
+        total_written = 0
+        with open(final_path, 'wb') as out:
+            for p in chunk_paths:
+                with open(p, 'rb') as cf:
+                    while True:
+                        buf = cf.read(8 * 1024 * 1024)
+                        if not buf:
+                            break
+                        out.write(buf)
+                        total_written += len(buf)
+        for p in chunk_paths:
+            try: os.remove(p)
+            except OSError: pass
+        meta_path = _partial_path(file_id)
+        try:
+            if os.path.exists(meta_path): os.remove(meta_path)
+        except OSError:
+            pass
+        return jsonify({
+            'status': 'ok',
+            'filename': final_filename,
+            'saved_path': (target_sub + '/' + final_filename).lstrip('/') if target_sub else final_filename,
+            'size_bytes': total_written,
+            'size_human': human_readable_size(total_written),
+        })
+    except Exception as e:
+        try:
+            if os.path.exists(final_path):
+                os.remove(final_path)
+        except OSError:
+            pass
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+@admin_bp.route('/dosyalar/yukle-iptal', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def file_upload_cancel():
+    """Kısmi yüklemeyi iptal et - chunk'ları sil"""
+    data = request.get_json(silent=True) or request.form
+    file_id = data.get('file_id', '').strip()
+    if not file_id:
+        return jsonify({'status': 'error', 'message': 'file_id gerekli'}), 400
+    partial_dir = _ensure_partial_dir()
+    deleted = 0
+    try:
+        for entry in os.listdir(partial_dir):
+            if entry.startswith(file_id):
+                p = os.path.join(partial_dir, entry)
+                try:
+                    os.remove(p)
+                    deleted += 1
+                except OSError:
+                    pass
+    except OSError as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+    return jsonify({'status': 'ok', 'deleted_chunks': deleted})
+
+
+# --- File Share Endpoints ---
+
+def _generate_share_token():
+    length = current_app.config.get('SHARE_TOKEN_LENGTH', 28)
+    import secrets
+    alphabet = string.ascii_letters + string.digits
+    while True:
+        token = ''.join(secrets.choice(alphabet) for _ in range(length))
+        if not FileShare.query.filter_by(token=token).first():
+            return token
+
+@admin_bp.route('/dosyalar/paylas', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def file_share_create():
+    data = request.get_json(silent=True) or request.form
+    filepath = sanitize_relative_path(data.get('filepath', ''))
+    if not filepath:
+        return jsonify({'status': 'error', 'message': 'Dosya yolu gerekli'}), 400
+
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target = os.path.realpath(os.path.join(base_dir, filepath))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real) or not os.path.isfile(target):
+        return jsonify({'status': 'error', 'message': 'Dosya bulunamadı'}), 404
+
+    try:
+        stat = os.stat(target)
+    except OSError as e:
+        return jsonify({'status': 'error', 'message': str(e)}), 500
+
+    password = data.get('password') or None
+    max_downloads = data.get('max_downloads')
+    if max_downloads:
+        try:
+            max_downloads = int(max_downloads)
+            if max_downloads <= 0:
+                max_downloads = None
+        except (ValueError, TypeError):
+            max_downloads = None
+    else:
+        max_downloads = None
+
+    expires_hours = data.get('expires_hours')
+    expires_at = None
+    if expires_hours:
+        try:
+            h = float(expires_hours)
+            if h > 0:
+                expires_at = datetime.utcnow() + timedelta(hours=h)
+        except (ValueError, TypeError):
+            expires_at = None
+
+    share = FileShare(
+        token=_generate_share_token(),
+        file_path=filepath,
+        file_name=os.path.basename(target),
+        file_size=stat.st_size,
+        max_downloads=max_downloads,
+        expires_at=expires_at,
+        created_by_id=current_user.id,
+    )
+    if password:
+        share.set_password(password)
+
+    db.session.add(share)
+    db.session.commit()
+
+    share_url = url_for('admin.file_share_view', token=share.token, _external=True)
+
+    return jsonify({
+        'status': 'ok',
+        'share': {
+            'id': share.id,
+            'token': share.token,
+            'url': share_url,
+            'file_name': share.file_name,
+            'file_size_human': human_readable_size(share.file_size or 0),
+            'has_password': bool(share.password_hash),
+            'max_downloads': share.max_downloads,
+            'download_count': share.download_count or 0,
+            'expires_at': share.expires_at.isoformat() if share.expires_at else None,
+            'time_left': share.time_left_text(),
+            'is_active': share.is_active,
+            'created_at': share.created_at.isoformat() if share.created_at else None,
+        }
+    })
+
+@admin_bp.route('/dosyalar/paylasimlar', methods=['GET'])
+@login_required
+@limiter.limit("120 per minute")
+def file_share_list():
+    """Tüm paylaşımları listele - ya da belirli bir filepath için"""
+    filepath = request.args.get('filepath')
+    query = FileShare.query.filter_by(created_by_id=current_user.id)
+    if filepath:
+        safe = sanitize_relative_path(filepath)
+        query = query.filter_by(file_path=safe)
+    shares = query.order_by(FileShare.created_at.desc()).all()
+    result = []
+    for s in shares:
+        result.append({
+            'id': s.id,
+            'token': s.token,
+            'url': url_for('admin.file_share_view', token=s.token, _external=True),
+            'file_path': s.file_path,
+            'file_name': s.file_name,
+            'file_size_human': human_readable_size(s.file_size or 0),
+            'has_password': bool(s.password_hash),
+            'max_downloads': s.max_downloads,
+            'download_count': s.download_count or 0,
+            'expires_at': s.expires_at.isoformat() if s.expires_at else None,
+            'time_left': s.time_left_text(),
+            'is_active': s.is_active,
+            'created_at': s.created_at.isoformat() if s.created_at else None,
+        })
+    return jsonify({'status': 'ok', 'count': len(result), 'shares': result})
+
+@admin_bp.route('/dosyalar/paylasim/<int:share_id>/sil', methods=['POST'])
+@login_required
+@limiter.limit("60 per minute")
+def file_share_delete(share_id):
+    share = FileShare.query.get_or_404(share_id)
+    if share.created_by_id != current_user.id:
+        abort(403)
+    db.session.delete(share)
+    db.session.commit()
+    return jsonify({'status': 'ok', 'message': 'Paylaşım silindi'})
+
+# Public share endpoints
+@main_bp.route('/p/<token>', methods=['GET', 'POST'])
+def file_share_view(token):
+    share = FileShare.query.filter_by(token=token).first()
+    if not share:
+        abort(404)
+
+    error = None
+    if request.method == 'POST':
+        password = request.form.get('password', '')
+        if not share.check_password(password):
+            error = 'Hatalı şifre'
+        else:
+            session['share_unlock_' + token] = True
+            return redirect(url_for('admin.file_share_view', token=token))
+
+    needs_password = bool(share.password_hash) and not session.get('share_unlock_' + token)
+    if not share.is_active:
+        return render_template('admin/file_share_expired.html', share=share, error=error), 410
+
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target = os.path.realpath(os.path.join(base_dir, share.file_path))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real) or not os.path.isfile(target):
+        return render_template('admin/file_share_expired.html', share=share, error='Dosya bulunamadı'), 404
+
+    return render_template('admin/file_share_view.html',
+                           share=share,
+                           file_size_human=human_readable_size(share.file_size or 0),
+                           needs_password=needs_password,
+                           error=error)
+
+@main_bp.route('/p/<token>/indir')
+def file_share_download(token):
+    share = FileShare.query.filter_by(token=token).first()
+    if not share:
+        abort(404)
+    if not share.is_active:
+        abort(410)
+    if share.password_hash and not session.get('share_unlock_' + token):
+        return redirect(url_for('admin.file_share_view', token=token))
+
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target = os.path.realpath(os.path.join(base_dir, share.file_path))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real) or not os.path.isfile(target):
+        abort(404)
+
+    share.download_count = (share.download_count or 0) + 1
+    db.session.commit()
+
+    return send_file(target, as_attachment=True, download_name=share.file_name)
+
+@main_bp.route('/p/<token>/dosya')
+def file_share_raw(token):
+    """Dosyayı doğrudan gönder (resim/video/markdown/kod için önizleme - indirme sayacını arttırmaz)"""
+    share = FileShare.query.filter_by(token=token).first()
+    if not share or not share.is_active:
+        abort(404)
+    if share.password_hash and not session.get('share_unlock_' + token):
+        abort(403)
+
+    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+    target = os.path.realpath(os.path.join(base_dir, share.file_path))
+    base_real = os.path.realpath(base_dir)
+    if not target.startswith(base_real) or not os.path.isfile(target):
+        abort(404)
+
+    ext = (os.path.splitext(target)[1].lstrip('.') or '').lower()
+    text_exts = {'txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'}
+    if ext in text_exts:
+        try:
+            mime_map = {
+                'html': 'text/plain; charset=utf-8', 'htm': 'text/plain; charset=utf-8',
+                'js': 'text/plain; charset=utf-8', 'ts': 'text/plain; charset=utf-8',
+                'css': 'text/css; charset=utf-8', 'json': 'application/json; charset=utf-8',
+                'xml': 'application/xml; charset=utf-8', 'svg': 'image/svg+xml; charset=utf-8',
+            }
+            mimetype = mime_map.get(ext, 'text/plain; charset=utf-8')
+            response = send_file(target, as_attachment=False, download_name=share.file_name, mimetype=mimetype)
+        except Exception:
+            response = send_file(target, as_attachment=False, download_name=share.file_name)
+    else:
+        response = send_file(target, as_attachment=False, download_name=share.file_name)
+    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+    return response
+
 
 # --- OG Routes ---
 THEMES = {

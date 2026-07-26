@@ -7,7 +7,7 @@ class Config:
     ADMIN_PASSWORD_HASH            = os.environ.get('ADMIN_PASSWORD_HASH')
     ADMIN_USERNAME                 = os.environ.get('ADMIN_USERNAME')       or 'admin'
     CONTACT_EMAIL                  = os.environ.get('CONTACT_EMAIL')        or 'yigit@yigitgulyurt.net.tr'
-    MAX_CONTENT_LENGTH             = 50 * 1024 * 1024  # 50MB
+    MAX_CONTENT_LENGTH             = None  # Sınırsız - Nginx tarafında yönetilir
     OBSIDIAN_PASSWORD              = os.environ.get('OBSIDIAN_PASSWORD')    or ''
     OBSIDIAN_VAULT_PATH            = os.environ.get('OBSIDIAN_VAULT_PATH')  or '/mnt/obsidian'
     REDIS_URL                      = os.environ.get('REDIS_URL')            or 'redis://localhost:6379/0'
@@ -19,6 +19,39 @@ class Config:
     STREAM_KEY                     = os.environ.get('STREAM_KEY')           or ''
     STREAM_LIVE_FALLBACK           = os.environ.get('STREAM_LIVE_FALLBACK') or 'false'
     UPLOAD_FOLDER                  = os.path.join(os.path.dirname(__file__), 'app', 'static', 'image', 'yigitgulyurt')
+
+    # Cookie Güvenlik Ayarları
+    SESSION_COOKIE_SECURE    = (os.environ.get('FLASK_ENV') == 'production')
+    SESSION_COOKIE_HTTPONLY  = True
+    SESSION_COOKIE_SAMESITE  = 'Lax'
+    REMEMBER_COOKIE_SECURE   = (os.environ.get('FLASK_ENV') == 'production')
+    REMEMBER_COOKIE_HTTPONLY = True
+    REMEMBER_COOKIE_SAMESITE = 'Lax'
+    REMEMBER_COOKIE_DURATION = 86400  # 1 gün
+
+    # WTF_CSRF_ENABLED       = True
+    WTF_CSRF_TIME_LIMIT    = 3600  # 1 saat
+    WTF_CSRF_SSL_STRICT    = (os.environ.get('FLASK_ENV') == 'production')
+
+    # İzin verilen dosya yükleme uzantıları (kişisel dosyalar için
+    ALLOWED_EXTENSIONS = {
+        # Belgeler
+        'pdf', 'doc', 'docx', 'xls', 'xlsx', 'ppt', 'pptx', 'txt', 'md', 'csv', 'json', 'xml', 'html', 'css', 'js',
+        # Görseller
+        'jpg', 'jpeg', 'png', 'gif', 'svg', 'webp', 'bmp', 'ico',
+        # Arşivler
+        'zip', 'rar', '7z', 'tar', 'gz',
+        # Fontlar
+        'ttf', 'otf', 'woff', 'woff2',
+        # Diğer
+        'epub', 'pdf', 'sql', 'log', 'yml', 'yaml', 'toml', 'cfg', 'ini', 'env',
+    }
+    MAX_UPLOAD_SIZE = None  # Sınırsız (chunked upload ile çok büyük dosyalar)
+    PERSONAL_UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), 'instance', 'personal_uploads')
+    PERSONAL_UPLOAD_PARTIAL_FOLDER = os.path.join(os.path.dirname(__file__), 'instance', 'personal_uploads', '.partials')
+    SHARE_TOKEN_LENGTH = 28
+    RESUMABLE_CHUNK_MIN_SIZE = 1024 * 1024       # 1 MB minimum
+    RESUMABLE_CHUNK_DEFAULT_SIZE = 8 * 1024 * 1024  # 8 MB (önerilen)
 
     # Telegram Bot Settings
     TELEGRAM_TOKEN                 = os.environ.get('TELEGRAM_TOKEN')

@@ -2,6 +2,7 @@
 <html lang="tr">
 <head>
   <meta charset="UTF-8">
+  <meta name="csrf-token" content="{{ csrf_token() }}">
   <title>{% block title %}Admin{% endblock %} | Yiğit Gülyurt</title>
   <link rel="icon" type="image/svg+xml" href="https://yigitgulyurt.net.tr/image/file/yigitgulyurt/admin/favicon.svg">
   <link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/main.yigitgulyurt.css">
@@ -30,6 +31,7 @@
 <nav class="nav">
   <a class="nav-logo" href="{{ url_for('admin.index') }}">admin<span class="cursor"></span></a>
   <div class="nav-links">
+    <a href="{{ url_for('admin.file_manager') }}">dosyalar</a>
     <a href="{{ url_for('obsidian.index') }}">obsidian</a>
     <a href="{{ url_for('admin.og') }}">og</a>
     <a href="{{ url_for('main.subdomain') }}">subdomainler</a>
@@ -40,7 +42,10 @@
     <a href="{{ url_for('admin.messages') }}">mesajlar</a>
     <a href="{{ url_for('admin.stream_config') }}">yayın</a>
     <a href="{{ url_for('admin.stream_viewers') }}">izleyiciler</a>
-    <a href="{{ url_for('main.index') }}" style="color:#f87171">çıkış</a>
+    <form action="{{ url_for('admin.logout') }}" method="POST" style="display:inline;margin:0">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+      <button type="submit" style="background:none;border:none;color:#f87171;cursor:pointer;font:inherit;padding:0">çıkış</button>
+    </form>
   </div>
 </nav>
 {% with messages = get_flashed_messages(with_categories=true) %}

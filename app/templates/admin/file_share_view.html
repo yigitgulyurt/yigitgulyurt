@@ -1,0 +1,275 @@
+{% extends "base/base.html" %}
+{% block title %}{{ share.file_name }} | Dosya Paylaşımı{% endblock %}
+{% block og_title %}{{ share.file_name }} · Dosya Paylaşımı{% endblock %}
+{% block og_description %}{{ file_size_human }} boyutunda dosya · Yiğit Gülyurt{% endblock %}
+{% block tw_title %}{{ share.file_name }} · Dosya Paylaşımı{% endblock %}
+{% block tw_description %}{{ file_size_human }} boyutunda dosya · Yiğit Gülyurt{% endblock %}
+{% block head %}
+{% set ext = share.file_name.rsplit('.', 1)[1].lower() if '.' in share.file_name else '' %}
+{% set is_img = ext in ['jpg','jpeg','png','gif','svg','webp','bmp','ico'] %}
+{% set is_video = ext in ['mp4','webm','mov','ogg','ogv','mkv','avi'] %}
+{% set is_audio = ext in ['mp3','wav','ogg','oga','flac','m4a','aac'] %}
+{% set is_pdf = ext in ['pdf'] %}
+{% set is_text = ext in ['txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'] %}
+{% set raw_url = url_for('admin.file_share_raw', token=share.token) %}
+{% if is_text %}
+<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" id="hljs-css">
+<script src="{{ url_for('static', filename='js/yigitgulyurt/marked.yigitgulyurt.js') }}"></script>
+<script src="{{ url_for('static', filename='js/yigitgulyurt/highlight.yigitgulyurt.js') }}"></script>
+{% endif %}
+<style>
+  .viewer-card { max-width: 1080px; margin: 0 auto; }
+  .viewer-box { border:0.5px solid var(--border); border-radius:8px; overflow:hidden; background:var(--bg-secondary); }
+  .viewer-media-wrap { background:#000; display:flex; align-items:center; justify-content:center; min-height:260px; }
+  .viewer-media-wrap img.viewer-img { max-width:100%; max-height:72vh; display:block; cursor:zoom-in; }
+  .viewer-media-wrap video.viewer-video, .viewer-media-wrap audio.viewer-audio { max-width:100%; max-height:72vh; }
+  .viewer-pdf { width:100%; height:82vh; border:0; background:#fff; }
+  .viewer-code-wrap { max-height:70vh; overflow:auto; background:#0d1117; border-top:0.5px solid var(--border); }
+  .viewer-code-wrap pre { margin:0; padding:16px 18px; font-family:JetBrains Mono NL, Menlo, Consolas, monospace; font-size:13px; line-height:1.6; }
+  .viewer-code-wrap pre code.hljs { padding:0; background:transparent; }
+  .viewer-md { padding:20px 24px; max-height:70vh; overflow:auto; color:var(--text); line-height:1.7; font-size:14px; }
+  .viewer-md h1,.viewer-md h2,.viewer-md h3,.viewer-md h4 { color:var(--text); margin-top:1.2em; margin-bottom:.5em; }
+  .viewer-md code { background:rgba(255,255,255,0.06); padding:1px 6px; border-radius:4px; font-size:12.5px; }
+  .viewer-md pre { background:#0d1117; padding:14px; border-radius:6px; overflow:auto; }
+  .viewer-md pre code { background:transparent; padding:0; }
+  .viewer-md blockquote { border-left:3px solid var(--color-accent2); padding:4px 12px; color:var(--color-text-secondary); margin-left:0; }
+  .viewer-md table { border-collapse:collapse; margin:12px 0; }
+  .viewer-md th, .viewer-md td { border:0.5px solid var(--border); padding:6px 10px; }
+  .viewer-md th { background:var(--bg-secondary); }
+  .viewer-tabs { display:flex; gap:0; background:var(--bg); border-bottom:0.5px solid var(--border); }
+  .viewer-tab { padding:8px 14px; font-family:monospace; font-size:12px; color:var(--color-text-secondary); cursor:pointer; border:0; background:transparent; border-right:0.5px solid var(--border); }
+  .viewer-tab.active { color:var(--primary); background:var(--bg-secondary); }
+  .viewer-tab:hover:not(.active) { color:var(--text); }
+
+  /* Lightbox for images */
+  #img-lightbox { display:none; position:fixed; inset:0; background:rgba(0,0,0,0.92); z-index:99999; align-items:center; justify-content:center; padding:20px; }
+  #img-lightbox.open { display:flex; }
+  #img-lightbox img { max-width:100%; max-height:92vh; box-shadow:0 10px 60px rgba(0,0,0,0.6); cursor:zoom-out; user-select:none; }
+  #img-lightbox .lb-close, #img-lightbox .lb-zoom { position:absolute; top:20px; padding:8px 14px; background:rgba(255,255,255,0.08); color:#fff; border:0.5px solid rgba(255,255,255,0.2); border-radius:6px; cursor:pointer; font-family:monospace; font-size:13px; backdrop-filter: blur(6px); }
+  #img-lightbox .lb-close { right:20px; }
+  #img-lightbox .lb-zoom { right:100px; }
+  #img-lightbox .lb-info { position:absolute; bottom:20px; left:20px; right:20px; text-align:center; color:#aaa; font-family:monospace; font-size:12px; }
+
+  .viewer-info-row { display:flex; gap:14px; flex-wrap:wrap; }
+</style>
+{% endblock %}
+{% block content %}
+<div style="min-height:70vh;padding:28px 20px 60px">
+  <div class="viewer-card">
+    <div class="hero-prompt" style="margin-bottom:18px">$ view /p/{{ share.token }}  # {{ share.file_name }}</div>
+
+    <div class="viewer-box">
+      <div style="padding:18px 22px;border-bottom:0.5px solid var(--border);display:flex;align-items:center;gap:14px;flex-wrap:wrap">
+        <div style="font-size:40px;flex-shrink:0">
+          {% if is_img %}🖼️
+          {% elif is_video %}🎬
+          {% elif is_audio %}🎵
+          {% elif is_pdf %}📕
+          {% elif ext in ['doc','docx'] %}📘
+          {% elif ext in ['xls','xlsx'] %}📗
+          {% elif ext in ['ppt','pptx'] %}📙
+          {% elif ext in ['zip','rar','7z','tar','gz'] %}🗜️
+          {% elif is_text %}
+            {% if ext in ['md','markdown'] %}📝
+            {% elif ext in ['py','js','ts','c','cpp','rs','go','java','kt','rb','php','html','css','sql','sh','bash'] %}💻
+            {% else %}📄{% endif %}
+          {% else %}📄{% endif %}
+        </div>
+        <div style="min-width:0;flex:1">
+          <div style="font-family:monospace;font-size:16px;color:var(--text);font-weight:700;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">{{ share.file_name }}</div>
+          <div style="margin-top:6px" class="viewer-info-row">
+            <span style="font-family:monospace;font-size:12px;color:var(--color-text-secondary)">📦 {{ file_size_human }}</span>
+            <span style="font-family:monospace;font-size:12px;color:var(--color-text-secondary)">⬇️ {{ share.download_count or 0 }} indirme{% if share.max_downloads %} / {{ share.max_downloads }}{% endif %}</span>
+            {% if share.expires_at %}<span style="font-family:monospace;font-size:12px;color:var(--color-text-secondary)">⏱ {{ share.time_left_text() }}</span>{% else %}<span style="font-family:monospace;font-size:12px;color:var(--color-text-secondary)">♾️ süresiz</span>{% endif %}
+            {% if share.password_hash %}<span style="font-family:monospace;font-size:12px;color:var(--color-text-secondary)">🔐 şifreli</span>{% endif %}
+            <span style="font-family:monospace;font-size:12px;color:var(--color-accent2)">🏷 .{{ ext or 'uzantısız' }}</span>
+          </div>
+        </div>
+      </div>
+
+      {% if needs_password %}
+      <div style="padding:28px 22px">
+        {% if error %}
+        <div style="padding:10px 14px;background:rgba(248,113,113,0.08);border:0.5px solid #f87171;border-radius:6px;color:#fca5a5;font-family:monospace;font-size:13px;margin-bottom:14px">❌ {{ error }}</div>
+        {% endif %}
+        <div style="font-family:monospace;font-size:13px;color:var(--color-text-secondary);margin-bottom:10px">bu dosya şifre korumalı. görüntülemek ve indirmek için şifreyi girin:</div>
+        <form method="POST" style="display:flex;gap:8px;flex-wrap:wrap">
+          <input type="password" name="password" autofocus placeholder="şifre…" style="flex:1;min-width:200px;padding:11px 14px;border:0.5px solid var(--border);background:var(--bg);color:var(--text);border-radius:6px;font-family:monospace;font-size:14px">
+          <button type="submit" class="btn" style="padding:11px 20px;background:#a78bfa;color:#000;font-family:monospace;font-weight:700;border-radius:6px">🔓 kilidi aç</button>
+        </form>
+      </div>
+      {% else %}
+
+        {# ====== VIEWER SECTION ====== #}
+        {% if is_img %}
+          <div class="viewer-media-wrap">
+            <img id="viewer-img" class="viewer-img" src="{{ raw_url }}" alt="{{ share.file_name }}" loading="lazy">
+          </div>
+        {% elif is_video %}
+          <div class="viewer-media-wrap">
+            <video class="viewer-video" src="{{ raw_url }}" controls autoplay muted playsinline preload="metadata" style="width:100%"></video>
+          </div>
+        {% elif is_audio %}
+          <div style="padding:40px 20px;background:linear-gradient(180deg, var(--bg) 0%, #0a0a0a 100%);text-align:center">
+            <div style="font-size:64px;margin-bottom:16px;opacity:.8">🎵</div>
+            <audio class="viewer-audio" src="{{ raw_url }}" controls preload="metadata" style="width:100%;max-width:520px"></audio>
+          </div>
+        {% elif is_pdf %}
+          <iframe class="viewer-pdf" src="{{ raw_url }}#toolbar=1&navpanes=0" title="{{ share.file_name }}"></iframe>
+        {% elif is_text %}
+          <div class="viewer-tabs">
+            {% if ext in ['md','markdown'] %}
+            <button type="button" class="viewer-tab active" data-view="md">📝 Markdown</button>
+            <button type="button" class="viewer-tab" data-view="code">💻 Kaynak</button>
+            {% else %}
+            <button type="button" class="viewer-tab active" data-view="code">💻 Kod</button>
+            {% if ext in ['json','xml','html','yml','yaml','csv'] %}
+            <button type="button" class="viewer-tab" data-view="raw">📄 Düz Metin</button>
+            {% endif %}
+            {% endif %}
+          </div>
+          <div id="viewer-code-wrap" class="viewer-code-wrap" style="display:{% if ext in ['md','markdown'] %}none{% else %}block{% endif %}"><pre><code id="viewer-code" class="language-{{ ext if ext not in ['yml','md','markdown'] else ('yaml' if ext=='yml' else 'markdown') }}">dosya yükleniyor…</code></pre></div>
+          {% if ext in ['md','markdown'] %}
+          <div id="viewer-md" class="viewer-md" data-src="{{ raw_url }}">markdown içeriği yükleniyor…</div>
+          {% endif %}
+          <div id="viewer-raw-wrap" style="display:none;max-height:70vh;overflow:auto;background:#0a0a0a"><pre id="viewer-raw" style="margin:0;padding:16px 18px;color:#cbd5e1;font-family:JetBrains Mono NL,monospace;font-size:12.5px;line-height:1.6;white-space:pre-wrap;word-break:break-word"></pre></div>
+        {% else %}
+          <div style="padding:60px 24px;text-align:center;background:linear-gradient(180deg,var(--bg) 0%,#0a0a0a 100%)">
+            <div style="font-size:72px;margin-bottom:14px">📄</div>
+            <div style="font-family:monospace;font-size:13px;color:var(--color-text-secondary);margin-bottom:18px">bu dosya tipi için önizleme desteklenmiyor</div>
+            <a href="{{ url_for('admin.file_share_download', token=share.token) }}" class="btn" style="padding:12px 24px;background:var(--primary);color:#000;font-family:monospace;font-weight:700;border-radius:6px">⬇️ doğrudan indir</a>
+          </div>
+        {% endif %}
+
+        <div style="padding:18px 22px;border-top:0.5px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
+          <div style="display:flex;gap:8px;flex-wrap:wrap">
+            <a href="{{ url_for('admin.file_share_download', token=share.token) }}" class="btn" style="padding:10px 18px;background:var(--primary);color:#000;font-family:monospace;font-size:13px;font-weight:700;border-radius:5px">
+              ⬇️ indir
+            </a>
+            {% if is_img or is_video or is_audio or is_pdf or is_text %}
+            <a href="{{ raw_url }}" target="_blank" rel="noopener noreferrer" class="btn" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">
+              ↗️ yeni sekmede aç
+            </a>
+            {% if is_img %}
+            <button type="button" id="btn-zoom-img" class="btn" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">🔍 büyüt</button>
+            {% endif %}
+            {% endif %}
+            <button type="button" id="btn-copy-link" class="btn" data-link="{{ url_for('admin.file_share_download', token=share.token, _external=True) }}" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">🔗 indirme linkini kopyala</button>
+          </div>
+          <div style="font-family:monospace;font-size:10.5px;color:var(--color-text-secondary);max-width:380px;text-align:right">
+            direkt link: <span style="color:var(--color-accent2);word-break:break-all">{{ url_for('admin.file_share_download', token=share.token, _external=True) }}</span>
+          </div>
+        </div>
+      {% endif %}
+    </div>
+
+    <div style="margin-top:22px;text-align:center;font-family:monospace;font-size:11px;color:var(--color-text-secondary)">
+      <a href="{{ url_for('main.index') }}" style="color:var(--color-accent2)">← ana siteye dön</a>
+    </div>
+  </div>
+</div>
+
+{% if is_img %}
+<div id="img-lightbox" role="dialog" aria-label="Tam ekran görüntü">
+  <button type="button" class="lb-close" id="lb-close">✕ kapat</button>
+  <button type="button" class="lb-zoom" id="lb-zoom">🔍 1:1</button>
+  <img id="lb-img" src="" alt="{{ share.file_name }}">
+  <div class="lb-info">{{ share.file_name }} · {{ file_size_human }} · esc tuşu ile kapat</div>
+</div>
+{% endif %}
+
+<script>
+(function(){
+  // copy link
+  document.querySelectorAll('[data-link]').forEach(btn => {
+    btn.addEventListener('click', () => {
+      const u = btn.dataset.link;
+      try { navigator.clipboard.writeText(u); } catch(_) { const ta=document.createElement('textarea'); ta.value=u; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta); }
+      const old = btn.textContent; btn.textContent = '✅ kopyalandı'; setTimeout(()=>btn.textContent=old, 1400);
+    });
+  });
+
+  // ---------- IMAGE LIGHTBOX ----------
+  {% if is_img %}
+  const lb = document.getElementById('img-lightbox');
+  const lbImg = document.getElementById('lb-img');
+  const mainImg = document.getElementById('viewer-img');
+  const openLb = () => { if (!mainImg) return; lbImg.src = mainImg.src; lbImg.style.transform = ''; lb.classList.add('open'); document.body.style.overflow='hidden'; };
+  const closeLb = () => { lb.classList.remove('open'); document.body.style.overflow=''; lbImg.src = ''; };
+  if (mainImg) mainImg.addEventListener('click', openLb);
+  const btnZoom = document.getElementById('btn-zoom-img');
+  if (btnZoom) btnZoom.addEventListener('click', openLb);
+  document.getElementById('lb-close').addEventListener('click', closeLb);
+  lb.addEventListener('click', (e) => { if (e.target === lb || e.target === lbImg) closeLb(); });
+  let zoom11 = false;
+  document.getElementById('lb-zoom').addEventListener('click', (e) => {
+    e.stopPropagation();
+    zoom11 = !zoom11;
+    if (zoom11) { lbImg.style.maxWidth = 'none'; lbImg.style.maxHeight = 'none'; lbImg.style.width = 'auto'; lbImg.style.height = 'auto'; lb.style.alignItems='flex-start'; lb.style.justifyContent='flex-start'; lb.style.overflow='auto'; }
+    else { lbImg.style.maxWidth='100%'; lbImg.style.maxHeight='92vh'; lbImg.style.width=''; lbImg.style.height=''; lb.style.alignItems='center'; lb.style.justifyContent='center'; lb.style.overflow=''; }
+  });
+  document.addEventListener('keydown', (e) => { if (e.key === 'Escape' && lb.classList.contains('open')) closeLb(); });
+  {% endif %}
+
+  // ---------- TEXT / MARKDOWN / CODE VIEWER ----------
+  {% if is_text %}
+  const rawUrl = {{ raw_url|tojson }};
+  const codeEl = document.getElementById('viewer-code');
+  const rawWrap = document.getElementById('viewer-raw-wrap');
+  const rawEl = document.getElementById('viewer-raw');
+  const mdWrap = document.getElementById('viewer-md');
+  const codeWrap = document.getElementById('viewer-code-wrap');
+  const tabs = document.querySelectorAll('.viewer-tab');
+  const EXT = {{ ext|tojson }};
+
+  async function loadText() {
+    try {
+      const r = await fetch(rawUrl, {credentials:'same-origin'});
+      if (!r.ok) throw new Error('HTTP ' + r.status);
+      const txt = await r.text();
+      if (codeEl) {
+        codeEl.textContent = txt.length > 3_000_000 ? txt.slice(0, 3_000_000) + '\n\n… [dosya çok büyük, ilk 3MB gösteriliyor]' : txt;
+        try {
+          if (window.hljs) {
+            const lang = (function() {
+              const m = {yml:'yaml',yaml:'yaml',md:'markdown',markdown:'markdown',txt:'plaintext',log:'accesslog',env:'bash',ini:'ini',cfg:'ini',conf:'nginx',nginx:'nginx',dockerfile:'dockerfile',makefile:'makefile'};
+              return m[EXT] || EXT || 'plaintext';
+            })();
+            try { hljs.highlightElement(codeEl); } catch(_) { hljs.highlight(codeEl); }
+          }
+        } catch(e) {}
+      }
+      if (rawEl) rawEl.textContent = txt;
+      if (mdWrap && (EXT === 'md' || EXT === 'markdown')) {
+        if (window.marked) {
+          try {
+            marked.setOptions({ breaks:true, gfm:true });
+            mdWrap.innerHTML = marked.parse(txt.length > 2_000_000 ? txt.slice(0, 2_000_000) + '\n\n… [dosya çok büyük, ilk 2MB gösteriliyor]' : txt);
+            // md içinde kod block varsa highlight et
+            if (window.hljs) mdWrap.querySelectorAll('pre code').forEach(b => { try { hljs.highlightElement(b); } catch(_){ hljs.highlight(b); } });
+          } catch(e) { mdWrap.textContent = txt; }
+        } else {
+          mdWrap.textContent = txt;
+        }
+      }
+    } catch(e) {
+      const msg = '❌ içerik yüklenemedi: ' + (e.message || String(e));
+      if (codeEl) codeEl.textContent = msg;
+      if (rawEl) rawEl.textContent = msg;
+      if (mdWrap) mdWrap.textContent = msg;
+    }
+  }
+  loadText();
+
+  tabs.forEach(t => t.addEventListener('click', () => {
+    tabs.forEach(x => x.classList.remove('active'));
+    t.classList.add('active');
+    const v = t.dataset.view;
+    if (codeWrap) codeWrap.style.display = (v==='code') ? 'block' : 'none';
+    if (mdWrap) mdWrap.style.display = (v==='md') ? 'block' : 'none';
+    if (rawWrap) rawWrap.style.display = (v==='raw') ? 'block' : 'none';
+  }));
+  {% endif %}
+})();
+</script>
+{% endblock %}

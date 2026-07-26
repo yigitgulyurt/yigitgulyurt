@@ -11,6 +11,7 @@
   <div style="display:flex;gap:10px;align-items:center">
     <a class="section-link" href="{{ url_for('admin.project_edit', id=p.id) }}">düzenle</a>
     <form method="POST" action="{{ url_for('admin.project_delete', id=p.id) }}" onsubmit="return confirm('Silmek istediğine emin misin?')">
+      <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
       <button type="submit" style="font-family:var(--mono);font-size:11px;background:none;border:none;color:#f87171;cursor:pointer">sil</button>
     </form>
   </div>

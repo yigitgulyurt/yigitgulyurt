@@ -27,6 +27,7 @@
   <a class="btn" href="{{ url_for('admin.messages') }}">mesajlar →</a>
   <a class="btn" href="{{ url_for('admin.stream_viewers') }}">izleyiciler →</a>
   <form action="{{ url_for('admin.merge_ip_logs') }}" method="POST" style="display:inline">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <button type="submit" class="btn" style="background:var(--primary);color:white;cursor:pointer">IP Loglarını Birleştir 🧹</button>
   </form>
   <a class="btn" href="{{ url_for('main.index') }}" target="_blank">siteyi gör ↗</a>

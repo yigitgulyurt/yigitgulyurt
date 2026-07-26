@@ -1,0 +1,514 @@
+{% extends "base/base_admin.html" %}
+{% block title %}Dosya Yöneticisi{% endblock %}
+{% block content %}
+<div class="hero-prompt">$ ls -lah /personal{% if current_path %}/{{ current_path }}{% endif %}</div>
+<h1 class="page-title">Kişisel Dosyalar</h1>
+
+<div id="upload-area" style="margin-top:24px;border:1.5px dashed var(--border);border-radius:6px;padding:32px 20px;text-align:center;cursor:pointer;transition:all .15s;user-select:none">
+  <div style="font-size:40px;margin-bottom:10px">⬆️</div>
+  <div style="font-family:monospace;color:var(--text);font-size:15px;margin-bottom:6px"><b>dosya(lar)ı buraya sürükle</b> veya <u style="color:var(--primary)">tıklayarak seç</u></div>
+  <div style="font-family:monospace;color:var(--color-text-secondary);font-size:12px">chunked yükleme · kesintiden devam · boyut sınırı yok</div>
+  <input id="file-picker" type="file" multiple style="display:none">
+</div>
+
+<div id="upload-queue" style="margin-top:16px;display:flex;flex-direction:column;gap:8px"></div>
+
+<div style="margin-top:16px;border:0.5px solid var(--border);border-radius:6px;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
+  <form id="legacy-form" action="{{ url_for('admin.file_upload') }}" method="POST" enctype="multipart/form-data" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:1;min-width:300px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="path" value="{{ current_path }}">
+    <input type="file" name="files" multiple style="color:var(--text)">
+    <button type="submit" class="btn" style="background:var(--bg-secondary);color:var(--text);border:0.5px solid var(--border)">klasik yükle</button>
+  </form>
+  <form action="{{ url_for('admin.file_mkdir') }}" method="POST" style="display:flex;gap:8px;align-items:center">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+    <input type="hidden" name="path" value="{{ current_path }}">
+    <input type="text" name="folder_name" placeholder="klasör adı" required style="padding:8px 10px;border:0.5px solid var(--border);background:var(--bg-secondary);color:var(--text);border-radius:4px;width:180px">
+    <button type="submit" class="btn" style="background:var(--color-success);color:#000">+ klasör</button>
+  </form>
+</div>
+
+<div style="margin-top:24px;border:0.5px solid var(--border);border-radius:6px;padding:14px 16px;display:flex;gap:20px;flex-wrap:wrap;color:var(--color-text-secondary);font-family:monospace">
+  <div><b style="color:var(--color-text)">konum:</b> /{% if current_path %}{{ current_path }}{% endif %}</div>
+  <div><b style="color:var(--color-text)">klasör:</b> {{ total_dirs }}</div>
+  <div><b style="color:var(--color-text)">dosya:</b> {{ total_files }}</div>
+  <div><b style="color:var(--color-text)">toplam boyut:</b> {{ total_size_human }}</div>
+</div>
+
+<div style="margin-top:14px;border:0.5px solid var(--border);border-radius:6px;overflow:hidden">
+  <div style="padding:10px 16px;background:var(--bg-secondary);border-bottom:0.5px solid var(--border);display:flex;gap:10px;align-items:center;flex-wrap:wrap">
+    <a class="btn" href="{{ url_for('admin.file_manager') }}" style="font-size:13px;padding:6px 12px">/</a>
+    {% for crumb in breadcrumb %}
+      <span style="color:var(--color-text-secondary)">/</span>
+      <a class="btn" href="{{ url_for('admin.file_manager', subpath=crumb.path) }}" style="font-size:13px;padding:6px 12px">{{ crumb.name }}</a>
+    {% endfor %}
+    {% if current_path and parent_path is defined %}
+      <span style="margin-left:auto">
+        <a class="btn" href="{% if parent_path %}{{ url_for('admin.file_manager', subpath=parent_path) }}{% else %}{{ url_for('admin.file_manager') }}{% endif %}" style="font-size:13px;padding:6px 12px">← üst</a>
+      </span>
+    {% endif %}
+  </div>
+
+  {% if not dirs and not files %}
+    <div style="padding:60px 20px;text-align:center;color:var(--color-text-secondary)">
+      <div style="font-size:40px;margin-bottom:12px">📂</div>
+      <div>bu klasör boş</div>
+    </div>
+  {% else %}
+    <table style="width:100%;border-collapse:collapse">
+      <thead>
+        <tr style="background:var(--bg-secondary);color:var(--color-text-secondary);font-family:monospace;font-size:13px">
+          <th style="text-align:left;padding:10px 16px;border-bottom:0.5px solid var(--border)">ad</th>
+          <th style="text-align:right;padding:10px 16px;border-bottom:0.5px solid var(--border);width:120px">boyut</th>
+          <th style="text-align:right;padding:10px 16px;border-bottom:0.5px solid var(--border);width:200px">değiştirilme</th>
+          <th style="text-align:right;padding:10px 16px;border-bottom:0.5px solid var(--border);width:300px">işlem</th>
+        </tr>
+      </thead>
+      <tbody>
+        {% for d in dirs %}
+          <tr style="border-bottom:0.5px solid var(--border)">
+            <td style="padding:10px 16px;display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">📁</span>
+              <a href="{{ url_for('admin.file_manager', subpath=d.path) }}" style="color:var(--color-accent2)">{{ d.name }}</a>
+            </td>
+            <td style="padding:10px 16px;text-align:right;color:var(--color-text-secondary);font-family:monospace">—</td>
+            <td style="padding:10px 16px;text-align:right;color:var(--color-text-secondary);font-family:monospace;font-size:13px">{{ d.mtime.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td style="padding:10px 16px;text-align:right">
+              <form action="{{ url_for('admin.file_delete', filepath=d.path) }}" method="POST" onsubmit="return confirm('Klasör silinsin mi? Tüm içeriği ile birlikte!');" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn" style="padding:4px 10px;font-size:12px;background:#7f1d1d;color:#fff">sil</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+        {% for f in files %}
+          <tr style="border-bottom:0.5px solid var(--border)">
+            <td style="padding:10px 16px;display:flex;align-items:center;gap:10px">
+              <span style="font-size:18px">
+                {% if f.ext in ['jpg','jpeg','png','gif','svg','webp','bmp','ico'] %}🖼️
+                {% elif f.ext in ['pdf'] %}📕
+                {% elif f.ext in ['doc','docx'] %}📘
+                {% elif f.ext in ['xls','xlsx','csv'] %}📗
+                {% elif f.ext in ['ppt','pptx'] %}📙
+                {% elif f.ext in ['zip','rar','7z','tar','gz'] %}🗜️
+                {% elif f.ext in ['mp3','wav','ogg','flac'] %}🎵
+                {% elif f.ext in ['mp4','mkv','avi','mov','webm'] %}🎬
+                {% elif f.ext in ['txt','md','log'] %}📄
+                {% elif f.ext in ['html','css','js','json','xml','yml','yaml','py','sql'] %}💻
+                {% else %}📄{% endif %}
+              </span>
+              <span style="color:var(--color-text)">{{ f.name }}</span>
+            </td>
+            <td style="padding:10px 16px;text-align:right;color:var(--color-text-secondary);font-family:monospace">{{ f.size_human }}</td>
+            <td style="padding:10px 16px;text-align:right;color:var(--color-text-secondary);font-family:monospace;font-size:13px">{{ f.mtime.strftime('%Y-%m-%d %H:%M') }}</td>
+            <td style="padding:10px 16px;text-align:right;display:flex;gap:6px;justify-content:flex-end;flex-wrap:wrap">
+              <a class="btn" href="{{ url_for('admin.file_download', filepath=f.path) }}" target="_blank" rel="noopener noreferrer" style="padding:4px 10px;font-size:12px;background:var(--color-accent2);color:#000">indir</a>
+              <button type="button" class="btn btn-share" data-filepath="{{ f.path }}" data-filename="{{ f.name }}" data-size="{{ f.size }}" style="padding:4px 10px;font-size:12px;background:#a78bfa;color:#000">paylaş 🔗</button>
+              <form action="{{ url_for('admin.file_delete', filepath=f.path) }}" method="POST" onsubmit="return confirm('Dosya silinsin mi?');" style="display:inline">
+                <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
+                <button type="submit" class="btn" style="padding:4px 10px;font-size:12px;background:#7f1d1d;color:#fff">sil</button>
+              </form>
+            </td>
+          </tr>
+        {% endfor %}
+      </tbody>
+    </table>
+  {% endif %}
+</div>
+
+<div id="share-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,0.7);z-index:9999;align-items:center;justify-content:center;padding:20px">
+  <div style="background:var(--bg);border:0.5px solid var(--border);border-radius:8px;width:100%;max-width:520px;overflow:hidden">
+    <div style="padding:16px 20px;background:var(--bg-secondary);border-bottom:0.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+      <div style="font-family:monospace;font-size:15px;color:var(--text)"><b>🔗 Dosya Paylaş</b></div>
+      <button id="share-modal-close" type="button" class="btn" style="padding:4px 10px;font-size:13px">✕</button>
+    </div>
+    <div style="padding:20px;display:flex;flex-direction:column;gap:14px">
+      <div id="share-file-info" style="padding:10px 14px;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:6px;font-family:monospace;font-size:13px;color:var(--color-text-secondary)"></div>
+
+      <div>
+        <label style="display:block;font-family:monospace;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px">şifre (isteğe bağlı)</label>
+        <input id="share-password" type="password" placeholder="boş bırak = şifresiz" style="width:100%;padding:10px 12px;border:0.5px solid var(--border);background:var(--bg-secondary);color:var(--text);border-radius:4px;font-family:monospace">
+      </div>
+
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+        <div>
+          <label style="display:block;font-family:monospace;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px">süre (saat)</label>
+          <input id="share-expires" type="number" min="0" step="0.5" placeholder="0 / boş = süresiz" style="width:100%;padding:10px 12px;border:0.5px solid var(--border);background:var(--bg-secondary);color:var(--text);border-radius:4px;font-family:monospace">
+        </div>
+        <div>
+          <label style="display:block;font-family:monospace;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px">max indirme</label>
+          <input id="share-maxd" type="number" min="0" step="1" placeholder="0 / boş = sınırsız" style="width:100%;padding:10px 12px;border:0.5px solid var(--border);background:var(--bg-secondary);color:var(--text);border-radius:4px;font-family:monospace">
+        </div>
+      </div>
+
+      <button id="share-create-btn" type="button" class="btn" style="width:100%;padding:12px;background:#a78bfa;color:#000;font-family:monospace"><b>paylaşım oluştur</b></button>
+
+      <div id="share-result" style="display:none;padding:12px;background:rgba(167,139,250,0.08);border:0.5px solid #a78bfa;border-radius:6px">
+        <div style="font-family:monospace;font-size:12px;color:var(--color-text-secondary);margin-bottom:6px">paylaşım linki:</div>
+        <div style="display:flex;gap:8px;align-items:center">
+          <input id="share-url-input" type="text" readonly style="flex:1;padding:8px 10px;background:var(--bg-secondary);border:0.5px solid var(--border);border-radius:4px;font-family:monospace;font-size:12px;color:var(--text)">
+          <button id="share-copy-btn" type="button" class="btn" style="padding:6px 12px;background:var(--color-accent2);color:#000;font-size:12px">kopyala</button>
+        </div>
+      </div>
+
+      <div id="share-existing" style="display:none">
+        <div style="font-family:monospace;font-size:12px;color:var(--color-text-secondary);margin-bottom:8px">mevcut paylaşımlar:</div>
+        <div id="share-existing-list" style="display:flex;flex-direction:column;gap:6px;max-height:180px;overflow-y:auto"></div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<style>
+  table tr:hover td { background: rgba(255,255,255,0.02); }
+  #upload-area.dragover { border-color: var(--primary); background: rgba(255,255,255,0.02); }
+  .progress-track { height: 10px; background: var(--bg-secondary); border-radius:4px; overflow:hidden; border:0.5px solid var(--border); }
+  .progress-bar { height: 100%; background: linear-gradient(90deg, var(--color-accent2), var(--primary)); transition: width .15s; }
+  .up-item { border:0.5px solid var(--border); border-radius:6px; padding:10px 14px; background:var(--bg-secondary); }
+</style>
+
+<script>
+(function() {
+  const CSRF = document.querySelector('meta[name="csrf-token"]') ? null : null;
+  const CSRF_TOKEN = '{{ csrf_token() }}';
+  const CURRENT_PATH = {{ current_path|tojson }};
+  const CHUNK_SIZE = 8 * 1024 * 1024;
+  const PARALLEL_CHUNKS = 3;
+  const ENDPOINTS = {
+    status:  '{{ url_for("admin.file_upload_status") }}',
+    chunk:   '{{ url_for("admin.file_upload_chunk") }}',
+    finalize:'{{ url_for("admin.file_upload_finalize") }}',
+    cancel:  '{{ url_for("admin.file_upload_cancel") }}',
+    share:   '{{ url_for("admin.file_share_create") }}',
+    shareList:'{{ url_for("admin.file_share_list") }}',
+    shareDel:'/admin/dosyalar/paylasim/__ID__/sil',
+  };
+
+  const queueEl = document.getElementById('upload-queue');
+  const uploads = new Map();
+  let uploadCounter = 0;
+
+  function csrfFetch(url, opts={}) {
+    opts.headers = opts.headers || {};
+    if (!opts.headers['X-CSRF-Token']) opts.headers['X-CSRF-Token'] = CSRF_TOKEN;
+    return fetch(url, opts);
+  }
+
+  function humanSize(n) {
+    for (const u of ['B','KB','MB','GB','TB']) {
+      if (Math.abs(n) < 1024) return n.toFixed(2) + ' ' + u;
+      n /= 1024;
+    }
+    return n.toFixed(2) + ' PB';
+  }
+
+  // ---------- Drag & Drop ----------
+  const uploadArea = document.getElementById('upload-area');
+  const filePicker = document.getElementById('file-picker');
+  uploadArea.addEventListener('click', () => filePicker.click());
+  filePicker.addEventListener('change', (e) => { handleFiles(e.target.files); filePicker.value = ''; });
+  ['dragenter','dragover'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); uploadArea.classList.add('dragover');
+  }));
+  ['dragleave','drop'].forEach(ev => uploadArea.addEventListener(ev, (e) => {
+    e.preventDefault(); e.stopPropagation(); uploadArea.classList.remove('dragover');
+  }));
+  uploadArea.addEventListener('drop', (e) => {
+    if (e.dataTransfer && e.dataTransfer.files) handleFiles(e.dataTransfer.files);
+  });
+
+  function handleFiles(files) {
+    if (!files || !files.length) return;
+    Array.from(files).forEach(startUpload);
+  }
+
+  // ---------- Upload Item ----------
+  function createUploadItem(uid, file) {
+    const el = document.createElement('div');
+    el.className = 'up-item';
+    el.dataset.uid = uid;
+    el.innerHTML = `
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:8px">
+        <div style="font-family:monospace;font-size:13px;color:var(--text);min-width:0;flex:1;overflow:hidden;text-overflow:ellipsis;white-space:nowrap"><b>${escapeHtml(file.name)}</b></div>
+        <div style="font-family:monospace;font-size:12px;color:var(--color-text-secondary);white-space:nowrap" class="up-size-info">0 / ${humanSize(file.size)}</div>
+      </div>
+      <div class="progress-track"><div class="progress-bar" style="width:0%"></div></div>
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-top:8px;gap:10px">
+        <div style="font-family:monospace;font-size:11px;color:var(--color-text-secondary)" class="up-status">hazırlanıyor…</div>
+        <div style="display:flex;gap:6px">
+          <button type="button" class="btn up-pause" style="padding:3px 8px;font-size:11px;background:var(--bg-secondary);color:var(--text);border:0.5px solid var(--border)">duraklat</button>
+          <button type="button" class="btn up-cancel" style="padding:3px 8px;font-size:11px;background:#7f1d1d;color:#fff">iptal</button>
+        </div>
+      </div>
+    `;
+    queueEl.appendChild(el);
+    return el;
+  }
+
+  function escapeHtml(s) {
+    return String(s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+  }
+
+  async function startUpload(file) {
+    if (!file || !file.size) return;
+    const uid = ++uploadCounter;
+    const state = {
+      uid, file, paused: false, cancelled: false, done: false,
+      fileId: null, uploadedBytes: 0, completedChunks: new Set(),
+      chunkTotal: Math.ceil(file.size / CHUNK_SIZE) || 1,
+      lastModified: file.lastModified || 0,
+      el: createUploadItem(uid, file),
+      speedHistory: [],
+      startTime: Date.now(),
+      nextChunkIdx: 0,
+      activeChunks: 0,
+    };
+    uploads.set(uid, state);
+
+    state.el.querySelector('.up-pause').addEventListener('click', () => togglePause(uid));
+    state.el.querySelector('.up-cancel').addEventListener('click', () => cancelUpload(uid));
+
+    try {
+      // 1) durumu sorgula - devam ettirme
+      const sr = await csrfFetch(ENDPOINTS.status, {
+        method: 'POST',
+        headers: {'Content-Type':'application/json'},
+        body: JSON.stringify({filename: file.name, file_size: file.size, last_modified: state.lastModified})
+      });
+      const sdata = await sr.json();
+      if (sdata.status !== 'ok') throw new Error(sdata.message || 'durum sorgulanamadı');
+      state.fileId = sdata.file_id;
+      state.uploadedBytes = sdata.uploaded_bytes || 0;
+      (sdata.completed_chunks || []).forEach(c => state.completedChunks.add(c));
+      state.nextChunkIdx = findNextMissing(state.completedChunks, state.chunkTotal);
+      setStateStatus(state, state.uploadedBytes > 0 ? `devam ediyor… (${sdata.progress_pct}% önceden)` : 'başlıyor…');
+      updateProgress(state);
+      runChunks(state);
+    } catch (err) {
+      failUpload(state, err.message || String(err));
+    }
+  }
+
+  function findNextMissing(doneSet, total) {
+    for (let i = 0; i < total; i++) if (!doneSet.has(i)) return i;
+    return total;
+  }
+
+  function togglePause(uid) {
+    const s = uploads.get(uid); if (!s || s.done) return;
+    s.paused = !s.paused;
+    const btn = s.el.querySelector('.up-pause');
+    if (s.paused) { btn.textContent = 'devam et'; btn.style.background = 'var(--color-success)'; btn.style.color = '#000'; setStateStatus(s, 'duraklatıldı'); }
+    else { btn.textContent = 'duraklat'; btn.style.background = ''; btn.style.color = ''; setStateStatus(s, 'devam ediyor…'); runChunks(s); }
+  }
+
+  async function cancelUpload(uid) {
+    const s = uploads.get(uid); if (!s) return;
+    s.cancelled = true; s.paused = true; s.done = true;
+    if (s.fileId) {
+      try { await csrfFetch(ENDPOINTS.cancel, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify({file_id: s.fileId})}); } catch(_){}
+    }
+    s.el.remove();
+    uploads.delete(uid);
+  }
+
+  function setStateStatus(s, txt) { const el = s.el.querySelector('.up-status'); if (el) el.textContent = txt; }
+
+  function updateProgress(s) {
+    const pct = s.file.size ? Math.min(100, (s.uploadedBytes / s.file.size) * 100) : 0;
+    s.el.querySelector('.progress-bar').style.width = pct.toFixed(2) + '%';
+    s.el.querySelector('.up-size-info').textContent = `${humanSize(s.uploadedBytes)} / ${humanSize(s.file.size)} · %${pct.toFixed(1)}`;
+  }
+
+  async function runChunks(s) {
+    if (s.done || s.paused || s.cancelled) return;
+    while (s.activeChunks < PARALLEL_CHUNKS && s.nextChunkIdx < s.chunkTotal) {
+      const idx = s.nextChunkIdx;
+      if (s.completedChunks.has(idx)) { s.nextChunkIdx++; continue; }
+      s.activeChunks++;
+      uploadChunk(s, idx).finally(() => {
+        s.activeChunks--;
+        if (!s.done && !s.paused && !s.cancelled) runChunks(s);
+        else if (s.activeChunks === 0 && s.completedChunks.size >= s.chunkTotal && !s.done) finalize(s);
+      });
+      s.nextChunkIdx = findNextMissing(s.completedChunks, s.chunkTotal);
+    }
+    if (s.activeChunks === 0 && s.completedChunks.size >= s.chunkTotal && !s.done) finalize(s);
+  }
+
+  async function uploadChunk(s, idx) {
+    if (s.done || s.paused || s.cancelled) return;
+    const start = idx * CHUNK_SIZE;
+    const end = Math.min(start + CHUNK_SIZE, s.file.size);
+    const blob = s.file.slice(start, end);
+    const fd = new FormData();
+    fd.append('file_id', s.fileId);
+    fd.append('chunk_index', idx);
+    fd.append('chunk_total', s.chunkTotal);
+    fd.append('filename', s.file.name);
+    fd.append('file_size', s.file.size);
+    fd.append('chunk', blob, 'chunk');
+    const t0 = Date.now();
+    try {
+      const r = await csrfFetch(ENDPOINTS.chunk, {method: 'POST', body: fd});
+      const d = await r.json();
+      if (d.status !== 'ok') throw new Error(d.message || `chunk ${idx} başarısız`);
+      s.completedChunks.add(idx);
+      s.uploadedBytes += (d.chunk_size || (end - start));
+      const dt = (Date.now() - t0) / 1000;
+      if (dt > 0) s.speedHistory.push((d.chunk_size || (end - start)) / dt);
+      if (s.speedHistory.length > 8) s.speedHistory.shift();
+      updateProgress(s);
+      const sp = s.speedHistory.length ? s.speedHistory.reduce((a,b)=>a+b,0)/s.speedHistory.length : 0;
+      const remain = s.file.size - s.uploadedBytes;
+      const eta = sp > 0 ? remain / sp : 0;
+      setStateStatus(s, `chunk ${idx+1}/${s.chunkTotal} · ${humanSize(sp)}/s · kalan ${formatETA(eta)}`);
+    } catch (err) {
+      if (s.cancelled || s.done) return;
+      setStateStatus(s, `chunk ${idx} tekrar deneniyor (${err.message || err})…`);
+      await new Promise(r => setTimeout(r, 800));
+      return uploadChunk(s, idx);
+    }
+  }
+
+  function formatETA(sec) {
+    if (!isFinite(sec) || sec <= 0) return '<1sn';
+    sec = Math.round(sec);
+    const h = Math.floor(sec/3600), m = Math.floor((sec%3600)/60), s = sec%60;
+    if (h) return `${h}s ${m}d`;
+    if (m) return `${m}d ${s}sn`;
+    return `${s}sn`;
+  }
+
+  async function finalize(s) {
+    if (s.done) return;
+    s.done = true;
+    setStateStatus(s, 'chunklar birleştiriliyor…');
+    try {
+      const r = await csrfFetch(ENDPOINTS.finalize, {
+        method:'POST',
+        headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({
+          file_id: s.fileId, filename: s.file.name, file_size: s.file.size,
+          chunk_total: s.chunkTotal, path: CURRENT_PATH || ''
+        })
+      });
+      const d = await r.json();
+      if (d.status !== 'ok') throw new Error(d.message || 'birleştirme başarısız');
+      s.el.querySelector('.progress-bar').style.width = '100%';
+      s.el.querySelector('.progress-bar').style.background = 'linear-gradient(90deg, var(--color-success), #4ade80)';
+      setStateStatus(s, `✅ tamamlandı · ${d.size_human || humanSize(s.file.size)}`);
+      s.el.querySelector('.up-pause').remove();
+      s.el.querySelector('.up-cancel').textContent = 'listeyi temizle';
+      s.el.querySelector('.up-cancel').style.background = 'var(--bg-secondary)';
+      s.el.querySelector('.up-cancel').style.color = 'var(--text)';
+      s.el.querySelector('.up-cancel').onclick = () => { s.el.remove(); uploads.delete(s.uid); };
+      setTimeout(() => location.reload(), 900);
+    } catch (err) {
+      failUpload(s, err.message || String(err));
+    }
+  }
+
+  function failUpload(s, msg) {
+    s.done = true;
+    s.el.querySelector('.progress-bar').style.background = '#7f1d1d';
+    setStateStatus(s, `❌ hata: ${msg}`);
+  }
+
+  // ---------- Share Modal ----------
+  const shareModal = document.getElementById('share-modal');
+  const shareClose = document.getElementById('share-modal-close');
+  const shareFileInfo = document.getElementById('share-file-info');
+  const sharePwd = document.getElementById('share-password');
+  const shareExp = document.getElementById('share-expires');
+  const shareMaxd = document.getElementById('share-maxd');
+  const shareCreateBtn = document.getElementById('share-create-btn');
+  const shareResult = document.getElementById('share-result');
+  const shareUrlInput = document.getElementById('share-url-input');
+  const shareCopyBtn = document.getElementById('share-copy-btn');
+  const shareExisting = document.getElementById('share-existing');
+  const shareExistingList = document.getElementById('share-existing-list');
+  let currentShareFilepath = null;
+
+  document.querySelectorAll('.btn-share').forEach(btn => {
+    btn.addEventListener('click', () => openShareModal(btn.dataset.filepath, btn.dataset.filename, btn.dataset.size));
+  });
+  shareClose.addEventListener('click', closeShareModal);
+  shareModal.addEventListener('click', (e) => { if (e.target === shareModal) closeShareModal(); });
+  shareCreateBtn.addEventListener('click', createShare);
+  shareCopyBtn.addEventListener('click', () => {
+    shareUrlInput.select(); try { navigator.clipboard.writeText(shareUrlInput.value); shareCopyBtn.textContent = '✅ kopyalandı'; setTimeout(() => shareCopyBtn.textContent = 'kopyala', 1500); } catch(_){ document.execCommand('copy'); }
+  });
+
+  function openShareModal(filepath, filename, size) {
+    currentShareFilepath = filepath;
+    shareFileInfo.innerHTML = `<b style="color:var(--text)">📄 ${escapeHtml(filename)}</b><br><span style="color:var(--color-text-secondary)">${humanSize(Number(size||0))} · /${escapeHtml(filepath)}</span>`;
+    sharePwd.value = ''; shareExp.value = ''; shareMaxd.value = '';
+    shareResult.style.display = 'none'; shareUrlInput.value = '';
+    shareModal.style.display = 'flex';
+    loadExistingShares(filepath);
+  }
+  function closeShareModal() { shareModal.style.display = 'none'; currentShareFilepath = null; }
+
+  async function loadExistingShares(filepath) {
+    shareExisting.style.display = 'none'; shareExistingList.innerHTML = '';
+    try {
+      const r = await csrfFetch(ENDPOINTS.shareList + '?filepath=' + encodeURIComponent(filepath));
+      const d = await r.json();
+      if (d.status === 'ok' && d.shares && d.shares.length) {
+        shareExisting.style.display = 'block';
+        d.shares.forEach(sh => {
+          const div = document.createElement('div');
+          div.style.cssText = 'padding:8px 10px;border:0.5px solid var(--border);border-radius:5px;font-family:monospace;font-size:12px;background:var(--bg-secondary);display:flex;justify-content:space-between;align-items:center;gap:10px';
+          const activeCls = sh.is_active ? 'color:var(--color-success)' : 'color:#f87171';
+          div.innerHTML = `
+            <div style="min-width:0;flex:1">
+              <div style="color:var(--text);font-size:11px"><b>${escapeHtml(sh.url.split('/').slice(-1)[0])}</b> · <span style="${activeCls}">${sh.is_active ? 'aktif' : 'süresi dolmuş'}</span></div>
+              <div style="color:var(--color-text-secondary);font-size:10px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap">${escapeHtml(sh.url)}</div>
+              <div style="color:var(--color-text-secondary);font-size:10px;margin-top:2px">${sh.download_count || 0} indirme${sh.has_password ? ' · 🔐 şifreli' : ''}${sh.time_left ? ' · ⏱ ' + sh.time_left : ''}${sh.max_downloads ? ' · /' + sh.max_downloads : ''}</div>
+            </div>
+            <div style="display:flex;gap:4px;flex-shrink:0">
+              <button type="button" class="btn share-cp" data-url="${escapeHtml(sh.url)}" style="padding:3px 7px;font-size:10px;background:var(--color-accent2);color:#000">kopyala</button>
+              <button type="button" class="btn share-del" data-id="${sh.id}" style="padding:3px 7px;font-size:10px;background:#7f1d1d;color:#fff">sil</button>
+            </div>
+          `;
+          shareExistingList.appendChild(div);
+        });
+        shareExistingList.querySelectorAll('.share-cp').forEach(b => b.addEventListener('click', () => {
+          const u = b.dataset.url;
+          const ta = document.createElement('textarea'); ta.value = u; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+          b.textContent = '✅'; setTimeout(() => b.textContent = 'kopyala', 1000);
+        }));
+        shareExistingList.querySelectorAll('.share-del').forEach(b => b.addEventListener('click', async () => {
+          if (!confirm('Bu paylaşımı silmek istediğine emin misin?')) return;
+          try { await csrfFetch(ENDPOINTS.shareDel.replace('__ID__', b.dataset.id), {method:'POST'}); loadExistingShares(currentShareFilepath); } catch(_){}
+        }));
+      }
+    } catch(_) {}
+  }
+
+  async function createShare() {
+    if (!currentShareFilepath) return;
+    shareCreateBtn.disabled = true; shareCreateBtn.style.opacity = '0.6';
+    try {
+      const body = {
+        filepath: currentShareFilepath,
+        password: sharePwd.value || null,
+        expires_hours: shareExp.value || null,
+        max_downloads: shareMaxd.value || null,
+      };
+      const r = await csrfFetch(ENDPOINTS.share, {method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(body)});
+      const d = await r.json();
+      if (d.status !== 'ok') throw new Error(d.message || ' oluşturulamadı');
+      shareResult.style.display = 'block';
+      shareUrlInput.value = d.share.url;
+      loadExistingShares(currentShareFilepath);
+    } catch (err) {
+      alert('Paylaşım oluşturulamadı: ' + (err.message || err));
+    } finally {
+      shareCreateBtn.disabled = false; shareCreateBtn.style.opacity = '';
+    }
+  }
+})();
+</script>
+{% endblock %}

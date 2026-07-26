@@ -4,6 +4,7 @@
 {% block content %}
 <h1 class="page-title">{{ 'Projeyi Düzenle' if project.id else 'Yeni Proje' }}</h1>
 <form method="POST" enctype="multipart/form-data" style="margin-top:24px;max-width:none">
+  <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
 
   <div style="display:grid;grid-template-columns:1fr 1fr;gap:16px;margin-bottom:16px">
     <div class="form-group" style="margin-bottom:0">
@@ -219,7 +220,13 @@ window.renderPreview = function() {
   preview.innerHTML = '<span style="color:var(--text2);font-size:12px">yükleniyor...</span>';
   const form = new FormData();
   form.append('content', text);
-  fetch(PREVIEW_URL, { method: 'POST', body: form })
+  const csrfMeta = document.querySelector('meta[name="csrf-token"]');
+  const csrfToken = csrfMeta ? csrfMeta.content : '';
+  fetch(PREVIEW_URL, {
+    method: 'POST',
+    body: form,
+    headers: csrfToken ? { 'X-CSRF-Token': csrfToken } : {}
+  })
     .then(r => r.json())
     .then(data => { preview.innerHTML = data.html; })
     .catch(() => { preview.innerHTML = '<span style="color:#f87171;font-size:12px">hata oluştu</span>'; });

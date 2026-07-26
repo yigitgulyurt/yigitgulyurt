@@ -1,4 +1,4 @@
-from datetime import datetime
+from datetime import datetime, timedelta
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 from app import db, login_manager
@@ -143,4 +143,64 @@ class IpLog(db.Model):
 
     def __repr__(self):
         return f'<IpLog {self.ip} at {self.created_at}>'
+
+
+# --- Personal File Share ---
+class FileShare(db.Model):
+    __tablename__ = 'file_shares'
+    id                = db.Column(db.Integer, primary_key=True)
+    token             = db.Column(db.String(64), unique=True, nullable=False, index=True)
+    file_path         = db.Column(db.Text, nullable=False)
+    file_name         = db.Column(db.String(512), nullable=False)
+    file_size         = db.Column(db.BigInteger, default=0)
+    password_hash     = db.Column(db.String(256))
+    max_downloads     = db.Column(db.Integer)                 # None = sınırsız
+    download_count    = db.Column(db.Integer, default=0)
+    expires_at        = db.Column(db.DateTime)                # None = süresiz
+    created_by_id     = db.Column(db.Integer, db.ForeignKey('admins.id'), nullable=False)
+    created_at        = db.Column(db.DateTime, default=datetime.utcnow)
+
+    created_by = db.relationship('Admin', backref=db.backref('file_shares', lazy='dynamic'))
+
+    @property
+    def is_expired(self):
+        if self.expires_at is None:
+            return False
+        return datetime.utcnow() > self.expires_at
+
+    @property
+    def is_max_downloads_reached(self):
+        if self.max_downloads is None:
+            return False
+        return (self.download_count or 0) >= self.max_downloads
+
+    @property
+    def is_active(self):
+        return (not self.is_expired) and (not self.is_max_downloads_reached)
+
+    def set_password(self, password):
+        self.password_hash = generate_password_hash(password) if password else None
+
+    def check_password(self, password):
+        if not self.password_hash:
+            return True
+        return check_password_hash(self.password_hash, password)
+
+    def time_left_text(self):
+        if not self.expires_at:
+            return "Süresiz"
+        delta = self.expires_at - datetime.utcnow()
+        if delta.total_seconds() <= 0:
+            return "Süresi dolmuş"
+        d, r = divmod(int(delta.total_seconds()), 86400)
+        h, r = divmod(r, 3600)
+        m = r // 60
+        parts = []
+        if d: parts.append(f"{d}g")
+        if h: parts.append(f"{h}s")
+        if m: parts.append(f"{m}d")
+        return " ".join(parts) or "<1dk"
+
+    def __repr__(self):
+        return f'<FileShare {self.token} -> {self.file_name}>'
 

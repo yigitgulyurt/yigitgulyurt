@@ -12,6 +12,7 @@
     {% if messages %}{% for c,m in messages %}<div class="flash flash-{{ c }}">{{ m }}</div>{% endfor %}{% endif %}
   {% endwith %}
   <form method="POST" style="display:flex;flex-direction:column;gap:14px">
+    <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
     <div class="form-group">
       <label>// kullanıcı adı</label>
       <input type="text" name="username" autofocus required>
