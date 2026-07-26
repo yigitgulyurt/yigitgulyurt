@@ -4,6 +4,7 @@ from werkzeug.utils import secure_filename
 from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog, FileShare
 from app import db, limiter
 from datetime import datetime, timedelta
+from sqlalchemy.exc import OperationalError, DatabaseError, IntegrityError
 import random
 import string
 import re
@@ -1115,219 +1116,273 @@ def file_upload_cancel():
 
 # --- File Share Endpoints ---
 
+def _share_db_err(e):
+    """Veritabanı hatalarını (özellikle eksik migration/tablo) kullanıcı dostu mesaja çevirir."""
+    msg = str(e)
+    low = msg.lower()
+    if 'no such table' in low or 'relation' in low and 'does not exist' in low:
+        return ('Paylaşım özelliği için veritabanı tablosu oluşturulmamış. '
+                'Sunucuda `flask db upgrade` komutunu çalıştırarak migrationları uygulayın.')
+    if 'column' in low and ('does not exist' in low or 'no such column' in low):
+        return f'Veritabanı şeması güncel değil: {msg[:200]} · Sunucuda `flask db upgrade` çalıştırın.'
+    return f'Veritabanı hatası: {msg[:220]}'
+
+
 def _generate_share_token():
     length = current_app.config.get('SHARE_TOKEN_LENGTH', 28)
     import secrets
     alphabet = string.ascii_letters + string.digits
     while True:
         token = ''.join(secrets.choice(alphabet) for _ in range(length))
-        if not FileShare.query.filter_by(token=token).first():
+        try:
+            if not FileShare.query.filter_by(token=token).first():
+                return token
+        except (OperationalError, DatabaseError):
+            # DB hatasıysa çakışma kontrolünü atla, nadir durumda token çakışması olursa IntegrityError döner
             return token
 
 @admin_bp.route('/dosyalar/paylas', methods=['POST'])
 @login_required
 @limiter.limit("60 per minute")
 def file_share_create():
-    data = request.get_json(silent=True) or request.form
-    filepath = sanitize_relative_path(data.get('filepath', ''))
-    if not filepath:
-        return jsonify({'status': 'error', 'message': 'Dosya yolu gerekli'}), 400
-
-    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
-    target = os.path.realpath(os.path.join(base_dir, filepath))
-    base_real = os.path.realpath(base_dir)
-    if not target.startswith(base_real) or not os.path.isfile(target):
-        return jsonify({'status': 'error', 'message': 'Dosya bulunamadı'}), 404
-
     try:
-        stat = os.stat(target)
-    except OSError as e:
-        return jsonify({'status': 'error', 'message': str(e)}), 500
+        data = request.get_json(silent=True) or request.form
+        filepath = sanitize_relative_path(data.get('filepath', ''))
+        if not filepath:
+            return jsonify({'status': 'error', 'message': 'Dosya yolu gerekli'}), 400
 
-    password = data.get('password') or None
-    max_downloads = data.get('max_downloads')
-    if max_downloads:
+        base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+        target = os.path.realpath(os.path.join(base_dir, filepath))
+        base_real = os.path.realpath(base_dir)
+        if not target.startswith(base_real) or not os.path.isfile(target):
+            return jsonify({'status': 'error', 'message': 'Dosya bulunamadı'}), 404
+
         try:
-            max_downloads = int(max_downloads)
-            if max_downloads <= 0:
+            stat = os.stat(target)
+        except OSError as e:
+            return jsonify({'status': 'error', 'message': str(e)}), 500
+
+        password = data.get('password') or None
+        max_downloads = data.get('max_downloads')
+        if max_downloads:
+            try:
+                max_downloads = int(max_downloads)
+                if max_downloads <= 0:
+                    max_downloads = None
+            except (ValueError, TypeError):
                 max_downloads = None
-        except (ValueError, TypeError):
+        else:
             max_downloads = None
-    else:
-        max_downloads = None
 
-    expires_hours = data.get('expires_hours')
-    expires_at = None
-    if expires_hours:
-        try:
-            h = float(expires_hours)
-            if h > 0:
-                expires_at = datetime.utcnow() + timedelta(hours=h)
-        except (ValueError, TypeError):
-            expires_at = None
+        expires_hours = data.get('expires_hours')
+        expires_at = None
+        if expires_hours:
+            try:
+                h = float(expires_hours)
+                if h > 0:
+                    expires_at = datetime.utcnow() + timedelta(hours=h)
+            except (ValueError, TypeError):
+                expires_at = None
 
-    share = FileShare(
-        token=_generate_share_token(),
-        file_path=filepath,
-        file_name=os.path.basename(target),
-        file_size=stat.st_size,
-        max_downloads=max_downloads,
-        expires_at=expires_at,
-        created_by_id=current_user.id,
-    )
-    if password:
-        share.set_password(password)
+        share = FileShare(
+            token=_generate_share_token(),
+            file_path=filepath,
+            file_name=os.path.basename(target),
+            file_size=stat.st_size,
+            max_downloads=max_downloads,
+            expires_at=expires_at,
+            created_by_id=current_user.id,
+        )
+        if password:
+            share.set_password(password)
 
-    db.session.add(share)
-    db.session.commit()
+        db.session.add(share)
+        db.session.commit()
 
-    share_url = url_for('admin.file_share_view', token=share.token, _external=True)
+        share_url = url_for('admin.file_share_view', token=share.token, _external=True)
 
-    return jsonify({
-        'status': 'ok',
-        'share': {
-            'id': share.id,
-            'token': share.token,
-            'url': share_url,
-            'file_name': share.file_name,
-            'file_size_human': human_readable_size(share.file_size or 0),
-            'has_password': bool(share.password_hash),
-            'max_downloads': share.max_downloads,
-            'download_count': share.download_count or 0,
-            'expires_at': share.expires_at.isoformat() if share.expires_at else None,
-            'time_left': share.time_left_text(),
-            'is_active': share.is_active,
-            'created_at': share.created_at.isoformat() if share.created_at else None,
-        }
-    })
+        return jsonify({
+            'status': 'ok',
+            'share': {
+                'id': share.id,
+                'token': share.token,
+                'url': share_url,
+                'file_name': share.file_name,
+                'file_size_human': human_readable_size(share.file_size or 0),
+                'has_password': bool(share.password_hash),
+                'max_downloads': share.max_downloads,
+                'download_count': share.download_count or 0,
+                'expires_at': share.expires_at.isoformat() if share.expires_at else None,
+                'time_left': share.time_left_text(),
+                'is_active': share.is_active,
+                'created_at': share.created_at.isoformat() if share.created_at else None,
+            }
+        })
+    except (OperationalError, DatabaseError, IntegrityError) as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': _share_db_err(e)}), 503
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': f'Paylaşım oluşturulamadı: {e}'}), 500
 
 @admin_bp.route('/dosyalar/paylasimlar', methods=['GET'])
 @login_required
 @limiter.limit("120 per minute")
 def file_share_list():
     """Tüm paylaşımları listele - ya da belirli bir filepath için"""
-    filepath = request.args.get('filepath')
-    query = FileShare.query.filter_by(created_by_id=current_user.id)
-    if filepath:
-        safe = sanitize_relative_path(filepath)
-        query = query.filter_by(file_path=safe)
-    shares = query.order_by(FileShare.created_at.desc()).all()
-    result = []
-    for s in shares:
-        result.append({
-            'id': s.id,
-            'token': s.token,
-            'url': url_for('admin.file_share_view', token=s.token, _external=True),
-            'file_path': s.file_path,
-            'file_name': s.file_name,
-            'file_size_human': human_readable_size(s.file_size or 0),
-            'has_password': bool(s.password_hash),
-            'max_downloads': s.max_downloads,
-            'download_count': s.download_count or 0,
-            'expires_at': s.expires_at.isoformat() if s.expires_at else None,
-            'time_left': s.time_left_text(),
-            'is_active': s.is_active,
-            'created_at': s.created_at.isoformat() if s.created_at else None,
-        })
-    return jsonify({'status': 'ok', 'count': len(result), 'shares': result})
+    try:
+        filepath = request.args.get('filepath')
+        query = FileShare.query.filter_by(created_by_id=current_user.id)
+        if filepath:
+            safe = sanitize_relative_path(filepath)
+            query = query.filter_by(file_path=safe)
+        shares = query.order_by(FileShare.created_at.desc()).all()
+        result = []
+        for s in shares:
+            result.append({
+                'id': s.id,
+                'token': s.token,
+                'url': url_for('admin.file_share_view', token=s.token, _external=True),
+                'file_path': s.file_path,
+                'file_name': s.file_name,
+                'file_size_human': human_readable_size(s.file_size or 0),
+                'has_password': bool(s.password_hash),
+                'max_downloads': s.max_downloads,
+                'download_count': s.download_count or 0,
+                'expires_at': s.expires_at.isoformat() if s.expires_at else None,
+                'time_left': s.time_left_text(),
+                'is_active': s.is_active,
+                'created_at': s.created_at.isoformat() if s.created_at else None,
+            })
+        return jsonify({'status': 'ok', 'count': len(result), 'shares': result})
+    except (OperationalError, DatabaseError) as e:
+        return jsonify({'status': 'error', 'message': _share_db_err(e), 'count': 0, 'shares': []}), 503
+    except Exception as e:
+        return jsonify({'status': 'error', 'message': f'Paylaşımlar listelenemedi: {e}', 'count': 0, 'shares': []}), 500
 
 @admin_bp.route('/dosyalar/paylasim/<int:share_id>/sil', methods=['POST'])
 @login_required
 @limiter.limit("60 per minute")
 def file_share_delete(share_id):
-    share = FileShare.query.get_or_404(share_id)
-    if share.created_by_id != current_user.id:
-        abort(403)
-    db.session.delete(share)
-    db.session.commit()
-    return jsonify({'status': 'ok', 'message': 'Paylaşım silindi'})
+    try:
+        share = FileShare.query.get_or_404(share_id)
+        if share.created_by_id != current_user.id:
+            abort(403)
+        db.session.delete(share)
+        db.session.commit()
+        return jsonify({'status': 'ok', 'message': 'Paylaşım silindi'})
+    except (OperationalError, DatabaseError, IntegrityError) as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': _share_db_err(e)}), 503
+    except Exception as e:
+        db.session.rollback()
+        return jsonify({'status': 'error', 'message': f'Silme başarısız: {e}'}), 500
 
 # Public share endpoints
 @main_bp.route('/p/<token>', methods=['GET', 'POST'])
 def file_share_view(token):
-    share = FileShare.query.filter_by(token=token).first()
-    if not share:
-        abort(404)
+    try:
+        share = FileShare.query.filter_by(token=token).first()
+        if not share:
+            abort(404)
 
-    error = None
-    if request.method == 'POST':
-        password = request.form.get('password', '')
-        if not share.check_password(password):
-            error = 'Hatalı şifre'
-        else:
-            session['share_unlock_' + token] = True
-            return redirect(url_for('admin.file_share_view', token=token))
+        error = None
+        if request.method == 'POST':
+            password = request.form.get('password', '')
+            if not share.check_password(password):
+                error = 'Hatalı şifre'
+            else:
+                session['share_unlock_' + token] = True
+                return redirect(url_for('admin.file_share_view', token=token))
 
-    needs_password = bool(share.password_hash) and not session.get('share_unlock_' + token)
-    if not share.is_active:
-        return render_template('admin/file_share_expired.html', share=share, error=error), 410
+        needs_password = bool(share.password_hash) and not session.get('share_unlock_' + token)
+        if not share.is_active:
+            return render_template('admin/file_share_expired.html', share=share, error=error), 410
 
-    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
-    target = os.path.realpath(os.path.join(base_dir, share.file_path))
-    base_real = os.path.realpath(base_dir)
-    if not target.startswith(base_real) or not os.path.isfile(target):
-        return render_template('admin/file_share_expired.html', share=share, error='Dosya bulunamadı'), 404
+        base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+        target = os.path.realpath(os.path.join(base_dir, share.file_path))
+        base_real = os.path.realpath(base_dir)
+        if not target.startswith(base_real) or not os.path.isfile(target):
+            return render_template('admin/file_share_expired.html', share=share, error='Dosya bulunamadı'), 404
 
-    return render_template('admin/file_share_view.html',
-                           share=share,
-                           file_size_human=human_readable_size(share.file_size or 0),
-                           needs_password=needs_password,
-                           error=error)
+        return render_template('admin/file_share_view.html',
+                               share=share,
+                               file_size_human=human_readable_size(share.file_size or 0),
+                               needs_password=needs_password,
+                               error=error)
+    except (OperationalError, DatabaseError):
+        try:
+            return render_template('admin/file_share_expired.html',
+                                   share=None, error='Paylaşım özelliği henüz hazır değil. Sunucu yöneticisine `flask db upgrade` komutunu çalıştırmasını söyleyin.'), 503
+        except Exception:
+            abort(503)
 
 @main_bp.route('/p/<token>/indir')
 def file_share_download(token):
-    share = FileShare.query.filter_by(token=token).first()
-    if not share:
-        abort(404)
-    if not share.is_active:
-        abort(410)
-    if share.password_hash and not session.get('share_unlock_' + token):
-        return redirect(url_for('admin.file_share_view', token=token))
+    try:
+        share = FileShare.query.filter_by(token=token).first()
+        if not share:
+            abort(404)
+        if not share.is_active:
+            abort(410)
+        if share.password_hash and not session.get('share_unlock_' + token):
+            return redirect(url_for('admin.file_share_view', token=token))
 
-    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
-    target = os.path.realpath(os.path.join(base_dir, share.file_path))
-    base_real = os.path.realpath(base_dir)
-    if not target.startswith(base_real) or not os.path.isfile(target):
-        abort(404)
+        base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+        target = os.path.realpath(os.path.join(base_dir, share.file_path))
+        base_real = os.path.realpath(base_dir)
+        if not target.startswith(base_real) or not os.path.isfile(target):
+            abort(404)
 
-    share.download_count = (share.download_count or 0) + 1
-    db.session.commit()
+        share.download_count = (share.download_count or 0) + 1
+        db.session.commit()
 
-    return send_file(target, as_attachment=True, download_name=share.file_name)
+        return send_file(target, as_attachment=True, download_name=share.file_name)
+    except (OperationalError, DatabaseError, IntegrityError) as e:
+        db.session.rollback()
+        abort(503)
+    except Exception as e:
+        db.session.rollback()
+        abort(500)
 
 @main_bp.route('/p/<token>/dosya')
 def file_share_raw(token):
     """Dosyayı doğrudan gönder (resim/video/markdown/kod için önizleme - indirme sayacını arttırmaz)"""
-    share = FileShare.query.filter_by(token=token).first()
-    if not share or not share.is_active:
-        abort(404)
-    if share.password_hash and not session.get('share_unlock_' + token):
-        abort(403)
+    try:
+        share = FileShare.query.filter_by(token=token).first()
+        if not share or not share.is_active:
+            abort(404)
+        if share.password_hash and not session.get('share_unlock_' + token):
+            abort(403)
 
-    base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
-    target = os.path.realpath(os.path.join(base_dir, share.file_path))
-    base_real = os.path.realpath(base_dir)
-    if not target.startswith(base_real) or not os.path.isfile(target):
-        abort(404)
+        base_dir = current_app.config['PERSONAL_UPLOAD_FOLDER']
+        target = os.path.realpath(os.path.join(base_dir, share.file_path))
+        base_real = os.path.realpath(base_dir)
+        if not target.startswith(base_real) or not os.path.isfile(target):
+            abort(404)
 
-    ext = (os.path.splitext(target)[1].lstrip('.') or '').lower()
-    text_exts = {'txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'}
-    if ext in text_exts:
-        try:
-            mime_map = {
-                'html': 'text/plain; charset=utf-8', 'htm': 'text/plain; charset=utf-8',
-                'js': 'text/plain; charset=utf-8', 'ts': 'text/plain; charset=utf-8',
-                'css': 'text/css; charset=utf-8', 'json': 'application/json; charset=utf-8',
-                'xml': 'application/xml; charset=utf-8', 'svg': 'image/svg+xml; charset=utf-8',
-            }
-            mimetype = mime_map.get(ext, 'text/plain; charset=utf-8')
-            response = send_file(target, as_attachment=False, download_name=share.file_name, mimetype=mimetype)
-        except Exception:
+        ext = (os.path.splitext(target)[1].lstrip('.') or '').lower()
+        text_exts = {'txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'}
+        if ext in text_exts:
+            try:
+                mime_map = {
+                    'html': 'text/plain; charset=utf-8', 'htm': 'text/plain; charset=utf-8',
+                    'js': 'text/plain; charset=utf-8', 'ts': 'text/plain; charset=utf-8',
+                    'css': 'text/css; charset=utf-8', 'json': 'application/json; charset=utf-8',
+                    'xml': 'application/xml; charset=utf-8', 'svg': 'image/svg+xml; charset=utf-8',
+                }
+                mimetype = mime_map.get(ext, 'text/plain; charset=utf-8')
+                response = send_file(target, as_attachment=False, download_name=share.file_name, mimetype=mimetype)
+            except Exception:
+                response = send_file(target, as_attachment=False, download_name=share.file_name)
+        else:
             response = send_file(target, as_attachment=False, download_name=share.file_name)
-    else:
-        response = send_file(target, as_attachment=False, download_name=share.file_name)
-    response.headers.setdefault('X-Content-Type-Options', 'nosniff')
-    return response
+        response.headers.setdefault('X-Content-Type-Options', 'nosniff')
+        return response
+    except (OperationalError, DatabaseError):
+        abort(503)
+    except Exception as e:
+        abort(500)
 
 
 # --- OG Routes ---
