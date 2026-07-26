@@ -56,7 +56,11 @@ server {
 
     location /pubg/ {
         alias /home/yigitgulyurt/pubg/;
+        mp4;
+        mp4_buffer_size     1m;
+        mp4_max_buffer_size 5m;
     }
+
 server {
     listen 80;
     listen [::]:80;
