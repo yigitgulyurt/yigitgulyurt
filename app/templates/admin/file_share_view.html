@@ -11,7 +11,7 @@
 {% set is_audio = ext in ['mp3','wav','ogg','oga','flac','m4a','aac'] %}
 {% set is_pdf = ext in ['pdf'] %}
 {% set is_text = ext in ['txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'] %}
-{% set raw_url = url_for('admin.file_share_raw', token=share.token) %}
+{% set raw_url = url_for('share.file_share_raw', token=share.token) %}
 {% if is_text %}
 <link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/github-dark.yigitgulyurt.css" id="hljs-css">
 <script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/marked.yigitgulyurt.js"></script>
@@ -137,13 +137,13 @@
           <div style="padding:60px 24px;text-align:center;background:linear-gradient(180deg,var(--bg) 0%,#0a0a0a 100%)">
             <div style="font-size:72px;margin-bottom:14px">📄</div>
             <div style="font-family:monospace;font-size:13px;color:var(--color-text-secondary);margin-bottom:18px">bu dosya tipi için önizleme desteklenmiyor</div>
-            <a href="{{ url_for('admin.file_share_download', token=share.token) }}" class="btn" style="padding:12px 24px;background:var(--primary);color:#000;font-family:monospace;font-weight:700;border-radius:6px">⬇️ doğrudan indir</a>
+            <a href="{{ url_for('share.file_share_download', token=share.token) }}" class="btn" style="padding:12px 24px;background:var(--primary);color:#000;font-family:monospace;font-weight:700;border-radius:6px">⬇️ doğrudan indir</a>
           </div>
         {% endif %}
 
         <div style="padding:18px 22px;border-top:0.5px solid var(--border);display:flex;gap:10px;flex-wrap:wrap;align-items:center;justify-content:space-between">
           <div style="display:flex;gap:8px;flex-wrap:wrap">
-            <a href="{{ url_for('admin.file_share_download', token=share.token) }}" class="btn" style="padding:10px 18px;background:var(--primary);color:#000;font-family:monospace;font-size:13px;font-weight:700;border-radius:5px">
+            <a href="{{ url_for('share.file_share_download', token=share.token) }}" class="btn" style="padding:10px 18px;background:var(--primary);color:#000;font-family:monospace;font-size:13px;font-weight:700;border-radius:5px">
               ⬇️ indir
             </a>
             {% if is_img or is_video or is_audio or is_pdf or is_text %}
@@ -154,10 +154,10 @@
             <button type="button" id="btn-zoom-img" class="btn" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">🔍 büyüt</button>
             {% endif %}
             {% endif %}
-            <button type="button" id="btn-copy-link" class="btn" data-link="{{ url_for('admin.file_share_download', token=share.token, _external=True) }}" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">🔗 indirme linkini kopyala</button>
+            <button type="button" id="btn-copy-link" class="btn" data-link="{{ url_for('share.file_share_download', token=share.token, _external=True) }}" style="padding:10px 16px;background:var(--bg);color:var(--text);font-family:monospace;font-size:12.5px;border:0.5px solid var(--border);border-radius:5px">🔗 indirme linkini kopyala</button>
           </div>
           <div style="font-family:monospace;font-size:10.5px;color:var(--color-text-secondary);max-width:380px;text-align:right">
-            direkt link: <span style="color:var(--color-accent2);word-break:break-all">{{ url_for('admin.file_share_download', token=share.token, _external=True) }}</span>
+            direkt link: <span style="color:var(--color-accent2);word-break:break-all">{{ url_for('share.file_share_download', token=share.token, _external=True) }}</span>
           </div>
         </div>
       {% endif %}

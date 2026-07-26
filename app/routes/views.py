@@ -1,6 +1,7 @@
 from flask import Blueprint, render_template, Response, url_for, current_app, request, jsonify, redirect, abort, flash, send_file, session
 from flask_login import login_user, logout_user, login_required, current_user
 from werkzeug.utils import secure_filename
+from werkzeug.exceptions import HTTPException
 from app.models import Project, BlogPost, StreamConfig, QrRedirect, Admin, ContactMessage, IpLog, FileShare
 from app import db, limiter
 from datetime import datetime, timedelta
@@ -1342,6 +1343,8 @@ def file_share_download(token):
     except (OperationalError, DatabaseError, IntegrityError) as e:
         db.session.rollback()
         abort(503)
+    except HTTPException:
+        raise
     except Exception as e:
         db.session.rollback()
         abort(500)
@@ -1382,6 +1385,8 @@ def file_share_raw(token):
         return response
     except (OperationalError, DatabaseError):
         abort(503)
+    except HTTPException:
+        raise
     except Exception as e:
         abort(500)
 
