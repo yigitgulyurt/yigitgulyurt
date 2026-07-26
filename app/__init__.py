@@ -96,14 +96,15 @@ def csrf_protect():
 
 def security_headers(response):
     csp = (
-        "default-src 'self'; "
-        "script-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-        "style-src 'self' 'unsafe-inline' https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "default-src 'self' https://*.yigitgulyurt.net.tr; "
+        "script-src 'self' 'unsafe-inline' https://*.yigitgulyurt.net.tr https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "style-src 'self' 'unsafe-inline' https://*.yigitgulyurt.net.tr https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
         "img-src 'self' data: blob: https:; "
-        "font-src 'self' data: https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
-        "connect-src 'self' https: wss:; "
-        "media-src 'self' blob: https:; "
+        "font-src 'self' data: https://*.yigitgulyurt.net.tr https://cdn.jsdelivr.net https://cdnjs.cloudflare.com; "
+        "connect-src 'self' https: wss: https://*.yigitgulyurt.net.tr wss://*.yigitgulyurt.net.tr; "
+        "media-src 'self' blob: https: https://*.yigitgulyurt.net.tr; "
         "frame-ancestors 'self'; "
+        "frame-src https: blob: data:; "
         "object-src 'none'; "
         "base-uri 'self'; "
         "form-action 'self';"

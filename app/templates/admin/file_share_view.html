@@ -13,9 +13,9 @@
 {% set is_text = ext in ['txt','md','markdown','log','csv','json','xml','yml','yaml','toml','ini','cfg','env','html','htm','css','js','ts','py','sql','sh','bash','bat','ps1','c','cpp','h','hpp','rs','go','java','kt','rb','php','pl','lua','vim','conf','nginx','dockerfile','makefile'] %}
 {% set raw_url = url_for('admin.file_share_raw', token=share.token) %}
 {% if is_text %}
-<link rel="stylesheet" href="https://cdn.jsdelivr.net/gh/highlightjs/cdn-release@11.9.0/build/styles/github-dark.min.css" id="hljs-css">
-<script src="{{ url_for('static', filename='js/yigitgulyurt/marked.yigitgulyurt.js') }}"></script>
-<script src="{{ url_for('static', filename='js/yigitgulyurt/highlight.yigitgulyurt.js') }}"></script>
+<link rel="stylesheet" href="https://css.yigitgulyurt.net.tr/yigitgulyurt/github-dark.yigitgulyurt.css" id="hljs-css">
+<script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/marked.yigitgulyurt.js"></script>
+<script src="https://js.yigitgulyurt.net.tr/yigitgulyurt/highlight.yigitgulyurt.js"></script>
 {% endif %}
 <style>
   .viewer-card { max-width: 1080px; margin: 0 auto; }
