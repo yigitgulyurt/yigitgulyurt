@@ -13,6 +13,31 @@
 
 <div id="upload-queue" style="margin-top:16px;display:flex;flex-direction:column;gap:8px"></div>
 
+<div id="upload-settings" style="margin-top:10px;padding:10px 14px;border:0.5px solid var(--border);border-radius:6px;display:flex;gap:18px;flex-wrap:wrap;align-items:center;font-family:monospace;font-size:12.5px;color:var(--color-text-secondary);background:var(--bg-secondary)">
+  <label style="display:flex;align-items:center;gap:6px">
+    <b style="color:var(--color-text)">chunk boyutu:</b>
+    <select id="cfg-chunk" style="padding:4px 6px;background:var(--bg);color:var(--color-text);border:0.5px solid var(--border);border-radius:4px;font-family:monospace">
+      <option value="2097152">2 MB</option>
+      <option value="4194304">4 MB</option>
+      <option value="8388608" selected>8 MB</option>
+      <option value="16777216">16 MB</option>
+      <option value="33554432">32 MB</option>
+    </select>
+  </label>
+  <label style="display:flex;align-items:center;gap:6px">
+    <b style="color:var(--color-text)">paralel (aynı anda):</b>
+    <select id="cfg-parallel" style="padding:4px 6px;background:var(--bg);color:var(--color-text);border:0.5px solid var(--border);border-radius:4px;font-family:monospace">
+      <option value="1">1</option>
+      <option value="2">2</option>
+      <option value="3" selected>3 (önerilen)</option>
+      <option value="5">5</option>
+      <option value="8">8</option>
+      <option value="12">12</option>
+    </select>
+  </label>
+  <span id="cfg-summary" style="margin-left:auto;color:var(--color-text-secondary)">● yüklenen her yeni dosya ayarları kullanır</span>
+</div>
+
 <div style="margin-top:16px;border:0.5px solid var(--border);border-radius:6px;padding:16px;display:flex;gap:12px;flex-wrap:wrap;align-items:center">
   <form id="legacy-form" action="{{ url_for('admin.file_upload') }}" method="POST" enctype="multipart/form-data" style="display:flex;gap:10px;align-items:center;flex-wrap:wrap;flex:1;min-width:300px">
     <input type="hidden" name="csrf_token" value="{{ csrf_token() }}">
@@ -172,8 +197,60 @@
   const CSRF = document.querySelector('meta[name="csrf-token"]') ? null : null;
   const CSRF_TOKEN = '{{ csrf_token() }}';
   const CURRENT_PATH = {{ current_path|tojson }};
-  const CHUNK_SIZE = 8 * 1024 * 1024;
-  const PARALLEL_CHUNKS = 3;
+  const LS_KEY = 'file_upload_cfg_v1';
+  const DEFAULT_CHUNK = 8 * 1024 * 1024;
+  const DEFAULT_PARALLEL = 3;
+  let CHUNK_SIZE = DEFAULT_CHUNK;
+  let PARALLEL_CHUNKS = DEFAULT_PARALLEL;
+
+  function loadCfg() {
+    try {
+      const saved = JSON.parse(localStorage.getItem(LS_KEY) || '{}');
+      const cs = parseInt(saved.chunk_size, 10);
+      const pc = parseInt(saved.parallel, 10);
+      if (!isNaN(cs) && cs >= 1 * 1024 * 1024 && cs <= 64 * 1024 * 1024) CHUNK_SIZE = cs;
+      if (!isNaN(pc) && pc >= 1 && pc <= 32) PARALLEL_CHUNKS = pc;
+    } catch(_) {}
+    const c = document.getElementById('cfg-chunk');
+    const p = document.getElementById('cfg-parallel');
+    if (c) {
+      if (![...c.options].some(o => parseInt(o.value,10) === CHUNK_SIZE)) {
+        const opt = document.createElement('option');
+        opt.value = String(CHUNK_SIZE);
+        opt.textContent = (CHUNK_SIZE / 1024 / 1024) + ' MB (özel)';
+        c.appendChild(opt);
+      }
+      c.value = String(CHUNK_SIZE);
+    }
+    if (p) {
+      if (![...p.options].some(o => parseInt(o.value,10) === PARALLEL_CHUNKS)) {
+        const opt = document.createElement('option');
+        opt.value = String(PARALLEL_CHUNKS);
+        opt.textContent = String(PARALLEL_CHUNKS) + ' (özel)';
+        p.appendChild(opt);
+      }
+      p.value = String(PARALLEL_CHUNKS);
+    }
+    updateCfgSummary();
+  }
+
+  function saveCfg(chunkSize, parallel) {
+    CHUNK_SIZE = chunkSize;
+    PARALLEL_CHUNKS = parallel;
+    try { localStorage.setItem(LS_KEY, JSON.stringify({chunk_size: chunkSize, parallel})); } catch(_){}
+    updateCfgSummary();
+  }
+
+  function updateCfgSummary() {
+    const el = document.getElementById('cfg-summary');
+    if (!el) return;
+    const mbChunk = (CHUNK_SIZE / 1024 / 1024).toFixed(0);
+    const totalLoopMB = (CHUNK_SIZE * PARALLEL_CHUNKS / 1024 / 1024).toFixed(0);
+    const totalLoop = parseFloat(totalLoopMB) >= 1024
+      ? (parseFloat(totalLoopMB) / 1024).toFixed(1) + ' GB'
+      : totalLoopMB + ' MB';
+    el.textContent = `● ${mbChunk} MB chunk · ${PARALLEL_CHUNKS} paralel · ~${totalLoop}/döngü`;
+  }
   const ENDPOINTS = {
     status:  '{{ url_for("admin.file_upload_status") }}',
     chunk:   '{{ url_for("admin.file_upload_chunk") }}',
@@ -298,10 +375,13 @@
   async function startUpload(file) {
     if (!file || !file.size) return;
     const uid = ++uploadCounter;
+    const chunkSizeSnap = CHUNK_SIZE;      // anlık ayarın fotoğrafı (yükleme başlarkenki)
+    const parallelSnap = PARALLEL_CHUNKS;
     const state = {
       uid, file, paused: false, cancelled: false, done: false,
       fileId: null, uploadedBytes: 0, completedChunks: new Set(),
-      chunkTotal: Math.ceil(file.size / CHUNK_SIZE) || 1,
+      chunkSize: chunkSizeSnap, parallel: parallelSnap,
+      chunkTotal: Math.ceil(file.size / chunkSizeSnap) || 1,
       lastModified: file.lastModified || 0,
       el: createUploadItem(uid, file),
       speedHistory: [],
@@ -368,7 +448,7 @@
 
   async function runChunks(s) {
     if (s.done || s.paused || s.cancelled) return;
-    while (s.activeChunks < PARALLEL_CHUNKS && s.nextChunkIdx < s.chunkTotal) {
+    while (s.activeChunks < s.parallel && s.nextChunkIdx < s.chunkTotal) {
       const idx = s.nextChunkIdx;
       if (s.completedChunks.has(idx)) { s.nextChunkIdx++; continue; }
       s.activeChunks++;
@@ -384,8 +464,8 @@
 
   async function uploadChunk(s, idx) {
     if (s.done || s.paused || s.cancelled) return;
-    const start = idx * CHUNK_SIZE;
-    const end = Math.min(start + CHUNK_SIZE, s.file.size);
+    const start = idx * s.chunkSize;
+    const end = Math.min(start + s.chunkSize, s.file.size);
     const blob = s.file.slice(start, end);
     const fd = new FormData();
     fd.append('file_id', s.fileId);
@@ -555,6 +635,19 @@
       shareCreateBtn.disabled = false; shareCreateBtn.style.opacity = '';
     }
   }
+
+  // ---------- Yükleme ayarlarını (chunk + paralel) başlat ----------
+  const _cfgC = document.getElementById('cfg-chunk');
+  const _cfgP = document.getElementById('cfg-parallel');
+  if (_cfgC) _cfgC.addEventListener('change', () => {
+    const cs = parseInt(_cfgC.value, 10);
+    if (!isNaN(cs)) saveCfg(cs, PARALLEL_CHUNKS);
+  });
+  if (_cfgP) _cfgP.addEventListener('change', () => {
+    const pc = parseInt(_cfgP.value, 10);
+    if (!isNaN(pc)) saveCfg(CHUNK_SIZE, pc);
+  });
+  loadCfg();
 })();
 </script>
 {% endblock %}
