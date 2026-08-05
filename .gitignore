@@ -16,6 +16,8 @@ obsidian.txt
 yigitgulyurt2
 yigitgulyurt.net.tr.code-workspace
 DOSYA_DONUSTURUCU_GELISTIRMELER.md
+instance/personal_uploads/*
+!instance/personal_uploads/.gitkeep
 
 # Proje dosyaları (yalnızca .gitkeep sakla)
 app/templates/projects/html/*

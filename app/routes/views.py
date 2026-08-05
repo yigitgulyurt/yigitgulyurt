@@ -335,6 +335,25 @@ def serve_sw():
 def offline():
     return render_template('main/offline.html')
 
+@main_bp.route('/wake-pc', methods=['POST'])
+@limiter.limit("10 per minute")
+def wake_pc():
+    vps_secret = current_app.config.get('WAKE_VPS_SECRET', '')
+    if not vps_secret or request.headers.get('X-Auth-Token') != vps_secret:
+        abort(403)
+    relay_url = current_app.config.get('WAKE_RELAY_URL', '')
+    relay_token = current_app.config.get('WAKE_RELAY_TOKEN', '')
+    try:
+        r = requests.post(
+            relay_url,
+            headers={'X-Auth-Token': relay_token},
+            timeout=5
+        )
+        return {'forwarded': r.status_code}, 200
+    except requests.RequestException as e:
+        current_app.logger.error(f'Wake relay error: {e}')
+        return {'error': 'Relay connection failed', 'detail': str(e)}, 502
+
 # --- Blog Routes ---
 @blog_bp.route('/')
 def index():

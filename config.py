@@ -68,3 +68,8 @@ class Config:
     # Telegram Bot Settings
     TELEGRAM_TOKEN                 = os.environ.get('TELEGRAM_TOKEN')
     ADMIN_TELEGRAM_ID              = os.environ.get('ADMIN_TELEGRAM_ID')
+
+    # Wake-on-LAN Relay Settings
+    WAKE_VPS_SECRET                = os.environ.get('WAKE_VPS_SECRET')    or ''
+    WAKE_RELAY_URL                 = os.environ.get('WAKE_RELAY_URL')     or 'http://x.x.x.x:xxxx/wake'
+    WAKE_RELAY_TOKEN               = os.environ.get('WAKE_RELAY_TOKEN')   or ''
