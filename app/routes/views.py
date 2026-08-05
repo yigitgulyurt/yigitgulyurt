@@ -377,25 +377,37 @@ def run_command():
     remote_cmd = allowed[cmd_id]
 
     try:
-        result = subprocess.run(
-            [
-                "/usr/bin/ssh",
-                "-i", current_app.config["PC_CONTROL_SSH_KEY"],
-                "-o", "ConnectTimeout=10",
-                ssh_target,
-                remote_cmd,
-            ],
-            capture_output=True,
-            text=True,
-            timeout=15,
-        )
-        current_app.logger.info(f"Command '{cmd_id}' executed, rc={result.returncode}")
-        return {
-            "status": "ok",
-            "returncode": result.returncode,
-            "stdout": result.stdout,
-            "stderr": result.stderr,
-        }, 200
+    result = subprocess.run(
+        [
+            "/usr/bin/ssh",
+            "-i", current_app.config["PC_CONTROL_SSH_KEY"],
+            "-o", "ConnectTimeout=10",
+            ssh_target,
+            remote_cmd,
+        ],
+        capture_output=True,
+        timeout=15,
+        # text=True KALDIRILDI — artık raw bytes alıyoruz
+    )
+
+    def safe_decode(b):
+        for enc in ("utf-8", "cp857", "cp1254"):
+            try:
+                return b.decode(enc)
+            except (UnicodeDecodeError, LookupError):
+                continue
+        return b.decode("utf-8", errors="replace")
+
+    stdout_text = safe_decode(result.stdout)
+    stderr_text = safe_decode(result.stderr)
+
+    current_app.logger.info(f"Command '{cmd_id}' executed, rc={result.returncode}")
+    return {
+        "status": "ok",
+        "returncode": result.returncode,
+        "stdout": stdout_text,
+        "stderr": stderr_text,
+    }, 200
 
     except subprocess.TimeoutExpired:
         current_app.logger.error(f"Command '{cmd_id}' timed out")
