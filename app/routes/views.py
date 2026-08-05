@@ -356,7 +356,7 @@ def wake_pc():
         current_app.logger.error(f'Wake relay error: {e}')
         return {'error': 'Relay connection failed', 'detail': str(e)}, 502
 
-@app.route("/run-command", methods=["POST"])
+@main_bp.route("/run-command", methods=["POST"])
 @limiter.limit("10 per minute")
 def run_command():
     if request.headers.get("X-Auth-Token") != current_app.config["WAKE_VPS_SECRET"]:
