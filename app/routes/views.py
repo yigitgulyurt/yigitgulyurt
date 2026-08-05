@@ -379,7 +379,7 @@ def run_command():
     try:
         result = subprocess.run(
             [
-                "ssh",
+                "/usr/bin/ssh",
                 "-i", current_app.config["PC_CONTROL_SSH_KEY"],
                 "-o", "ConnectTimeout=10",
                 ssh_target,
