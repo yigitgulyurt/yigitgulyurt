@@ -18,6 +18,8 @@ from threading import Thread
 from urllib.parse import urlparse, parse_qs
 from functools import lru_cache
 from PIL import Image, ImageDraw, ImageFont
+import subprocess
+
 
 # --- Blueprints ---
 main_bp     = Blueprint('main', __name__)
@@ -354,6 +356,55 @@ def wake_pc():
         current_app.logger.error(f'Wake relay error: {e}')
         return {'error': 'Relay connection failed', 'detail': str(e)}, 502
 
+@app.route("/run-command", methods=["POST"])
+@limiter.limit("10 per minute")
+def run_command():
+    if request.headers.get("X-Auth-Token") != current_app.config["WAKE_VPS_SECRET"]:
+        abort(403)
+
+    allowed = current_app.config.get("PC_ALLOWED_COMMANDS", {})
+    if not allowed:
+        current_app.logger.error("PC_ALLOWED_COMMANDS boş veya parse edilemedi")
+        return {"error": "server misconfigured"}, 500
+
+    data = request.get_json(silent=True) or {}
+    cmd_id = data.get("command_id")
+
+    if cmd_id not in allowed:
+        return {"error": "unknown command"}, 400
+
+    ssh_target = f"{current_app.config['PC_CONTROL_USER']}@{current_app.config['PC_CONTROL_HOST']}"
+    remote_cmd = allowed[cmd_id]
+
+    try:
+        result = subprocess.run(
+            [
+                "ssh",
+                "-i", current_app.config["PC_CONTROL_SSH_KEY"],
+                "-o", "ConnectTimeout=10",
+                ssh_target,
+                remote_cmd,
+            ],
+            capture_output=True,
+            text=True,
+            timeout=15,
+        )
+        current_app.logger.info(f"Command '{cmd_id}' executed, rc={result.returncode}")
+        return {
+            "status": "ok",
+            "returncode": result.returncode,
+            "stdout": result.stdout,
+            "stderr": result.stderr,
+        }, 200
+
+    except subprocess.TimeoutExpired:
+        current_app.logger.error(f"Command '{cmd_id}' timed out")
+        return {"error": "timeout"}, 504
+
+    except Exception as e:
+        current_app.logger.error(f"Command '{cmd_id}' failed: {e}")
+        return {"error": "ssh failed"}, 502
+        
 # --- Blog Routes ---
 @blog_bp.route('/')
 def index():

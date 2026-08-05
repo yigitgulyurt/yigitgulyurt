@@ -73,3 +73,12 @@ class Config:
     WAKE_VPS_SECRET                = os.environ.get('WAKE_VPS_SECRET')    or ''
     WAKE_RELAY_URL                 = os.environ.get('WAKE_RELAY_URL')     or 'http://x.x.x.x:xxxx/wake'
     WAKE_RELAY_TOKEN               = os.environ.get('WAKE_RELAY_TOKEN')   or ''
+
+    PC_CONTROL_HOST = os.environ.get("PC_CONTROL_HOST", "100.x.x.x")  # Windows PC'nin Tailscale IP'si
+    PC_CONTROL_USER = os.environ.get("PC_CONTROL_USER", "kullanici")
+    PC_CONTROL_SSH_KEY = os.environ.get("PC_CONTROL_SSH_KEY", "/home/yigitgulyurt/.ssh/pc_control")
+    _raw_commands = os.environ.get("PC_ALLOWED_COMMANDS", "{}")
+    try:
+        PC_ALLOWED_COMMANDS = json.loads(_raw_commands)
+    except json.JSONDecodeError:
+        PC_ALLOWED_COMMANDS = {}
