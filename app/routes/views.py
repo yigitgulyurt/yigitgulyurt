@@ -377,37 +377,44 @@ def run_command():
     remote_cmd = allowed[cmd_id]
 
     try:
-    result = subprocess.run(
-        [
-            "/usr/bin/ssh",
-            "-i", current_app.config["PC_CONTROL_SSH_KEY"],
-            "-o", "ConnectTimeout=10",
-            ssh_target,
-            remote_cmd,
-        ],
-        capture_output=True,
-        timeout=15,
-        # text=True KALDIRILDI — artık raw bytes alıyoruz
-    )
+        result = subprocess.run(
+            [
+                "/usr/bin/ssh",
+                "-i", current_app.config["PC_CONTROL_SSH_KEY"],
+                "-o", "ConnectTimeout=10",
+                ssh_target,
+                remote_cmd,
+            ],
+            capture_output=True,
+            timeout=15,
+        )
 
-    def safe_decode(b):
-        for enc in ("utf-8", "cp857", "cp1254"):
-            try:
-                return b.decode(enc)
-            except (UnicodeDecodeError, LookupError):
-                continue
-        return b.decode("utf-8", errors="replace")
+        def safe_decode(b):
+            for enc in ("utf-8", "cp857", "cp1254"):
+                try:
+                    return b.decode(enc)
+                except (UnicodeDecodeError, LookupError):
+                    continue
+            return b.decode("utf-8", errors="replace")
 
-    stdout_text = safe_decode(result.stdout)
-    stderr_text = safe_decode(result.stderr)
+        stdout_text = safe_decode(result.stdout)
+        stderr_text = safe_decode(result.stderr)
 
-    current_app.logger.info(f"Command '{cmd_id}' executed, rc={result.returncode}")
-    return {
-        "status": "ok",
-        "returncode": result.returncode,
-        "stdout": stdout_text,
-        "stderr": stderr_text,
-    }, 200
+        current_app.logger.info(f"Command '{cmd_id}' executed, rc={result.returncode}")
+        return {
+            "status": "ok",
+            "returncode": result.returncode,
+            "stdout": stdout_text,
+            "stderr": stderr_text,
+        }, 200
+
+    except subprocess.TimeoutExpired:
+        current_app.logger.error(f"Command '{cmd_id}' timed out")
+        return {"error": "timeout"}, 504
+
+    except Exception as e:
+        current_app.logger.error(f"Command '{cmd_id}' failed: {e}")
+        return {"error": "ssh failed"}, 502
 
     except subprocess.TimeoutExpired:
         current_app.logger.error(f"Command '{cmd_id}' timed out")
