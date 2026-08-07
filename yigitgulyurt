@@ -4,7 +4,7 @@
 # ANA SITE — yigitgulyurt.net.tr + www + canli
 # ══════════════════════════════════════════════
 server {
-    listen 443 ssl;
+    listen 127.0.0.1:8443 ssl;
     listen [::]:443 ssl;
     server_name yigitgulyurt.net.tr www.yigitgulyurt.net.tr canli.yigitgulyurt.net.tr;
 
@@ -75,7 +75,7 @@ server {
 # JS — js.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
-    listen 443 ssl;
+    listen 127.0.0.1:8443 ssl;
     listen [::]:443 ssl;
     server_name js.yigitgulyurt.net.tr;
 
@@ -120,7 +120,7 @@ server {
 # CSS — css.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
-    listen 443 ssl;
+    listen 127.0.0.1:8443 ssl;
     listen [::]:443 ssl;
     server_name css.yigitgulyurt.net.tr;
 
@@ -165,7 +165,7 @@ server {
 # HARİTA — harita.yigitgulyurt.net.tr
 # ══════════════════════════════════════════════
 server {
-    listen 443 ssl;
+    listen 127.0.0.1:8443 ssl;
     listen [::]:443 ssl;
     server_name harita.yigitgulyurt.net.tr;
 
@@ -204,7 +204,7 @@ server {
  # IMAGE — image.yigitgulyurt.net.tr
  # ══════════════════════════════════════════════
  # server {
- #     listen 443 ssl;
+ #     listen 127.0.0.1:8443 ssl;
  #     listen [::]:443 ssl;
  #     server_name image.yigitgulyurt.net.tr;
  #     ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
@@ -250,7 +250,7 @@ server {
  # # CANLI (Türkçe IDN) — xn--canl-oza.yigitgulyurt.net.tr
  # # ══════════════════════════════════════════════
  # server {
- #     listen 443 ssl;
+ #     listen 127.0.0.1:8443 ssl;
  #     listen [::]:443 ssl;
  #     server_name xn--canl-oza.yigitgulyurt.net.tr;
  #     ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
@@ -269,7 +269,7 @@ server {
  # # OBSİDİAN — obsidian.yigitgulyurt.net.tr
  # # ══════════════════════════════════════════════
  # server {
- #     listen 443 ssl;
+ #     listen 127.0.0.1:8443 ssl;
  #     listen [::]:443 ssl;
  #     server_name obsidian.yigitgulyurt.net.tr;
  #     ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
@@ -301,7 +301,7 @@ server {
  # # FONT — font.yigitgulyurt.net.tr
  # # ══════════════════════════════════════════════
  # server {
- #     listen 443 ssl;
+ #     listen 127.0.0.1:8443 ssl;
  #     listen [::]:443 ssl;
  #     server_name font.yigitgulyurt.net.tr;
  #     ssl_certificate     /etc/letsencrypt/live/yigitgulyurt.net.tr/fullchain.pem;
