@@ -87,7 +87,8 @@ def csrf_protect():
         path = request.path
         exempt_prefixes = ['/tools/ip-log', '/api/', '/canli/', '/obsidian/',
                           '/admin/dosyalar/yukle-', '/admin/dosyalar/paylas',
-                          '/admin/dosyalar/paylasimlar', '/wake-pc']
+                          '/admin/dosyalar/paylasimlar', '/wake-pc',
+                          '/mc-server', '/run-command']
         if any(path.startswith(p) for p in exempt_prefixes):
             return
         if not current_user.is_authenticated:
