@@ -407,6 +407,52 @@ def mc_server_control():
     except Exception as e:
         return {"error": "ssh failed", "detail": str(e)}, 502
 
+@main_bp.route("/mc-status", methods=["GET"])
+@limiter.limit("30 per minute")
+def mc_status_check():
+    # Güvenlik için istersen Header veya Query param kontrolü ekleyebilirsin:
+    # token = request.args.get("token")
+    # if token != current_app.config.get("WAKE_VPS_SECRET"):
+    #     abort(403)
+
+    android_user = "u0_a297"
+    android_host = "100.100.106.104"
+    android_port = "8022"
+    ssh_key_path = "/home/yigitgulyurt/.ssh/id_rsa"
+
+    # Android Termux'a durum sorgusunu gönderiyoruz
+    try:
+        result = subprocess.run(
+            [
+                "/usr/bin/ssh",
+                "-i", ssh_key_path,
+                "-p", android_port,
+                "-o", "ConnectTimeout=5",
+                "-o", "StrictHostKeyChecking=no",
+                "-o", "UserKnownHostsFile=/dev/null",
+                f"{android_user}@{android_host}",
+                "./mcs.sh status",
+            ],
+            capture_output=True,
+            timeout=10,
+        )
+
+        stdout_text = result.stdout.decode("utf-8", errors="replace").strip()
+
+        # pgrep -x kontrolüne göre sunucunun aktif olup olmadığını anlıyoruz
+        is_online = "AKTİF" in stdout_text
+
+        return {
+            "status": "online" if is_online else "offline",
+            "message": stdout_text,
+            "returncode": result.returncode
+        }, 200
+
+    except subprocess.TimeoutExpired:
+        return {"status": "error", "message": "Connection to Android server timed out"}, 504
+    except Exception as e:
+        return {"status": "error", "message": str(e)}, 502
+
 @main_bp.route("/run-command", methods=["POST"])
 @limiter.limit("10 per minute")
 def run_command():
