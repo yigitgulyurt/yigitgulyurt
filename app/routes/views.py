@@ -423,6 +423,59 @@ def run_command():
     except Exception as e:
         current_app.logger.error(f"Command '{cmd_id}' failed: {e}")
         return {"error": "ssh failed"}, 502
+
+@main_bp.route("/mc-server", methods=["POST"])
+@limiter.limit("10 per minute")
+def mc_server_control():
+    # Güvenlik kontrolü
+    if request.headers.get("X-Auth-Token") != current_app.config.get("WAKE_VPS_SECRET"):
+        abort(403)
+
+    data = request.get_json(silent=True) or {}
+    action = data.get("action") # "start", "stop" veya "status"
+
+    if action not in ["start", "stop", "status"]:
+        return {"error": "invalid action"}, 400
+
+    # Android Sunucu SSH bilgileri (Tailscale IP & Termux Portu)
+    android_user = "u0_a297"
+    android_host = "100.100.106.104"
+    android_port = "8022"
+    remote_cmd = f"./mcs.sh {action}"
+
+    try:
+        result = subprocess.run(
+            [
+                "/usr/bin/ssh",
+                "-p", android_port,
+                "-i", current_app.config["PC_CONTROL_SSH_KEY"], # Varolan SSH key dosyan
+                "-o", "ConnectTimeout=10",
+                f"{android_user}@{android_host}",
+                remote_cmd,
+            ],
+            capture_output=True,
+            timeout=15,
+        )
+
+        stdout_text = result.stdout.decode("utf-8", errors="replace")
+        stderr_text = result.stderr.decode("utf-8", errors="replace")
+
+        current_app.logger.info(f"MC Server action '{action}' executed, rc={result.returncode}")
+        return {
+            "status": "ok",
+            "action": action,
+            "returncode": result.returncode,
+            "stdout": stdout_text,
+            "stderr": stderr_text,
+        }, 200
+
+    except subprocess.TimeoutExpired:
+        current_app.logger.error(f"MC Server action '{action}' timed out")
+        return {"error": "timeout"}, 504
+
+    except Exception as e:
+        current_app.logger.error(f"MC Server action '{action}' failed: {e}")
+        return {"error": "ssh failed", "detail": str(e)}, 502
         
 # --- Blog Routes ---
 @blog_bp.route('/')
