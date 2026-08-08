@@ -83,3 +83,9 @@ class Config:
         PC_ALLOWED_COMMANDS = json.loads(_raw_commands)
     except json.JSONDecodeError:
         PC_ALLOWED_COMMANDS = {}
+
+    # Minecraft Server (Android Termux) SSH Settings
+    MC_SERVER_USER    = os.environ.get("MC_SERVER_USER",    "u0_a297")
+    MC_SERVER_HOST    = os.environ.get("MC_SERVER_HOST",    "100.100.106.104")
+    MC_SERVER_PORT    = os.environ.get("MC_SERVER_PORT",    "8022")
+    MC_SERVER_SCRIPT  = os.environ.get("MC_SERVER_SCRIPT",  "./mcs.sh")
