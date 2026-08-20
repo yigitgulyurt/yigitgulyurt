@@ -1855,6 +1855,10 @@ def temperature_converter():
 def tip_calculator():
     return render_template('tools/tip_calculator.html')
 
+@tools_bp.route('/mesai-takip')
+def work_tracker():
+    return render_template('tools/work_tracker.html')
+
 # GitHub-style color palette
 GITHUB_COLORS = [
     '#0066FF', '#1192AA', '#008C88', '#11AA77', '#44BB44',

@@ -1,0 +1,474 @@
+{% extends "base/base.html" %}
+
+{% block title %}Mesai Takipçi{% endblock %}
+
+{% block head %}
+<style>
+.tool-container {
+    max-width: 850px;
+    margin: 40px auto;
+    padding: 30px;
+    background: var(--card-bg);
+    border-radius: 20px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.timer-section {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 30px;
+    border-radius: 16px;
+    margin-bottom: 25px;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.session-name-input {
+    width: 100%;
+    padding: 12px 15px;
+    background: rgba(0, 0, 0, 0.3);
+    border: 1px solid rgba(255, 255, 255, 0.1);
+    border-radius: 10px;
+    color: var(--text);
+    margin-bottom: 20px;
+    font-size: 1rem;
+}
+
+.timer-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 4.5rem;
+    color: var(--primary);
+    text-align: center;
+    padding: 20px;
+    background: rgba(0, 0, 0, 0.3);
+    border-radius: 12px;
+    margin-bottom: 20px;
+    text-shadow: 0 0 25px rgba(var(--primary-rgb), 0.4);
+    letter-spacing: 4px;
+}
+
+.timer-status {
+    text-align: center;
+    margin-bottom: 20px;
+    font-size: 1rem;
+    color: var(--text-dim);
+}
+
+.timer-status.running { color: #4ade80; font-weight: 600; }
+.timer-status.paused { color: #facc15; font-weight: 600; }
+.timer-status.stopped { color: var(--text-dim); }
+
+.timer-buttons {
+    display: flex;
+    gap: 12px;
+    justify-content: center;
+    flex-wrap: wrap;
+}
+
+.timer-btn {
+    padding: 12px 28px;
+    border: none;
+    border-radius: 10px;
+    font-weight: 700;
+    font-size: 1rem;
+    cursor: pointer;
+    transition: all 0.3s;
+}
+
+.timer-btn.start { background: #4ade80; color: #000; }
+.timer-btn.start:hover { background: #22c55e; }
+.timer-btn.pause { background: #facc15; color: #000; }
+.timer-btn.pause:hover { background: #ca8a04; }
+.timer-btn.stop { background: #f87171; color: #000; }
+.timer-btn.stop:hover { background: #ef4444; }
+.timer-btn:disabled { opacity: 0.4; cursor: not-allowed; }
+
+.stats-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 15px;
+    margin-bottom: 25px;
+}
+
+@media (max-width: 600px) {
+    .stats-grid { grid-template-columns: 1fr; }
+}
+
+.stat-card {
+    background: rgba(0, 0, 0, 0.25);
+    padding: 18px;
+    border-radius: 12px;
+    text-align: center;
+    border: 1px solid rgba(255, 255, 255, 0.05);
+}
+
+.stat-label {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    margin-bottom: 8px;
+    font-weight: 500;
+}
+
+.stat-value {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.4rem;
+    font-weight: 700;
+    color: var(--primary);
+}
+
+.section-title {
+    font-size: 1.1rem;
+    font-weight: 700;
+    margin-bottom: 15px;
+    color: var(--text);
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.clear-btn {
+    background: transparent;
+    border: 1px solid #f87171;
+    color: #f87171;
+    padding: 6px 14px;
+    border-radius: 8px;
+    cursor: pointer;
+    font-size: 0.85rem;
+    font-weight: 600;
+    transition: all 0.2s;
+}
+.clear-btn:hover { background: #f87171; color: #fff; }
+
+.sessions-list {
+    max-height: 400px;
+    overflow-y: auto;
+}
+
+.session-item {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 16px;
+    background: rgba(0, 0, 0, 0.2);
+    border-radius: 10px;
+    margin-bottom: 10px;
+    border-left: 3px solid var(--primary);
+    transition: all 0.2s;
+}
+.session-item:hover { background: rgba(0, 0, 0, 0.3); }
+
+.session-info { flex: 1; }
+.session-name {
+    font-weight: 600;
+    font-size: 1rem;
+    margin-bottom: 4px;
+    color: var(--text);
+}
+.session-details {
+    font-size: 0.85rem;
+    color: var(--text-dim);
+    font-family: 'JetBrains Mono', monospace;
+}
+.session-duration {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 1.2rem;
+    font-weight: 700;
+    color: var(--primary);
+    margin-right: 12px;
+}
+.session-delete {
+    background: transparent;
+    border: none;
+    color: #f87171;
+    cursor: pointer;
+    font-size: 1.2rem;
+    padding: 4px 8px;
+    border-radius: 6px;
+    transition: all 0.2s;
+}
+.session-delete:hover { background: rgba(248, 113, 113, 0.2); }
+
+.empty-state {
+    text-align: center;
+    padding: 40px 20px;
+    color: var(--text-dim);
+}
+.empty-state-icon { font-size: 3rem; margin-bottom: 10px; }
+</style>
+{% endblock %}
+
+{% block content %}
+<div class="tool-container">
+    <h1 class="tool-title">
+        <span class="lang-tr">💼 Mesai Takipçi</span>
+        <span class="lang-en">💼 Work Time Tracker</span>
+    </h1>
+    
+    <div class="timer-section">
+        <input type="text" class="session-name-input" id="session-name" placeholder="Seans adı girin (örn: Frontend geliştirme)">
+        
+        <div class="timer-display" id="timer-display">00:00:00</div>
+        <div class="timer-status stopped" id="timer-status">
+            <span class="lang-tr">Başlatmak için tıklayın</span>
+            <span class="lang-en">Click to start</span>
+        </div>
+        
+        <div class="timer-buttons">
+            <button class="timer-btn start" id="btn-start" onclick="startTimer()">
+                <span class="lang-tr">▶ Başlat</span>
+                <span class="lang-en">▶ Start</span>
+            </button>
+            <button class="timer-btn pause" id="btn-pause" onclick="pauseTimer()" disabled>
+                <span class="lang-tr">⏸ Duraklat</span>
+                <span class="lang-en">⏸ Pause</span>
+            </button>
+            <button class="timer-btn stop" id="btn-stop" onclick="stopTimer()" disabled>
+                <span class="lang-tr">■ Bitir</span>
+                <span class="lang-en">■ Stop</span>
+            </button>
+        </div>
+    </div>
+    
+    <div class="stats-grid">
+        <div class="stat-card">
+            <div class="stat-label">
+                <span class="lang-tr">Bugünkü Toplam</span>
+                <span class="lang-en">Today Total</span>
+            </div>
+            <div class="stat-value" id="today-total">00:00:00</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">
+                <span class="lang-tr">Seans Sayısı</span>
+                <span class="lang-en">Session Count</span>
+            </div>
+            <div class="stat-value" id="session-count">0</div>
+        </div>
+        <div class="stat-card">
+            <div class="stat-label">
+                <span class="lang-tr">Tüm Zamanlar</span>
+                <span class="lang-en">All Time</span>
+            </div>
+            <div class="stat-value" id="all-time">00:00:00</div>
+        </div>
+    </div>
+    
+    <div class="section-title">
+        <span class="lang-tr">📋 Seanslar</span>
+        <span class="lang-en">📋 Sessions</span>
+        <button class="clear-btn" onclick="clearSessions()">
+            <span class="lang-tr">Temizle</span>
+            <span class="lang-en">Clear</span>
+        </button>
+    </div>
+    <div class="sessions-list" id="sessions-list">
+        <div class="empty-state">
+            <div class="empty-state-icon">📝</div>
+            <span class="lang-tr">Henüz seans kaydedilmedi</span><br>
+            <span class="lang-en">No sessions recorded yet</span>
+        </div>
+    </div>
+</div>
+{% endblock %}
+
+{% block scripts %}
+<script>
+let timerInterval = null;
+let elapsedSeconds = 0;
+let isRunning = false;
+let isPaused = false;
+let sessionStart = null;
+let sessions = JSON.parse(localStorage.getItem('work_tracker_sessions') || '[]');
+
+function formatTime(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    const s = seconds % 60;
+    return `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`;
+}
+
+function formatTimeShort(seconds) {
+    const h = Math.floor(seconds / 3600);
+    const m = Math.floor((seconds % 3600) / 60);
+    if (h > 0) return `${h}s ${m}d`;
+    return `${m}d ${seconds % 60}sn`;
+}
+
+function formatDateTime(timestamp) {
+    const d = new Date(timestamp);
+    return d.toLocaleString('tr-TR', {
+        day: '2-digit',
+        month: '2-digit',
+        year: 'numeric',
+        hour: '2-digit',
+        minute: '2-digit'
+    });
+}
+
+function isSameDay(ts1, ts2) {
+    const d1 = new Date(ts1), d2 = new Date(ts2);
+    return d1.getDate() === d2.getDate() &&
+           d1.getMonth() === d2.getMonth() &&
+           d1.getFullYear() === d2.getFullYear();
+}
+
+function saveSessions() {
+    localStorage.setItem('work_tracker_sessions', JSON.stringify(sessions));
+}
+
+function updateDisplay() {
+    document.getElementById('timer-display').textContent = formatTime(elapsedSeconds);
+}
+
+function updateStatus(status, text) {
+    const el = document.getElementById('timer-status');
+    el.className = 'timer-status ' + status;
+    el.innerHTML = text;
+}
+
+function startTimer() {
+    if (isPaused) {
+        isPaused = false;
+    } else {
+        elapsedSeconds = 0;
+        sessionStart = Date.now();
+    }
+    isRunning = true;
+    
+    timerInterval = setInterval(() => {
+        elapsedSeconds++;
+        updateDisplay();
+    }, 1000);
+    
+    document.getElementById('btn-start').disabled = true;
+    document.getElementById('btn-pause').disabled = false;
+    document.getElementById('btn-stop').disabled = false;
+    
+    updateStatus('running', `
+        <span class="lang-tr">⏱ Çalışıyor... Başlangıç: ${formatDateTime(sessionStart)}</span>
+        <span class="lang-en">⏱ Running... Started: ${formatDateTime(sessionStart)}</span>
+    `);
+}
+
+function pauseTimer() {
+    isRunning = false;
+    isPaused = true;
+    clearInterval(timerInterval);
+    
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-pause').disabled = true;
+    
+    updateStatus('paused', `
+        <span class="lang-tr">⏸ Duraklatıldı - ${formatTime(elapsedSeconds)}</span>
+        <span class="lang-en">⏸ Paused - ${formatTime(elapsedSeconds)}</span>
+    `);
+    
+    const startBtn = document.getElementById('btn-start');
+    startBtn.innerHTML = `
+        <span class="lang-tr">▶ Devam Et</span>
+        <span class="lang-en">▶ Resume</span>
+    `;
+}
+
+function stopTimer() {
+    clearInterval(timerInterval);
+    
+    if (elapsedSeconds > 0) {
+        const name = document.getElementById('session-name').value.trim() || 
+                     `<span class="lang-tr">Adsız Seans</span><span class="lang-en">Unnamed Session</span>`;
+        sessions.unshift({
+            id: Date.now(),
+            name: name,
+            duration: elapsedSeconds,
+            start: sessionStart || Date.now() - (elapsedSeconds * 1000),
+            end: Date.now()
+        });
+        saveSessions();
+    }
+    
+    isRunning = false;
+    isPaused = false;
+    elapsedSeconds = 0;
+    sessionStart = null;
+    
+    updateDisplay();
+    renderList();
+    renderStats();
+    
+    document.getElementById('btn-start').disabled = false;
+    document.getElementById('btn-pause').disabled = true;
+    document.getElementById('btn-stop').disabled = true;
+    document.getElementById('session-name').value = '';
+    
+    const startBtn = document.getElementById('btn-start');
+    startBtn.innerHTML = `
+        <span class="lang-tr">▶ Başlat</span>
+        <span class="lang-en">▶ Start</span>
+    `;
+    
+    updateStatus('stopped', `
+        <span class="lang-tr">Seans kaydedildi! ✅</span>
+        <span class="lang-en">Session saved! ✅</span>
+    `);
+}
+
+function deleteSession(id) {
+    sessions = sessions.filter(s => s.id !== id);
+    saveSessions();
+    renderList();
+    renderStats();
+}
+
+function clearSessions() {
+    if (sessions.length === 0) return;
+    if (!confirm('<span class="lang-tr">Tüm seansları silmek istediğinize emin misiniz?</span><span class="lang-en">Are you sure you want to delete all sessions?</span>')) return;
+    sessions = [];
+    saveSessions();
+    renderList();
+    renderStats();
+}
+
+function renderList() {
+    const list = document.getElementById('sessions-list');
+    if (sessions.length === 0) {
+        list.innerHTML = `
+            <div class="empty-state">
+                <div class="empty-state-icon">📝</div>
+                <span class="lang-tr">Henüz seans kaydedilmedi</span><br>
+                <span class="lang-en">No sessions recorded yet</span>
+            </div>
+        `;
+        return;
+    }
+    
+    list.innerHTML = sessions.map(s => `
+        <div class="session-item">
+            <div class="session-info">
+                <div class="session-name">${s.name}</div>
+                <div class="session-details">
+                    ${formatDateTime(s.start)} → ${formatDateTime(s.end)}
+                </div>
+            </div>
+            <div class="session-duration">${formatTimeShort(s.duration)}</div>
+            <button class="session-delete" onclick="deleteSession(${s.id})" title="Sil">✕</button>
+        </div>
+    `).join('');
+}
+
+function renderStats() {
+    const today = Date.now();
+    const todayTotal = sessions
+        .filter(s => isSameDay(s.end, today))
+        .reduce((sum, s) => sum + s.duration, 0);
+    
+    const allTimeTotal = sessions.reduce((sum, s) => sum + s.duration, 0);
+    
+    document.getElementById('today-total').textContent = formatTime(todayTotal);
+    document.getElementById('all-time').textContent = formatTime(allTimeTotal);
+    document.getElementById('session-count').textContent = sessions.length;
+}
+
+document.addEventListener('DOMContentLoaded', () => {
+    renderList();
+    renderStats();
+});
+</script>
+{% endblock %}
