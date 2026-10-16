@@ -134,26 +134,35 @@ def extract_slug(url):
 # --- Main Routes ---
 
 
-YORESEL_ANILAR = [
-    "Ankara’nın ayazı üşütür ama bu doğum günü ateşi Sincan’dan tüm dünyaya yayılır!",
-    "Yozgat sürmelisi gibi daldan dala, bu dostluk katlanarak yola devam kanki!",
-    "Çankaya yokuşu bile senin bu yaşa gelișin kadar dik ve iddialı olamadı!",
-    "Alemciyiz deriz ama doğum gününde çorba içerken bile baş tacısın!",
-    "Yozgat'ın arabaşı meşhur, senin de bu gruptaki varlığın tam bir lezzet!",
-    "Ankara barlar sokağı boş, bugün mekanın sahibi sensin kanki!",
+YORESEL_VIBES = [
+    {
+        "baslik": "Sincan Çarşı Pazar",
+        "soz": "Ankara’nın ayazı mert adamı üşütmez, bu doğum günü ateşi Sincan’dan tüm dünyaya yayılır kanki!",
+    },
+    {
+        "baslik": "Yozgat Çamlık Havası",
+        "soz": "Yozgat sürmelisi gibi daldan dala, bu dostluk katlanarak yola devam!",
+    },
+    {
+        "baslik": "Kızılay Meydanı",
+        "soz": "Kızılay'ın göbeğinde simit satılır ama bu grubun krallığı baki kalır!",
+    },
+    {
+        "baslik": "Aramızda Mekan Fark Etmez",
+        "soz": "Ankara barlar sokağı boş, bugün mekanın ve gecenin kralı sensin kanki!",
+    },
+    {
+        "baslik": "Arabaşı Kültürü",
+        "soz": "Yozgat'ın arabaşı meşhur, senin de bu gruptaki varlığın tam bir efsane!",
+    },
 ]
-
-
 @main_bp.route("/emirhan")
 def emirhan():
-  # Rastgele bir yöresel esinti seçelim
-  secilen_soz = random.choice(YORESEL_ANILAR)
-
-  # Arkadaşının ismini buradan dinamik yollayabilirsin
-  arkadas_adi = "Kanki"  # Buraya arkadaşının adını yazabilirsin
+  secilen = random.choice(YORESEL_VIBES)
+  arkadas_adi = "Emirhan"  # Arkadaşının ismi
 
   return render_template(
-      "main/emirhan.html", arkadas_adi=arkadas_adi, anilar_soz=secilen_soz
+      "main/emirhan.html", arkadas_adi=arkadas_adi, vib=secilen
   )
 
 
