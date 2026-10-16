@@ -132,6 +132,35 @@ def extract_slug(url):
     return "link", None
 
 # --- Main Routes ---
+
+
+YORESEL_ANILAR = [
+    "Ankara’nın ayazı üşütür ama bu doğum günü ateşi Sincan’dan tüm dünyaya yayılır!",
+    "Yozgat sürmelisi gibi daldan dala, bu dostluk katlanarak yola devam kanki!",
+    "Çankaya yokuşu bile senin bu yaşa gelișin kadar dik ve iddialı olamadı!",
+    "Alemciyiz deriz ama doğum gününde çorba içerken bile baş tacısın!",
+    "Yozgat'ın arabaşı meşhur, senin de bu gruptaki varlığın tam bir lezzet!",
+    "Ankara barlar sokağı boş, bugün mekanın sahibi sensin kanki!",
+]
+
+
+@app.route("/emirhan")
+def index():
+  # Rastgele bir yöresel esinti seçelim
+  secilen_soz = random.choice(YORESEL_ANILAR)
+
+  # Arkadaşının ismini buradan dinamik yollayabilirsin
+  arkadas_adi = "Kanki"  # Buraya arkadaşının adını yazabilirsin
+
+  return render_template(
+      "index.html", arkadas_adi=arkadas_adi, anilar_soz=secilen_soz
+  )
+
+
+
+
+
+
 @main_bp.route('/subdomain')
 def subdomain():
     subdomain_list = [
