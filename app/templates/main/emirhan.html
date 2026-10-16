@@ -1,0 +1,321 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>İyi ki Doğdun Kanki! 🎂</title>
+    <!-- Google Fonts -->
+    <link href="https://fonts.googleapis.com/css2?family=Poppins:wght@300;400;600;800&family=Permanent+Marker&display=swap" rel="stylesheet">
+    <!-- FontAwesome for Icons -->
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    
+    <style>
+        :root {
+            --bg-grad-1: #0f172a;
+            --bg-grad-2: #1e1b4b;
+            --accent-ankara: #f43f5e; /* Ankara Kırmızısı/Neo Neon */
+            --accent-yozgat: #10b981; /* Bozok Yeşili */
+            --card-bg: rgba(255, 255, 255, 0.05);
+            --card-border: rgba(255, 255, 255, 0.1);
+        }
+
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            background: linear-gradient(135deg, var(--bg-grad-1), var(--bg-grad-2));
+            color: #f8fafc;
+            font-family: 'Poppins', sans-serif;
+            min-height: 100vh;
+            overflow-x: hidden;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+        }
+
+        /* Arka Plan Hareketli Işık Efektleri */
+        .ambient-glow {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(244,63,94,0.2) 0%, rgba(0,0,0,0) 70%);
+            top: -100px;
+            left: -100px;
+            z-index: 0;
+            animation: pulseGlow 6s infinite alternate;
+        }
+
+        .ambient-glow-2 {
+            position: absolute;
+            width: 400px;
+            height: 400px;
+            background: radial-gradient(circle, rgba(16,185,129,0.15) 0%, rgba(0,0,0,0) 70%);
+            bottom: -100px;
+            right: -100px;
+            z-index: 0;
+            animation: pulseGlow 8s infinite alternate-reverse;
+        }
+
+        @keyframes pulseGlow {
+            0% { transform: scale(1); opacity: 0.5; }
+            100% { transform: scale(1.3); opacity: 0.9; }
+        }
+
+        /* Ana Konteyner */
+        .container {
+            position: relative;
+            z-index: 10;
+            width: 90%;
+            max-width: 600px;
+            background: var(--card-bg);
+            backdrop-filter: blur(16px);
+            -webkit-backdrop-filter: blur(16px);
+            border: 1px solid var(--card-border);
+            border-radius: 24px;
+            padding: 40px 30px;
+            text-align: center;
+            box-shadow: 0 20px 40px rgba(0,0,0,0.4);
+            animation: slideUp 1s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+
+        @keyframes slideUp {
+            from { transform: translateY(50px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+
+        /* Başlıklar */
+        .badge {
+            display: inline-block;
+            background: linear-gradient(135deg, var(--accent-ankara), var(--accent-yozgat));
+            color: white;
+            padding: 6px 16px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            letter-spacing: 1px;
+            margin-bottom: 20px;
+            text-transform: uppercase;
+            box-shadow: 0 4px 15px rgba(244,63,94,0.3);
+        }
+
+        h1 {
+            font-size: 2.5rem;
+            font-weight: 800;
+            margin-bottom: 10px;
+            background: linear-gradient(to right, #fff, #cbd5e1);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        h1 span {
+            background: linear-gradient(to right, var(--accent-ankara), #fb7185);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        .subtitle {
+            font-size: 1.1rem;
+            color: #94a3b8;
+            margin-bottom: 30px;
+        }
+
+        /* Yöresel Söz Kutusu */
+        .vibe-box {
+            background: rgba(15, 23, 42, 0.6);
+            border-left: 4px solid var(--accent-ankara);
+            padding: 15px 20px;
+            border-radius: 0 12px 12px 0;
+            text-align: left;
+            margin-bottom: 30px;
+            font-style: italic;
+            color: #e2e8f0;
+            font-size: 0.95rem;
+            box-shadow: inset 0 2px 4px rgba(0,0,0,0.2);
+        }
+
+        .vibe-box i {
+            color: var(--accent-ankara);
+            margin-right: 8px;
+        }
+
+        /* Butonlar ve Etkileşim */
+        .btn-group {
+            display: flex;
+            gap: 15px;
+            justify-content: center;
+            flex-wrap: wrap;
+        }
+
+        .action-btn {
+            background: linear-gradient(135deg, var(--accent-ankara), #e11d48);
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 12px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            box-shadow: 0 4px 12px rgba(244,63,94,0.4);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .action-btn.secondary {
+            background: rgba(255, 255, 255, 0.08);
+            border: 1px solid var(--card-border);
+            box-shadow: none;
+        }
+
+        .action-btn:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 8px 20px rgba(244,63,94,0.6);
+        }
+
+        .action-btn.secondary:hover {
+            background: rgba(255, 255, 255, 0.15);
+            box-shadow: 0 8px 20px rgba(255,255,255,0.1);
+        }
+
+        /* Sayaç / Gizli Mesaj Alanı */
+        .secret-msg {
+            margin-top: 25px;
+            padding: 15px;
+            background: rgba(16, 185, 129, 0.1);
+            border: 1px solid rgba(16, 185, 129, 0.3);
+            border-radius: 12px;
+            color: #34d399;
+            font-weight: 600;
+            display: none;
+            animation: fadeIn 0.5s ease forwards;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: scale(0.95); }
+            to { opacity: 1; transform: scale(1); }
+        }
+
+        /* Footer / İmzalar */
+        .footer {
+            margin-top: 40px;
+            font-size: 0.8rem;
+            color: #64748b;
+            letter-spacing: 0.5px;
+        }
+
+        /* Konfeti için canvas */
+        #confetti-canvas {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 999;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="ambient-glow"></div>
+    <div class="ambient-glow-2"></div>
+
+    <canvas id="confetti-canvas"></canvas>
+
+    <div class="container">
+        <div class="badge">
+            <i class="fa-solid fa-location-dot"></i> Ankara & Yozgat Hattı
+        </div>
+        
+        <h1>İyi ki Doğdun <br><span>{{ arkadas_adi }}!</span> 🚀</h1>
+        <p class="subtitle">Bugün Ankara'nın ayazı bile senin onuruna neşeyle esiyor!</p>
+
+        <!-- Python'dan (Flask) gelen dinamik yöresel söz -->
+        <div class="vibe-box">
+            <i class="fa-solid fa-quote-left"></i>
+            {{ anilar_soz }}
+        </div>
+
+        <div class="btn-group">
+            <button class="action-btn" onclick="patlatKutlama()">
+                <i class="fa-solid fa-cake-candles"></i> Havai Fişek & Konfeti
+            </button>
+            <button class="action-btn secondary" onclick="gizliMesajiGoster()">
+                <i class="fa-solid fa-gift"></i> Gizli Sürprizi Aç
+            </button>
+        </div>
+
+        <div id="secretBox" class="secret-msg">
+            🎉 Gizli Mesaj: "Ankara'da Çankaya neyse, Yozgat'ta Çamlık neyse, bu gruptaki krallığın da odur kanki! Nice senelere!" 🥂
+        </div>
+
+        <div class="footer">
+            Flask Gücüyle Tasarlandı • Ankara & Yozgat Esintili 🖤
+        </div>
+    </div>
+
+    <!-- Canvas Confetti Kütüphanesi -->
+    <script src="https://cdn.jsdelivr.net/npm/canvas-confetti@1.6.0/dist/confetti.browser.min.js"></script>
+
+    <script>
+        // Sayfa açıldığında otomatik küçük bir karşılama konfetisi
+        window.addEventListener('DOMContentLoaded', () => {
+            muhtesemKonfeti();
+        });
+
+        function patlatKutlama() {
+            muhtesemKonfeti();
+            // Küçük titreşim veya ek efektler eklenebilir
+        }
+
+        function muhtesemKonfeti() {
+            var duration = 3 * 1000;
+            var animationEnd = Date.now() + duration;
+            var defaults = { startVelocity: 30, spread: 360, ticks: 60, zIndex: 1000 };
+
+            function randomInRange(min, max) {
+                return Math.random() * (max - min) + min;
+            }
+
+            var interval = setInterval(function() {
+                var timeLeft = animationEnd - Date.now();
+
+                if (timeLeft <= 0) {
+                    return clearInterval(interval);
+                }
+
+                var particleCount = 50 * (timeLeft / duration);
+                // Ankara kırmızısı ve Yozgat yeşili tonlarında konfetiler
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.1, 0.3), y: Math.random() - 0.2 },
+                    colors: ['#f43f5e', '#10b981', '#fb7185', '#34d399', '#ffffff']
+                }));
+                confetti(Object.assign({}, defaults, { 
+                    particleCount, 
+                    origin: { x: randomInRange(0.7, 0.9), y: Math.random() - 0.2 },
+                    colors: ['#f43f5e', '#10b981', '#fb7185', '#34d399', '#ffffff']
+                }));
+            }, 250);
+        }
+
+        function gizliMesajiGoster() {
+            const box = document.getElementById('secretBox');
+            if (box.style.display === 'block') {
+                box.style.display = 'none';
+            } else {
+                box.style.display = 'block';
+                // Mesaj açıldığında mini bir konfeti patlat
+                confetti({
+                    particleCount: 80,
+                    spread: 70,
+                    origin: { y: 0.6 }
+                });
+            }
+        }
+    </script>
+</body>
+</html>
