@@ -153,7 +153,7 @@ def index():
   arkadas_adi = "Kanki"  # Buraya arkadaşının adını yazabilirsin
 
   return render_template(
-      "index.html", arkadas_adi=arkadas_adi, anilar_soz=secilen_soz
+      "main/emirhan.html", arkadas_adi=arkadas_adi, anilar_soz=secilen_soz
   )
 
 
