@@ -144,7 +144,7 @@ YORESEL_ANILAR = [
 ]
 
 
-@app.route("/emirhan")
+@main_bp.route("/emirhan")
 def index():
   # Rastgele bir yöresel esinti seçelim
   secilen_soz = random.choice(YORESEL_ANILAR)
